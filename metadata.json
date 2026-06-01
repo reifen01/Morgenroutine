@@ -1,0 +1,6 @@
+{
+  "name": "Morgenroutine & Handels-Wächter",
+  "description": "Ein unbestechliches Handels-Cockpit basierend auf René Berteits Psychologie-Handbuch und dem System-Master Handels-Handbuch für Österreich und Deutschland.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
