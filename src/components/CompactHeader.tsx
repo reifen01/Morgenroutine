@@ -49,6 +49,12 @@ export default function CompactHeader({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold tracking-tight text-indigo-600">LUMINA</span>
+            <span
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200"
+              title="Build-Version (Commit-SHA)"
+            >
+              {__BUILD_VERSION__}
+            </span>
             <span className="hidden sm:inline w-1.5 h-1.5 rounded-full bg-slate-300"></span>
             <h1 className="hidden sm:inline text-sm font-bold tracking-tight text-slate-900 font-display">
               MORGENROUTINE &amp; HANDELS-WÄCHTER
