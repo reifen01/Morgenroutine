@@ -56,6 +56,7 @@ export default function App() {
       vix: null,
       vxv: null,
       vvix: null,
+      spx: null,
       wti: null,
       gas: null,
       distSpx: 2,
@@ -545,8 +546,9 @@ export default function App() {
     }
 
     const vvixVal = marketState.vvix || 0;
+    const spxVal = marketState.spx || 0;
 
-    return `${formattedDate};${vix.toFixed(2)};${vxv.toFixed(2)};${ratio.toFixed(2)};${vvixVal.toFixed(2)};7519.10;${wti.toFixed(2)};${gas.toFixed(2)};${tsla.toFixed(2)};${baba.toFixed(2)};${now.toFixed(2)};${btc.toFixed(2)};${statusLabel};${textComment}`;
+    return `${formattedDate};${vix.toFixed(2)};${vxv.toFixed(2)};${ratio.toFixed(2)};${vvixVal.toFixed(2)};${spxVal.toFixed(2)};${wti.toFixed(2)};${gas.toFixed(2)};${tsla.toFixed(2)};${baba.toFixed(2)};${now.toFixed(2)};${btc.toFixed(2)};${statusLabel};${textComment}`;
   };
 
   const handleCopyExcelLine = () => {

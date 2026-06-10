@@ -24,7 +24,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { MarketState, LivePrices, PortfolioItem, WatchlistItem } from "../types";
-import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
+import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
   parseCleanFloat, 
   parseCleanDate,
@@ -244,11 +244,13 @@ export default function MorgenroutineTab({
   // Collect Yahoo tickers from portfolio + watchlist for live fetch.
   // Includes fallback candidates per item so we can recover when Yahoo
   // returns no data for the primary listing (e.g. BABA.DE went stale).
+  // SPY is always pulled as a surrogate for ^GSPC (Yahoo flakes on the
+  // bare index quote — see SPX_SURROGATE_SYMBOL in yahooMapping).
   const collectLiveSymbols = () => {
     const marketSyms = Object.values(MARKET_SYMBOLS);
     const portfolioSyms = portfolioData.flatMap(p => yahooCandidatesForPortfolio(p));
     const watchlistSyms = watchlist.flatMap(w => yahooCandidatesForWatchlist(w));
-    return Array.from(new Set([...marketSyms, ...portfolioSyms, ...watchlistSyms]));
+    return Array.from(new Set([...marketSyms, SPX_SURROGATE_SYMBOL, ...portfolioSyms, ...watchlistSyms]));
   };
 
   const handleFetchLivePrices = async () => {
@@ -256,11 +258,18 @@ export default function MorgenroutineTab({
     setIsFetchingLive(true);
     try {
       const symbols = collectLiveSymbols();
-      const resp = await fetch("/api/fetch-live-prices", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ symbols })
-      });
+      // Fire live prices + distribution days in parallel.
+      const [resp, distResp] = await Promise.all([
+        fetch("/api/fetch-live-prices", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ symbols })
+        }),
+        fetch("/api/calculate-distribution-days", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" }
+        }).catch(() => null),
+      ]);
       if (!resp.ok) {
         const errBody = await resp.json().catch(() => ({}));
         const msg = errBody.error || `HTTP ${resp.status}`;
@@ -280,6 +289,31 @@ export default function MorgenroutineTab({
             (newMarket as any)[k] = v;
             updatedCount++;
           }
+        }
+      }
+      // SPX surrogate: if Yahoo refused ^GSPC but SPY came through, derive
+      // SPX as SPY * 10 (close enough for our regime checks).
+      if ((newMarket.spx == null || newMarket.spx === 0) && data.prices?.[SPX_SURROGATE_SYMBOL]) {
+        const spyEntry = data.prices[SPX_SURROGATE_SYMBOL];
+        if (typeof spyEntry.price === "number") {
+          newMarket.spx = spyEntry.price * SPX_SURROGATE_MULTIPLIER;
+          updatedCount++;
+        }
+      }
+      // Distribution Days from the parallel call.
+      if (distResp && distResp.ok) {
+        try {
+          const distData = await distResp.json();
+          if (typeof distData.distSpx === "number") {
+            newMarket.distSpx = distData.distSpx;
+            updatedCount++;
+          }
+          if (typeof distData.distNdx === "number") {
+            newMarket.distNdx = distData.distNdx;
+            updatedCount++;
+          }
+        } catch {
+          // ignore — DD remain at previous value
         }
       }
       onMarketStateChange(newMarket);
