@@ -23,7 +23,8 @@ import {
   Check,
   Sparkles
 } from "lucide-react";
-import { MarketState, LivePrices, PortfolioItem } from "../types";
+import { MarketState, LivePrices, PortfolioItem, WatchlistItem } from "../types";
+import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, yahooTickerForPortfolio, yahooTickerForWatchlist } from "../utils/yahooMapping";
 import { 
   parseCleanFloat, 
   parseCleanDate,
@@ -86,6 +87,8 @@ interface MorgenroutineTabProps {
   livePrices: LivePrices;
   onLivePricesChange: (prices: LivePrices) => void;
   portfolioData: PortfolioItem[];
+  watchlist: WatchlistItem[];
+  onWatchlistChange: (next: WatchlistItem[]) => void;
   routineDate: string;
   onCopyExcelLine: () => void;
   csvExportString: string;
@@ -98,6 +101,8 @@ export default function MorgenroutineTab({
   livePrices,
   onLivePricesChange,
   portfolioData,
+  watchlist,
+  onWatchlistChange,
   routineDate,
   onCopyExcelLine,
   csvExportString,
@@ -232,7 +237,126 @@ export default function MorgenroutineTab({
   };
   
   // States for Screenshot parsing via Gemini vision
-  const [activeImportTab, setActiveImportTab] = useState<"text" | "screenshot">("text");
+  const [activeImportTab, setActiveImportTab] = useState<"text" | "screenshot" | "live">("text");
+  const [isFetchingLive, setIsFetchingLive] = useState(false);
+  const [lastLiveFetchAt, setLastLiveFetchAt] = useState<string | null>(() => localStorage.getItem("morgenroutine_last_live_fetch") || null);
+
+  // Collect Yahoo tickers from portfolio + watchlist for live fetch
+  const collectLiveSymbols = () => {
+    const marketSyms = Object.values(MARKET_SYMBOLS);
+    const portfolioSyms = portfolioData
+      .map(p => yahooTickerForPortfolio(p))
+      .filter((s): s is string => !!s);
+    const watchlistSyms = watchlist
+      .map(w => yahooTickerForWatchlist(w))
+      .filter((s): s is string => !!s);
+    return Array.from(new Set([...marketSyms, ...portfolioSyms, ...watchlistSyms]));
+  };
+
+  const handleFetchLivePrices = async () => {
+    if (isFetchingLive) return;
+    setIsFetchingLive(true);
+    try {
+      const symbols = collectLiveSymbols();
+      const resp = await fetch("/api/fetch-live-prices", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ symbols })
+      });
+      if (!resp.ok) {
+        const errBody = await resp.json().catch(() => ({}));
+        throw new Error(errBody.error || `HTTP ${resp.status}`);
+      }
+      const data = await resp.json();
+
+      let updatedCount = 0;
+
+      // 1. Merge market values
+      const newMarket: MarketState = { ...marketState };
+      if (data.market) {
+        for (const [k, v] of Object.entries(data.market)) {
+          if (typeof v === "number" && !isNaN(v)) {
+            (newMarket as any)[k] = v;
+            updatedCount++;
+          }
+        }
+      }
+      onMarketStateChange(newMarket);
+
+      // 2. Update livePrices for every portfolio item
+      const newLive: LivePrices = {
+        tsla: { ...livePrices.tsla },
+        now: { ...livePrices.now },
+        baba: { ...livePrices.baba },
+        btc: { ...livePrices.btc }
+      };
+      for (const item of portfolioData) {
+        const sym = yahooTickerForPortfolio(item);
+        if (!sym || !data.prices?.[sym]) continue;
+        const entry = data.prices[sym];
+        const key = item.key as keyof LivePrices;
+        if (newLive[key]) {
+          if (typeof entry.price === "number") {
+            newLive[key].price = entry.price;
+            newLive[key].date = routineDate;
+            updatedCount++;
+          }
+          if (typeof entry.atr === "number" && entry.atr > 0) {
+            newLive[key].atr = entry.atr;
+          }
+        }
+      }
+      onLivePricesChange(newLive);
+
+      // 3. Update watchlist
+      let watchlistChanged = false;
+      const newWatchlist = watchlist.map(w => {
+        const sym = yahooTickerForWatchlist(w);
+        if (!sym || !data.prices?.[sym]) return w;
+        const entry = data.prices[sym];
+        const next = { ...w };
+        if (typeof entry.price === "number") {
+          next.price = entry.price.toFixed(2);
+          updatedCount++;
+          watchlistChanged = true;
+        }
+        if (typeof entry.atr === "number" && entry.atr > 0) {
+          next.atr = entry.atr.toFixed(2);
+          watchlistChanged = true;
+        }
+        return next;
+      });
+      if (watchlistChanged) {
+        onWatchlistChange(newWatchlist);
+      }
+
+      // 4. Persist cache
+      saveToImportCache(newMarket, newLive);
+      const fetchedAt = data.fetchedAt || new Date().toISOString();
+      setLastLiveFetchAt(fetchedAt);
+      localStorage.setItem("morgenroutine_last_live_fetch", fetchedAt);
+
+      const cachedHint = data.cached ? " (Cache)" : "";
+      if (onShowToast) {
+        onShowToast(
+          "Live-Daten geladen",
+          `✅ ${updatedCount} Werte aktualisiert${cachedHint}.`,
+          "success"
+        );
+      }
+    } catch (err: any) {
+      console.error("Live fetch failed:", err);
+      if (onShowToast) {
+        onShowToast(
+          "Live-Abruf fehlgeschlagen",
+          err.message || "Konnte keine Daten von Yahoo Finance laden.",
+          "error"
+        );
+      }
+    } finally {
+      setIsFetchingLive(false);
+    }
+  };
   const [isDragging, setIsDragging] = useState(false);
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreviewUrl, setScreenshotPreviewUrl] = useState<string | null>(null);
@@ -1423,6 +1547,17 @@ export default function MorgenroutineTab({
             >
               📸 Screenshot hochladen
             </button>
+            <button
+              type="button"
+              onClick={() => setActiveImportTab("live")}
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+                activeImportTab === "live"
+                  ? "bg-indigo-650 text-white shadow-sm"
+                  : "text-slate-400 hover:text-slate-200"
+              }`}
+            >
+              🌐 Live abrufen
+            </button>
           </div>
         </div>
 
@@ -1451,7 +1586,7 @@ export default function MorgenroutineTab({
               </button>
             </div>
           </div>
-        ) : (
+        ) : activeImportTab === "screenshot" ? (
           <div className="flex flex-col gap-4">
             <div className="w-full">
               {/* Drag n Drop Screenshot Area */}
@@ -1551,6 +1686,51 @@ export default function MorgenroutineTab({
                   </>
                 )}
               </button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
+              <div className="flex items-center gap-2 mb-3">
+                <span className="text-base">🌐</span>
+                <h4 className="text-sm font-bold text-slate-100">Aktuelle Kurse direkt holen</h4>
+              </div>
+              <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
+                Lädt VIX, VXV, VVIX, SPX, WTI, Erdgas <strong>und</strong> alle Aktien aus deinem Portfolio + deiner Watchlist live von Yahoo Finance. ATR wird aus der 14-Tage-Historie berechnet.
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Marktindikatoren</p>
+                  <p className="text-[10px] text-slate-300 font-mono leading-relaxed">VIX · VXV · VVIX · SPX · WTI · NG</p>
+                </div>
+                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Deine Werte ({portfolioData.length + watchlist.length})</p>
+                  <p className="text-[10px] text-slate-300 font-mono leading-relaxed truncate">
+                    {[...portfolioData.map(p => p.ticker || p.key.toUpperCase()), ...watchlist.map(w => w.symbol)].join(" · ") || "(noch keine Werte)"}
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleFetchLivePrices}
+                disabled={isFetchingLive}
+                className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+              >
+                {isFetchingLive ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin text-white" /> Lade Live-Daten...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4 fill-current text-amber-300" /> Jetzt abrufen
+                  </>
+                )}
+              </button>
+              {lastLiveFetchAt && (
+                <p className="text-[10px] text-slate-500 text-center mt-2">
+                  Zuletzt aktualisiert: {new Date(lastLiveFetchAt).toLocaleString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit" })}
+                </p>
+              )}
             </div>
           </div>
         )}

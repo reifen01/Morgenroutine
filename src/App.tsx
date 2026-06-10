@@ -23,7 +23,8 @@ import AICoachTab from "./components/AICoachTab";
 import RegelwerkTab from "./components/RegelwerkTab";
 import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
-import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase } from "./types";
+import OnboardingScreen from "./components/OnboardingScreen";
+import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 
 const getTodayDateStr = () => {
@@ -432,10 +433,32 @@ export default function App() {
     };
   });
 
+  // Watchlist (used by RechnerTab and MorgenroutineTab live-fetch)
+  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => {
+    const saved = localStorage.getItem("morgenroutine_watchlist");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) return parsed;
+      } catch (e) {
+        console.error("Error loading watchlist:", e);
+      }
+    }
+    return [
+      { symbol: "AAPL", name: "Apple Inc.", atr: "5.50", price: "220.00" },
+      { symbol: "NVDA", name: "NVIDIA Corp.", atr: "4.80", price: "125.00" },
+      { symbol: "MSFT", name: "Microsoft Corp.", atr: "8.20", price: "425.00" }
+    ];
+  });
+
   // Save changes to localStorage
   useEffect(() => {
     localStorage.setItem("morgenroutine_portfolio", JSON.stringify(portfolioData));
   }, [portfolioData]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_watchlist", JSON.stringify(watchlist));
+  }, [watchlist]);
 
   useEffect(() => {
     localStorage.setItem("morgenroutine_custom_depots", JSON.stringify(customDepots));
@@ -470,6 +493,9 @@ export default function App() {
   }, [livePrices]);
 
   // Toast systems
+  const [onboardingDone, setOnboardingDone] = useState(
+    () => !!localStorage.getItem("morgenroutine_onboarding_done")
+  );
   const [toast, setToast] = useState<{ title: string; msg: string; type: "success" | "warning" | "error" } | null>(null);
 
   const showToast = (title: string, msg: string, type: "success" | "warning" | "error" = "success") => {
@@ -573,6 +599,8 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen min-h-screen bg-[#F4F4F7] overflow-hidden font-sans text-slate-900">
+
+      {!onboardingDone && <OnboardingScreen onComplete={() => setOnboardingDone(true)} />}
 
       <PWAInstallPrompt />
 
@@ -678,12 +706,14 @@ export default function App() {
       <main className="flex-1 overflow-y-auto w-full max-w-full overflow-x-hidden p-4 sm:p-8 pb-16">
         <div className="max-w-7xl mx-auto">
           {activeTab === "morgenroutine" && (
-            <MorgenroutineTab 
+            <MorgenroutineTab
               marketState={marketState}
               onMarketStateChange={setMarketState}
               livePrices={livePrices}
               onLivePricesChange={setLivePrices}
               portfolioData={portfolioData}
+              watchlist={watchlist}
+              onWatchlistChange={setWatchlist}
               routineDate={routineDate}
               onCopyExcelLine={handleCopyExcelLine}
               csvExportString={getCSVLine()}
@@ -692,10 +722,12 @@ export default function App() {
           )}
 
           {activeTab === "rechner" && (
-            <RechnerTab 
-              routineDate={routineDate} 
+            <RechnerTab
+              routineDate={routineDate}
               livePrices={livePrices}
               portfolioData={portfolioData}
+              watchlist={watchlist}
+              onWatchlistChange={setWatchlist}
               onShowToast={showToast}
             />
           )}

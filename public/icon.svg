@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <!-- Background -->
+  <rect width="512" height="512" rx="100" fill="#4f46e5"/>
+
+  <!-- Sun rays (top) -->
+  <circle cx="256" cy="170" r="52" fill="#fbbf24"/>
+  <line x1="256" y1="90" x2="256" y2="60" stroke="#fbbf24" stroke-width="16" stroke-linecap="round"/>
+  <line x1="316" y1="110" x2="336" y2="86" stroke="#fbbf24" stroke-width="16" stroke-linecap="round"/>
+  <line x1="340" y1="170" x2="372" y2="170" stroke="#fbbf24" stroke-width="16" stroke-linecap="round"/>
+  <line x1="196" y1="110" x2="176" y2="86" stroke="#fbbf24" stroke-width="16" stroke-linecap="round"/>
+  <line x1="172" y1="170" x2="140" y2="170" stroke="#fbbf24" stroke-width="16" stroke-linecap="round"/>
+
+  <!-- Horizon line -->
+  <rect x="80" y="245" width="352" height="8" rx="4" fill="rgba(255,255,255,0.4)"/>
+
+  <!-- Chart bars (rising trend) -->
+  <rect x="100" y="380" width="48" height="80" rx="8" fill="rgba(255,255,255,0.5)"/>
+  <rect x="168" y="340" width="48" height="120" rx="8" fill="rgba(255,255,255,0.65)"/>
+  <rect x="236" y="300" width="48" height="160" rx="8" fill="rgba(255,255,255,0.8)"/>
+  <rect x="304" y="270" width="48" height="190" rx="8" fill="rgba(255,255,255,0.9)"/>
+  <rect x="372" y="290" width="48" height="170" rx="8" fill="#ffffff"/>
+
+  <!-- Trend arrow -->
+  <polyline points="110,390 180,355 250,315 318,285 396,260"
+            fill="none" stroke="#fbbf24" stroke-width="8"
+            stroke-linecap="round" stroke-linejoin="round"/>
+  <polygon points="396,260 378,250 385,272" fill="#fbbf24"/>
+</svg>

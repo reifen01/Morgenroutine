@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CloudSun, FileSpreadsheet } from "lucide-react";
+import { CloudSun, FileSpreadsheet, BookOpen } from "lucide-react";
 
 interface CompactHeaderProps {
   routineDate: string;
@@ -81,6 +81,16 @@ export default function CompactHeader({
         >
           <FileSpreadsheet className="h-4.5 w-4.5" />
         </button>
+
+        <a
+          href="/anleitung.html"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center h-9 w-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 rounded-xl shadow-xs transition-all active:scale-95 duration-200"
+          title="Installations-Anleitung öffnen"
+        >
+          <BookOpen className="h-4 w-4" />
+        </a>
 
         <span
           className={`h-2.5 w-2.5 rounded-full ${
