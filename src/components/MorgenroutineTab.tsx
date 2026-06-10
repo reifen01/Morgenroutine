@@ -265,7 +265,10 @@ export default function MorgenroutineTab({
       });
       if (!resp.ok) {
         const errBody = await resp.json().catch(() => ({}));
-        throw new Error(errBody.error || `HTTP ${resp.status}`);
+        const msg = errBody.error || `HTTP ${resp.status}`;
+        const detail = errBody.detail ? `\n\nDetails: ${errBody.detail}` : "";
+        console.error("[Live] Backend error", resp.status, errBody);
+        throw new Error(msg + detail);
       }
       const data = await resp.json();
 
