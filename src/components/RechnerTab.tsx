@@ -21,23 +21,18 @@ import {
   Search
 } from "lucide-react";
 import { parseCleanFloat, formatAccounting } from "../utils/mathUtils";
-import { LivePrices, PortfolioItem } from "../types";
-
-export interface WatchlistItem {
-  symbol: string;
-  name: string;
-  atr: string;
-  price: string;
-}
+import { LivePrices, PortfolioItem, WatchlistItem } from "../types";
 
 interface RechnerTabProps {
   routineDate: string;
   livePrices?: LivePrices;
   portfolioData?: PortfolioItem[];
+  watchlist: WatchlistItem[];
+  onWatchlistChange: (next: WatchlistItem[]) => void;
   onShowToast?: (title: string, msg: string, type: "success" | "warning" | "error") => void;
 }
 
-export default function RechnerTab({ routineDate, livePrices, portfolioData, onShowToast }: RechnerTabProps) {
+export default function RechnerTab({ routineDate, livePrices, portfolioData, watchlist, onWatchlistChange, onShowToast }: RechnerTabProps) {
   // Input states
   const [depotCapital, setDepotCapital] = useState("200000"); // €
   const [calcMode, setCalcMode] = useState<"shares" | "stop">("shares");
@@ -54,26 +49,13 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, onS
   const [kiCheckText, setKiCheckText] = useState("");
   const [bearCaseText, setBearCaseText] = useState("");
 
-  // Watchlist states
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>(() => {
-    const saved = localStorage.getItem("morgenroutine_watchlist");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch (e) {
-        console.error("Error loading watchlist:", e);
-      }
+  const setWatchlist = (updater: WatchlistItem[] | ((prev: WatchlistItem[]) => WatchlistItem[])) => {
+    if (typeof updater === "function") {
+      onWatchlistChange(updater(watchlist));
+    } else {
+      onWatchlistChange(updater);
     }
-    return [
-      { symbol: "AAPL", name: "Apple Inc.", atr: "5.50", price: "220.00" },
-      { symbol: "NVDA", name: "NVIDIA Corp.", atr: "4.80", price: "125.00" },
-      { symbol: "MSFT", name: "Microsoft Corp.", atr: "8.20", price: "425.00" }
-    ];
-  });
-
-  useEffect(() => {
-    localStorage.setItem("morgenroutine_watchlist", JSON.stringify(watchlist));
-  }, [watchlist]);
+  };
 
   // Watchlist form states
   const [wlSymbol, setWlSymbol] = useState("");

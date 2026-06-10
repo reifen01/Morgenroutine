@@ -89,3 +89,10 @@ export interface ChatMessage {
   text: string;
   timestamp: string;
 }
+
+export interface WatchlistItem {
+  symbol: string;
+  name: string;
+  atr: string;
+  price: string;
+}

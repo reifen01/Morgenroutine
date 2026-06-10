@@ -405,6 +405,154 @@ NUMBER FORMATTING & MULTI-LANGUAGE CONSTRAINTS:
   }
 });
 
+// ----------------------------------------------------------------------------
+// Live Price Fetch from Yahoo Finance
+// ----------------------------------------------------------------------------
+
+const YAHOO_MARKET_MAP: Record<string, string> = {
+  "^VIX": "vix",
+  "^VIX3M": "vxv",
+  "^VVIX": "vvix",
+  "^GSPC": "spx",
+  "CL=F": "wti",
+  "NG=F": "gas",
+};
+
+interface LivePriceCacheEntry {
+  ts: number;
+  data: any;
+}
+const livePriceCache = new Map<string, LivePriceCacheEntry>();
+const LIVE_PRICE_CACHE_TTL = 60_000; // 60 s
+
+async function yahooFetch(url: string): Promise<any> {
+  const res = await fetch(url, {
+    headers: {
+      "User-Agent":
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      "Accept": "application/json",
+    },
+  });
+  if (!res.ok) {
+    throw new Error(`Yahoo API ${res.status}: ${res.statusText}`);
+  }
+  return res.json();
+}
+
+function computeATRFromBars(
+  bars: { high: number; low: number; close: number }[],
+  period = 14
+): number | null {
+  if (!bars || bars.length < period + 1) return null;
+  const slice = bars.slice(-period - 1);
+  const trs: number[] = [];
+  for (let i = 1; i < slice.length; i++) {
+    const cur = slice[i];
+    const prev = slice[i - 1];
+    if (![cur.high, cur.low, cur.close, prev.close].every((x) => typeof x === "number")) continue;
+    const tr = Math.max(
+      cur.high - cur.low,
+      Math.abs(cur.high - prev.close),
+      Math.abs(cur.low - prev.close)
+    );
+    trs.push(tr);
+  }
+  if (trs.length === 0) return null;
+  const avg = trs.reduce((a, b) => a + b, 0) / trs.length;
+  return Number.isFinite(avg) ? Number(avg.toFixed(4)) : null;
+}
+
+app.post("/api/fetch-live-prices", async (req, res) => {
+  try {
+    const { symbols } = req.body as { symbols?: string[] };
+    if (!Array.isArray(symbols) || symbols.length === 0) {
+      return res.status(400).json({ error: "Keine Symbole übergeben." });
+    }
+
+    const cleanSymbols = Array.from(new Set(symbols.filter((s) => typeof s === "string" && s.length > 0)));
+    const cacheKey = cleanSymbols.slice().sort().join(",");
+    const cached = livePriceCache.get(cacheKey);
+    if (cached && Date.now() - cached.ts < LIVE_PRICE_CACHE_TTL) {
+      return res.json({ ...cached.data, cached: true });
+    }
+
+    // 1. Batch quote
+    const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(
+      cleanSymbols.join(",")
+    )}`;
+    let quoteResult: any = null;
+    try {
+      quoteResult = await yahooFetch(quoteUrl);
+    } catch (e: any) {
+      console.warn("Yahoo quote batch failed:", e.message);
+    }
+    const quotes: any[] = quoteResult?.quoteResponse?.result || [];
+
+    // 2. Parallel chart fetch for ATR
+    const chartUrlFor = (s: string) =>
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
+        s
+      )}?range=1mo&interval=1d`;
+
+    const chartResults = await Promise.allSettled(
+      cleanSymbols.map((s) => yahooFetch(chartUrlFor(s)))
+    );
+
+    const market: Record<string, number> = {};
+    const prices: Record<string, { price: number | null; atr: number | null; currency?: string; name?: string }> = {};
+
+    for (let i = 0; i < cleanSymbols.length; i++) {
+      const sym = cleanSymbols[i];
+      const quote = quotes.find((q) => q.symbol === sym);
+      let price: number | null = quote?.regularMarketPrice ?? null;
+      let currency: string | undefined = quote?.currency;
+      let name: string | undefined = quote?.shortName || quote?.longName;
+      let atr: number | null = null;
+
+      const chartRes = chartResults[i];
+      if (chartRes.status === "fulfilled") {
+        const chart = chartRes.value?.chart?.result?.[0];
+        const indicators = chart?.indicators?.quote?.[0];
+        const timestamps: number[] = chart?.timestamp || [];
+        if (indicators && timestamps.length > 0) {
+          const bars: { high: number; low: number; close: number }[] = [];
+          for (let j = 0; j < timestamps.length; j++) {
+            const h = indicators.high?.[j];
+            const l = indicators.low?.[j];
+            const c = indicators.close?.[j];
+            if (typeof h === "number" && typeof l === "number" && typeof c === "number") {
+              bars.push({ high: h, low: l, close: c });
+            }
+          }
+          atr = computeATRFromBars(bars);
+          // Fallback price from chart if quote was empty
+          if (price === null && bars.length > 0) {
+            price = bars[bars.length - 1].close;
+          }
+          if (!currency) currency = chart?.meta?.currency;
+        }
+      }
+
+      if (YAHOO_MARKET_MAP[sym] && price !== null) {
+        market[YAHOO_MARKET_MAP[sym]] = price;
+      } else {
+        prices[sym] = { price, atr, currency, name };
+      }
+    }
+
+    const payload = {
+      market,
+      prices,
+      fetchedAt: new Date().toISOString(),
+    };
+    livePriceCache.set(cacheKey, { ts: Date.now(), data: payload });
+    res.json(payload);
+  } catch (error: any) {
+    console.error("Live Price Fetch Error:", error);
+    res.status(500).json({ error: error.message || "Fehler beim Abruf der Live-Daten." });
+  }
+});
+
 
 // Predefined local dictionary of common stocks to provide a robust, rate-limit-free fallback
 interface LocalStock {
