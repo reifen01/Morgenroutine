@@ -13,6 +13,51 @@ const PORT = 3000;
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
 
+// Diagnostic ping endpoint
+app.get("/api/ping", (_req, res) => {
+  res.json({
+    ok: true,
+    runtime: process.versions.node,
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
+    isVercel: !!process.env.VERCEL,
+    timestamp: new Date().toISOString(),
+  });
+});
+
+// Diagnostic: hit Yahoo directly with a single symbol and report what happened
+app.get("/api/yahoo-test", async (req, res) => {
+  const sym = (req.query.s as string) || "^GSPC";
+  const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(sym)}?range=5d&interval=1d`;
+  try {
+    const t0 = Date.now();
+    const r = await fetch(url, {
+      headers: {
+        "User-Agent":
+          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "application/json",
+      },
+    });
+    const elapsedMs = Date.now() - t0;
+    const text = await r.text();
+    res.json({
+      symbol: sym,
+      url,
+      status: r.status,
+      ok: r.ok,
+      elapsedMs,
+      bodyPreview: text.slice(0, 800),
+      contentType: r.headers.get("content-type"),
+    });
+  } catch (e: any) {
+    res.status(500).json({
+      symbol: sym,
+      url,
+      error: e.message,
+      stack: String(e.stack || e).slice(0, 800),
+    });
+  }
+});
+
 // Initialize the Gemini client on the server-side only
 const geminiApiKey = process.env.GEMINI_API_KEY || "";
 let aiClient: GoogleGenAI | null = null;
