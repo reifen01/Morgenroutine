@@ -318,18 +318,23 @@ app.post("/api/parse-screenshot", async (req, res) => {
     const textPart = {
       text: `You are an extremely precise and clever financial data OCR agent. Analyze this watchlist, broker screenshot (often compiled in German/LS/Trade Republic or trading platforms) and extract the values for specific indices and stock tickers.
 
+YOUR JOB: Find ALL of the 10 fields below in the image. Watchlists typically show all tickers stacked vertically with prices in the "Zuletzt" (Last) column. Scan EVERY row carefully - do not stop after finding just a few.
+
 CRITICAL MAPPING DICTIONARY (GERMAN & ENGLISH TRADING CODES):
 1. 'vix': CBOE Volatility Index. Labeled as: "VIX", "VIX Index", "CBOE Volatility Index", "VOLATILITÄTSINDEX S&P 500". Typical value: 10.0 to 45.0.
-2. 'vxv': VXV or CBOE S&P 500 3-Month Volatility Index. Labeled as: "VXV", "VXVCLS", "S&P 500 3-MONTH VOLATILITY INDEX". Typical value: 12.0 to 45.0.
-3. 'vvix': VVIX or CBOE VIX Volatility Index. Labeled as: "VVIX", "CBOE VIX VOLATILITY", "VVIX Index". Typical value: 70.0 to 160.0.
-4. 'spx': S&P 500 Index. Labeled as: "S&P 500", "SPX", "S&P500 Index". Typical value: 4000.0 to 8000.0.
-5. 'wti': WTI Crude Oil price per barrel. Labeled as: "WTI Crude Oil", "WTI", "Crude Oil", "WEST TEXAS INTERMEDIATE". Typical value: $60.00 to $120.00.
+2. 'vxv': VXV or CBOE S&P 500 3-Month Volatility Index. Labeled as: "VXV", "VXVCLS", "VXVCLS D", "S&P 500 3-MONTH VOLATILITY INDEX". Typical value: 12.0 to 45.0.
+3. 'vvix': VVIX or CBOE VIX Volatility Index. Labeled as: "VVIX", "VVIX D", "CBOE VIX VOLATILITY". Typical value: 70.0 to 160.0.
+4. 'spx': S&P 500 Index. Labeled as: "S&P 500", "SPX", "SPX D", "S&P500 Index", "SP:SPX". Typical value: 4000.0 to 8000.0.
+5. 'wti': WTI Crude Oil price per barrel. Labeled as: "WTI", "WTI Crude Oil", "Crude Oil", "WEST TEXAS INTERMEDIATE". Typical value: $60.00 to $120.00.
 6. 'gas': Henry Hub Natural Gas spot price. Labeled as: "NG1!", "NG1! D", "Erdgas-Futures", "Erdgas", "Natural Gas", "Gas Futures".
-   CRITICAL FOR GAS: Natural Gas spot price is a small decimal, typically between 1.10 and 8.00 USD (e.g., 3.333 or 2.155). It is NEVER a large number like 1000 or -1.000 or 1.00! Ignore daily absolute percentage or points changes like "-1,000" or "-0,91%" and find the proper price.
-7. 'tsla': Tesla, Inc. stock price. Labeled as: "TSLA", "TESLA", "TL0" (German ticker TL0), "TLO" (common German typo). Typical stock price: €100.00 to €500.00 / $100.00 to $500.00.
-8. 'now': ServiceNow, Inc. Labeled as: "NOW", "SERVICENOW", "4S0" (German ticker 4S0), "4S0 L", "4S0L". Typical stock price: €300.00 to €1100.00.
-9. 'baba': Alibaba Group Holding. Labeled as: "AHLA" (German ticker AHLA on Tradegate), "BABA", "ALIBABA". Typical stock price: €50.00 to €200.00.
+   CRITICAL FOR GAS: Natural Gas spot price is a small decimal, typically between 1.10 and 8.00 USD (e.g., 3.333 or 2.155). It is NEVER a large number like 1000! Ignore the change columns and find the price in the "Zuletzt" column.
+7. 'tsla': Tesla, Inc. stock price. Labeled as: "TSLA", "TESLA", "TL0" (German ticker), "TLO" (common typo). Typical stock price: €100.00 to €500.00.
+8. 'now': ServiceNow, Inc. Labeled as: "NOW", "NOW.L", "SERVICENOW", "4S0" (German ticker), "4S0 L", "4S0L". Typical stock price: €300.00 to €1100.00.
+   IMPORTANT: 4S0 (the German Tradegate ticker for ServiceNow) sometimes appears MULTIPLE TIMES in a watchlist. Always pick the one with a realistic ServiceNow stock price (€80-€1100), NOT the change column.
+9. 'baba': Alibaba Group Holding. Labeled as: "AHLA" (German Tradegate ticker), "BABA", "ALIBABA", "BABA D". Typical stock price: €50.00 to €200.00.
 10. 'btc': Bitcoin. Labeled as: "BTC", "BTCEUR", "BTC-EUR", "BTC Index", "Bitcoin Tracker Index", "Bitcoin". Typical price: €40000.0 to €150000.0.
+
+WATCHLIST LAYOUT HINT: Most watchlists have columns "Symbol | Zuletzt | Änd | Änd. %". Read the value from the "Zuletzt" (Last) column - NOT from "Änd" (change) or "Änd. %" (percent change) columns. Scan every single row from top to bottom and try to match it against the dictionary above.
 
 NUMBER FORMATTING & MULTI-LANGUAGE CONSTRAINTS:
 1. German/European formats are frequently used in user screenshots, where a comma (',') is used for the decimal part and a period ('.') is used as the thousands separator.
@@ -343,14 +348,14 @@ NUMBER FORMATTING & MULTI-LANGUAGE CONSTRAINTS:
     };
 
     let response: any;
-    const modelsToTry = ["gemini-3.5-flash", "gemini-3.1-flash-lite", "gemini-flash-latest"];
+    const modelsToTry = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
     let lastError: any = null;
 
     for (let currentAttempt = 1; currentAttempt <= modelsToTry.length; currentAttempt++) {
       const selectedModel = modelsToTry[currentAttempt - 1];
       try {
         console.log(`[Screenshot OCR API] Starte Analyse mit Modell: ${selectedModel} (Versuch ${currentAttempt}/${modelsToTry.length})`);
-        
+
         const generatePromise = aiClient.models.generateContent({
           model: selectedModel,
           contents: { parts: [imagePart, textPart] },
@@ -375,7 +380,7 @@ NUMBER FORMATTING & MULTI-LANGUAGE CONSTRAINTS:
         });
 
         const timeoutPromise = new Promise<any>((_, reject) => {
-          setTimeout(() => reject(new Error("Timeout bei der Modellgenerierung (7.5s)")), 7500);
+          setTimeout(() => reject(new Error("Timeout bei der Modellgenerierung (30s)")), 30000);
         });
 
         response = await Promise.race([generatePromise, timeoutPromise]);
