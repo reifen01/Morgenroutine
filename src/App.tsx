@@ -505,7 +505,8 @@ export default function App() {
 
   useEffect(() => {
     if (toast) {
-      const timer = setTimeout(() => setToast(null), 4000);
+      const duration = toast.type === "error" ? 15000 : 4000;
+      const timer = setTimeout(() => setToast(null), duration);
       return () => clearTimeout(timer);
     }
   }, [toast]);
@@ -616,7 +617,7 @@ export default function App() {
             
             <div className="flex-1">
               <h4 className="text-xs sm:text-sm font-bold text-slate-900">{toast.title}</h4>
-              <p className="text-slate-500 text-xs mt-1 leading-snug font-medium">{toast.msg}</p>
+              <p className="text-slate-500 text-xs mt-1 leading-snug font-medium whitespace-pre-wrap break-words">{toast.msg}</p>
             </div>
             
             <button 
