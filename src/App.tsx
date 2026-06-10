@@ -22,6 +22,7 @@ import PortfolioTab from "./components/PortfolioTab";
 import AICoachTab from "./components/AICoachTab";
 import RegelwerkTab from "./components/RegelwerkTab";
 import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
+import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 
@@ -572,7 +573,9 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen min-h-screen bg-[#F4F4F7] overflow-hidden font-sans text-slate-900">
-      
+
+      <PWAInstallPrompt />
+
       {/* Absolute Toast Component */}
       {toast && (
         <div className="fixed top-24 right-4 left-4 sm:left-auto sm:w-96 z-50 animate-fade shadow-xl pointer-events-auto">
