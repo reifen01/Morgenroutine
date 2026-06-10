@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Morgenroutine App – Installations-Anleitung</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: #F4F4F7;
+      color: #1e293b;
+      padding: 24px 16px 60px;
+      max-width: 680px;
+      margin: 0 auto;
+    }
+    .header {
+      text-align: center;
+      padding: 40px 0 32px;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      border-radius: 20px;
+      margin: 0 auto 16px;
+      display: block;
+    }
+    h1 { font-size: 28px; font-weight: 800; color: #1e293b; }
+    .subtitle { color: #64748b; margin-top: 8px; font-size: 16px; }
+    .card {
+      background: white;
+      border-radius: 16px;
+      padding: 24px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .card h2 {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .emoji { font-size: 22px; }
+    p { color: #475569; line-height: 1.6; margin-bottom: 10px; }
+    ol, ul { padding-left: 20px; color: #475569; line-height: 1.8; }
+    li { margin-bottom: 4px; }
+    .step {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      margin-bottom: 14px;
+    }
+    .step-num {
+      background: #4f46e5;
+      color: white;
+      font-weight: 700;
+      font-size: 13px;
+      min-width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 2px;
+    }
+    .step-text { flex: 1; }
+    .step-text strong { color: #1e293b; }
+    .tip {
+      background: #eff6ff;
+      border-left: 3px solid #4f46e5;
+      border-radius: 8px;
+      padding: 12px 16px;
+      margin-top: 10px;
+      font-size: 14px;
+      color: #3730a3;
+    }
+    .badge {
+      display: inline-block;
+      background: #f1f5f9;
+      border-radius: 6px;
+      padding: 2px 8px;
+      font-size: 13px;
+      font-family: monospace;
+      color: #1e293b;
+    }
+    .platform-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .platform {
+      background: #f8fafc;
+      border-radius: 12px;
+      padding: 16px;
+      text-align: center;
+    }
+    .platform .p-icon { font-size: 28px; margin-bottom: 6px; }
+    .platform strong { display: block; font-size: 14px; color: #1e293b; }
+    .platform span { font-size: 12px; color: #64748b; }
+    a { color: #4f46e5; font-weight: 600; }
+    .url-box {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      padding: 14px 16px;
+      font-family: monospace;
+      font-size: 14px;
+      color: #4f46e5;
+      word-break: break-all;
+      margin: 10px 0;
+    }
+    @media (max-width: 400px) {
+      .platform-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <img class="icon" src="/apple-touch-icon.png" alt="Morgenroutine Icon" />
+    <h1>Morgenroutine App</h1>
+    <p class="subtitle">Dein persönlicher Handels-Assistent</p>
+  </div>
+
+  <!-- Was ist diese App -->
+  <div class="card">
+    <h2><span class="emoji">📱</span> Was ist diese App?</h2>
+    <p>
+      Die <strong>Morgenroutine App</strong> ist ein persönlicher Börsen-Assistent für deine tägliche
+      Handels-Morgenroutine. Du kannst dein Portfolio verwalten, Kurse eintragen, Stop-Loss Limits
+      berechnen und einen KI-Coach befragen.
+    </p>
+    <p>
+      <strong>Deine Daten gehören nur dir</strong> – alles wird lokal auf deinem Gerät gespeichert.
+      Kein Account nötig, keine Cloud (außer du willst Google-Sync nutzen).
+    </p>
+  </div>
+
+  <!-- Auf welchen Geräten -->
+  <div class="card">
+    <h2><span class="emoji">🌐</span> Auf welchen Geräten läuft sie?</h2>
+    <p>Die App läuft auf <strong>allen Geräten</strong> – direkt im Browser oder als installierte App:</p>
+    <div class="platform-grid">
+      <div class="platform">
+        <div class="p-icon">🍎</div>
+        <strong>iPhone / iPad</strong>
+        <span>Safari Browser</span>
+      </div>
+      <div class="platform">
+        <div class="p-icon">🤖</div>
+        <strong>Android</strong>
+        <span>Chrome Browser</span>
+      </div>
+      <div class="platform">
+        <div class="p-icon">💻</div>
+        <strong>Windows PC</strong>
+        <span>Chrome / Edge</span>
+      </div>
+      <div class="platform">
+        <div class="p-icon">🍏</div>
+        <strong>Mac</strong>
+        <span>Safari / Chrome</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Schritt 1: App öffnen -->
+  <div class="card">
+    <h2><span class="emoji">1️⃣</span> Schritt 1: App im Browser öffnen</h2>
+    <p>Öffne auf deinem Gerät den Browser und geh auf diese Adresse:</p>
+    <div class="url-box">https://morgenroutine.vercel.app</div>
+    <p>Du siehst beim ersten Besuch eine kurze Einführung in die App. Klick dich einfach durch!</p>
+  </div>
+
+  <!-- iPhone Installation -->
+  <div class="card">
+    <h2><span class="emoji">📱</span> Schritt 2a: Auf iPhone installieren (iOS)</h2>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">Öffne die App in <strong>Safari</strong> (nicht Chrome oder Firefox – muss Safari sein!)</div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">Tippe unten auf das <strong>Teilen-Symbol</strong> <span class="badge">⬆️ Quadrat mit Pfeil</span></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">Scrolle nach unten und tippe auf <strong>"Zum Home-Bildschirm"</strong></div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">Tippe oben rechts auf <strong>"Hinzufügen"</strong></div>
+    </div>
+    <div class="tip">
+      ✅ Jetzt erscheint das App-Icon auf deinem Home-Bildschirm. Die App startet ohne Browser-Leiste wie eine echte App!
+    </div>
+  </div>
+
+  <!-- Android Installation -->
+  <div class="card">
+    <h2><span class="emoji">🤖</span> Schritt 2b: Auf Android installieren</h2>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">Öffne die App in <strong>Chrome</strong></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">Tippe oben rechts auf die <strong>3 Punkte</strong> <span class="badge">⋮</span></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">Tippe auf <strong>"App installieren"</strong> oder <strong>"Zum Startbildschirm hinzufügen"</strong></div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-text">Auf <strong>"Installieren"</strong> tippen – fertig!</div>
+    </div>
+  </div>
+
+  <!-- Windows/Mac Installation -->
+  <div class="card">
+    <h2><span class="emoji">💻</span> Schritt 2c: Auf Windows oder Mac installieren</h2>
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-text">Öffne die App in <strong>Chrome</strong> oder <strong>Edge</strong></div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-text">Klick in der Adresszeile rechts auf das <strong>Installieren-Symbol</strong> <span class="badge">⊕</span> oder <span class="badge">⬇</span></div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-text">Klick auf <strong>"Installieren"</strong> im erscheinenden Dialog</div>
+    </div>
+    <div class="tip">
+      💡 Die App öffnet sich dann in einem eigenen Fenster ohne Browser-Leiste – wie ein normales Programm auf deinem PC!
+    </div>
+  </div>
+
+  <!-- Portfolio einrichten -->
+  <div class="card">
+    <h2><span class="emoji">📊</span> Schritt 3: Portfolio einrichten</h2>
+    <p>Nach der Installation richtest du dein Portfolio einmalig ein:</p>
+    <ol>
+      <li>Öffne den Tab <strong>"Portfolio &amp; Cash"</strong></li>
+      <li>Trage deine Positionen ein (welche Aktien, zu welchem Preis gekauft)</li>
+      <li>Trage deine Depot-Namen und Anfangskapital ein</li>
+      <li>Das war's – ab jetzt pflegst du nur täglich die aktuellen Kurse</li>
+    </ol>
+    <div class="tip">
+      🔒 Alle Daten bleiben nur auf deinem Gerät. Niemand anderes kann dein Portfolio sehen.
+    </div>
+  </div>
+
+  <!-- Tägliche Nutzung -->
+  <div class="card">
+    <h2><span class="emoji">☀️</span> So nutzt du die App täglich</h2>
+    <p>Jeden Morgen <strong>vor der Börseneröffnung</strong> (8–9 Uhr):</p>
+    <ol>
+      <li>App öffnen → Tab <strong>"Morgenroutine"</strong></li>
+      <li>VIX, VXV, WTI Öl, Erdgas eintragen (von <a href="https://finance.yahoo.com" target="_blank">Yahoo Finance</a>)</li>
+      <li>Aktuelle Kurse für deine Positionen eintragen</li>
+      <li>Die App zeigt dir: 🟢 Kaufen / 🟡 Abwarten / 🔴 Stopp</li>
+      <li>Bei Fragen: Tab <strong>"AI Coach"</strong> öffnen und fragen</li>
+    </ol>
+  </div>
+
+  <!-- FAQ -->
+  <div class="card">
+    <h2><span class="emoji">❓</span> Häufige Fragen</h2>
+    <p><strong>Brauche ich einen Account?</strong><br/>
+    Nein. Die App funktioniert ohne Account, Login oder Registrierung.</p>
+
+    <p><strong>Kann jemand anderes meine Daten sehen?</strong><br/>
+    Nein. Alle Daten werden nur lokal auf deinem Gerät gespeichert.</p>
+
+    <p><strong>Was wenn ich das Gerät wechsle?</strong><br/>
+    Nutze den Tab "Workspace" → "Daten exportieren" und auf dem neuen Gerät importieren. Oder Google Sheets Sync aktivieren.</p>
+
+    <p><strong>Kostet die App etwas?</strong><br/>
+    Nein, die App ist kostenlos.</p>
+
+    <p><strong>Funktioniert die App ohne Internet?</strong><br/>
+    Ja! Nach der ersten Installation läuft sie auch offline (nur KI-Coach braucht Internet).</p>
+  </div>
+
+  <p style="text-align:center; color:#94a3b8; font-size:13px; margin-top:24px;">
+    Morgenroutine &amp; Handels-Wächter · Für persönliche Nutzung
+  </p>
+
+</body>
+</html>

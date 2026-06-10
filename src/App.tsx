@@ -23,6 +23,7 @@ import AICoachTab from "./components/AICoachTab";
 import RegelwerkTab from "./components/RegelwerkTab";
 import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import OnboardingScreen from "./components/OnboardingScreen";
 import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 
@@ -470,6 +471,9 @@ export default function App() {
   }, [livePrices]);
 
   // Toast systems
+  const [onboardingDone, setOnboardingDone] = useState(
+    () => !!localStorage.getItem("morgenroutine_onboarding_done")
+  );
   const [toast, setToast] = useState<{ title: string; msg: string; type: "success" | "warning" | "error" } | null>(null);
 
   const showToast = (title: string, msg: string, type: "success" | "warning" | "error" = "success") => {
@@ -573,6 +577,8 @@ export default function App() {
 
   return (
     <div className="flex flex-col h-screen min-h-screen bg-[#F4F4F7] overflow-hidden font-sans text-slate-900">
+
+      {!onboardingDone && <OnboardingScreen onComplete={() => setOnboardingDone(true)} />}
 
       <PWAInstallPrompt />
 
