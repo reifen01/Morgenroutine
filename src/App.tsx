@@ -505,8 +505,7 @@ export default function App() {
 
   useEffect(() => {
     if (toast) {
-      const duration = toast.type === "error" ? 15000 : 4000;
-      const timer = setTimeout(() => setToast(null), duration);
+      const timer = setTimeout(() => setToast(null), 4000);
       return () => clearTimeout(timer);
     }
   }, [toast]);
