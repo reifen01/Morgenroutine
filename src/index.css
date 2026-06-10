@@ -6,6 +6,38 @@
   --font-mono: "Fira Code", "Fira Mono", monospace;
 }
 
+/* Fix mobile Safari horizontal scrolling / layout shifting */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+/* PWA Safe Areas for iPhone notch / Dynamic Island */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* When running as installed PWA, fill the whole screen */
+@media (display-mode: standalone) {
+  html, body {
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
 /* Custom scroll bar tweaks */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
