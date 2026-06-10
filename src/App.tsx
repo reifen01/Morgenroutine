@@ -23,6 +23,7 @@ import AICoachTab from "./components/AICoachTab";
 import RegelwerkTab from "./components/RegelwerkTab";
 import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
+import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OnboardingScreen from "./components/OnboardingScreen";
 import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
@@ -603,6 +604,7 @@ export default function App() {
       {!onboardingDone && <OnboardingScreen onComplete={() => setOnboardingDone(true)} />}
 
       <PWAInstallPrompt />
+      <PWAUpdatePrompt />
 
       {/* Absolute Toast Component */}
       {toast && (
