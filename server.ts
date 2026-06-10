@@ -426,17 +426,28 @@ const livePriceCache = new Map<string, LivePriceCacheEntry>();
 const LIVE_PRICE_CACHE_TTL = 60_000; // 60 s
 
 async function yahooFetch(url: string): Promise<any> {
-  const res = await fetch(url, {
-    headers: {
-      "User-Agent":
-        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-      "Accept": "application/json",
-    },
-  });
-  if (!res.ok) {
-    throw new Error(`Yahoo API ${res.status}: ${res.statusText}`);
+  // Try query1, fall back to query2 (same pattern as fetchYahooData)
+  const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+  let lastErr: any = null;
+  for (const host of hosts) {
+    const fullUrl = url.replace(/^https?:\/\/[^/]+/, `https://${host}`);
+    try {
+      const res = await fetch(fullUrl, {
+        headers: {
+          "User-Agent":
+            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "application/json",
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`Yahoo API ${res.status} for ${host}`);
+      }
+      return await res.json();
+    } catch (e) {
+      lastErr = e;
+    }
   }
-  return res.json();
+  throw lastErr || new Error("Yahoo fetch failed");
 }
 
 function computeATRFromBars(
@@ -476,23 +487,10 @@ app.post("/api/fetch-live-prices", async (req, res) => {
       return res.json({ ...cached.data, cached: true });
     }
 
-    // 1. Batch quote
-    const quoteUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(
-      cleanSymbols.join(",")
-    )}`;
-    let quoteResult: any = null;
-    try {
-      quoteResult = await yahooFetch(quoteUrl);
-    } catch (e: any) {
-      console.warn("Yahoo quote batch failed:", e.message);
-    }
-    const quotes: any[] = quoteResult?.quoteResponse?.result || [];
-
-    // 2. Parallel chart fetch for ATR
+    // Use Yahoo chart endpoint only — the v7/quote endpoint now requires auth cookies.
+    // Chart response includes meta.regularMarketPrice (current price) and OHLC bars for ATR.
     const chartUrlFor = (s: string) =>
-      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(
-        s
-      )}?range=1mo&interval=1d`;
+      `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(s)}?range=2mo&interval=1d`;
 
     const chartResults = await Promise.allSettled(
       cleanSymbols.map((s) => yahooFetch(chartUrlFor(s)))
@@ -503,17 +501,24 @@ app.post("/api/fetch-live-prices", async (req, res) => {
 
     for (let i = 0; i < cleanSymbols.length; i++) {
       const sym = cleanSymbols[i];
-      const quote = quotes.find((q) => q.symbol === sym);
-      let price: number | null = quote?.regularMarketPrice ?? null;
-      let currency: string | undefined = quote?.currency;
-      let name: string | undefined = quote?.shortName || quote?.longName;
+      let price: number | null = null;
+      let currency: string | undefined;
+      let name: string | undefined;
       let atr: number | null = null;
 
       const chartRes = chartResults[i];
       if (chartRes.status === "fulfilled") {
         const chart = chartRes.value?.chart?.result?.[0];
+        const meta = chart?.meta;
         const indicators = chart?.indicators?.quote?.[0];
         const timestamps: number[] = chart?.timestamp || [];
+
+        if (typeof meta?.regularMarketPrice === "number") {
+          price = meta.regularMarketPrice;
+        }
+        if (meta?.currency) currency = meta.currency;
+        if (meta?.symbol) name = meta.symbol;
+
         if (indicators && timestamps.length > 0) {
           const bars: { high: number; low: number; close: number }[] = [];
           for (let j = 0; j < timestamps.length; j++) {
@@ -525,12 +530,12 @@ app.post("/api/fetch-live-prices", async (req, res) => {
             }
           }
           atr = computeATRFromBars(bars);
-          // Fallback price from chart if quote was empty
           if (price === null && bars.length > 0) {
             price = bars[bars.length - 1].close;
           }
-          if (!currency) currency = chart?.meta?.currency;
         }
+      } else {
+        console.warn(`[Live] Chart fetch failed for ${sym}:`, chartRes.reason?.message || chartRes.reason);
       }
 
       if (YAHOO_MARKET_MAP[sym] && price !== null) {
@@ -549,7 +554,10 @@ app.post("/api/fetch-live-prices", async (req, res) => {
     res.json(payload);
   } catch (error: any) {
     console.error("Live Price Fetch Error:", error);
-    res.status(500).json({ error: error.message || "Fehler beim Abruf der Live-Daten." });
+    res.status(500).json({
+      error: error.message || "Fehler beim Abruf der Live-Daten.",
+      detail: String(error?.stack || error).slice(0, 500),
+    });
   }
 });
 
