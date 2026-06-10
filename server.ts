@@ -554,7 +554,10 @@ app.post("/api/fetch-live-prices", async (req, res) => {
     res.json(payload);
   } catch (error: any) {
     console.error("Live Price Fetch Error:", error);
-    res.status(500).json({ error: error.message || "Fehler beim Abruf der Live-Daten." });
+    res.status(500).json({
+      error: error.message || "Fehler beim Abruf der Live-Daten.",
+      detail: String(error?.stack || error).slice(0, 500),
+    });
   }
 });
 
