@@ -1,11 +1,29 @@
 import tailwindcss from '@tailwindcss/vite';
 import react from '@vitejs/plugin-react';
 import path from 'path';
+import { execSync } from 'child_process';
 import {defineConfig} from 'vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
+function resolveBuildVersion(): string {
+  // On Vercel, VERCEL_GIT_COMMIT_SHA is set automatically for every deploy.
+  const sha = process.env.VERCEL_GIT_COMMIT_SHA;
+  if (sha) return sha.slice(0, 7);
+  try {
+    return execSync('git rev-parse --short HEAD', { stdio: ['ignore', 'pipe', 'ignore'] })
+      .toString()
+      .trim();
+  } catch {
+    return 'dev';
+  }
+}
+
 export default defineConfig(() => {
+  const buildVersion = resolveBuildVersion();
   return {
+    define: {
+      __BUILD_VERSION__: JSON.stringify(buildVersion),
+    },
     plugins: [
       react(),
       tailwindcss(),
