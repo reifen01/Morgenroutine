@@ -21,11 +21,13 @@ export type MarketKey = keyof typeof MARKET_SYMBOLS;
 export const YAHOO_TO_MARKET_KEY: Record<string, MarketKey> = Object.entries(MARKET_SYMBOLS)
   .reduce((acc, [k, v]) => ({ ...acc, [v]: k as MarketKey }), {} as Record<string, MarketKey>);
 
-// Known portfolio key -> Yahoo ticker (Tradegate / XETRA EUR-listings preferred)
+// Known portfolio key -> primary Yahoo ticker (Tradegate / XETRA EUR-listings preferred).
+// BABA.F (Frankfurt) is more reliable on Yahoo than BABA.DE which sometimes
+// returns no data — see FALLBACKS below.
 const KEY_TO_YAHOO: Record<string, string> = {
   tsla: "TL0.F",
   now: "4S0.F",
-  baba: "BABA.DE",
+  baba: "BABA.F",
   btc: "BTC-EUR",
 };
 
@@ -37,11 +39,21 @@ const TICKER_TO_YAHOO: Record<string, string> = {
   NOW: "4S0.F",
   "4S0": "4S0.F",
   "4S0L": "4S0.F",
-  BABA: "BABA.DE",
-  AHLA: "BABA.DE",
+  BABA: "BABA.F",
+  AHLA: "BABA.F",
   BTC: "BTC-EUR",
   BTCEUR: "BTC-EUR",
   "BTC-EUR": "BTC-EUR",
+};
+
+// Fallback candidates per primary ticker. Yahoo periodically drops a specific
+// German listing without notice. We send all candidates and the response
+// resolver in MorgenroutineTab picks the first one that returned a price.
+const FALLBACKS: Record<string, string[]> = {
+  "TL0.F": ["TL0.F", "TL0.DE"],
+  "4S0.F": ["4S0.F", "4S0.DE"],
+  "BABA.F": ["BABA.F", "BABA.DE", "BABA.MU", "BABA.SG"],
+  "BTC-EUR": ["BTC-EUR"],
 };
 
 /**
@@ -68,6 +80,26 @@ export function yahooTickerForWatchlist(item: WatchlistItem): string | null {
   if (TICKER_TO_YAHOO[upper]) return TICKER_TO_YAHOO[upper];
   if (upper.includes(".") || upper.includes("-")) return upper;
   return upper;
+}
+
+/**
+ * Return all Yahoo candidate tickers to try for a portfolio item.
+ * First entry is the preferred one; subsequent entries are fallbacks
+ * used if Yahoo returns no data for the primary.
+ */
+export function yahooCandidatesForPortfolio(item: PortfolioItem): string[] {
+  const primary = yahooTickerForPortfolio(item);
+  if (!primary) return [];
+  return FALLBACKS[primary] || [primary];
+}
+
+/**
+ * Same as yahooCandidatesForPortfolio but for watchlist items.
+ */
+export function yahooCandidatesForWatchlist(item: WatchlistItem): string[] {
+  const primary = yahooTickerForWatchlist(item);
+  if (!primary) return [];
+  return FALLBACKS[primary] || [primary];
 }
 
 /**

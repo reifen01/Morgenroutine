@@ -24,7 +24,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { MarketState, LivePrices, PortfolioItem, WatchlistItem } from "../types";
-import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, yahooTickerForPortfolio, yahooTickerForWatchlist } from "../utils/yahooMapping";
+import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
   parseCleanFloat, 
   parseCleanDate,
@@ -241,15 +241,13 @@ export default function MorgenroutineTab({
   const [isFetchingLive, setIsFetchingLive] = useState(false);
   const [lastLiveFetchAt, setLastLiveFetchAt] = useState<string | null>(() => localStorage.getItem("morgenroutine_last_live_fetch") || null);
 
-  // Collect Yahoo tickers from portfolio + watchlist for live fetch
+  // Collect Yahoo tickers from portfolio + watchlist for live fetch.
+  // Includes fallback candidates per item so we can recover when Yahoo
+  // returns no data for the primary listing (e.g. BABA.DE went stale).
   const collectLiveSymbols = () => {
     const marketSyms = Object.values(MARKET_SYMBOLS);
-    const portfolioSyms = portfolioData
-      .map(p => yahooTickerForPortfolio(p))
-      .filter((s): s is string => !!s);
-    const watchlistSyms = watchlist
-      .map(w => yahooTickerForWatchlist(w))
-      .filter((s): s is string => !!s);
+    const portfolioSyms = portfolioData.flatMap(p => yahooCandidatesForPortfolio(p));
+    const watchlistSyms = watchlist.flatMap(w => yahooCandidatesForWatchlist(w));
     return Array.from(new Set([...marketSyms, ...portfolioSyms, ...watchlistSyms]));
   };
 
@@ -293,17 +291,26 @@ export default function MorgenroutineTab({
         baba: { ...livePrices.baba },
         btc: { ...livePrices.btc }
       };
+      // Walk through each item's candidate symbols, take the first that
+      // actually came back with a numeric price (so BABA.DE → BABA.F
+      // fallbacks resolve transparently).
+      const firstEntryWithPrice = (candidates: string[]) => {
+        for (const sym of candidates) {
+          const entry = data.prices?.[sym];
+          if (entry && typeof entry.price === "number") return entry;
+        }
+        return null;
+      };
+
       for (const item of portfolioData) {
-        const sym = yahooTickerForPortfolio(item);
-        if (!sym || !data.prices?.[sym]) continue;
-        const entry = data.prices[sym];
+        const candidates = yahooCandidatesForPortfolio(item);
+        const entry = firstEntryWithPrice(candidates);
+        if (!entry) continue;
         const key = item.key as keyof LivePrices;
         if (newLive[key]) {
-          if (typeof entry.price === "number") {
-            newLive[key].price = entry.price;
-            newLive[key].date = routineDate;
-            updatedCount++;
-          }
+          newLive[key].price = entry.price as number;
+          newLive[key].date = routineDate;
+          updatedCount++;
           if (typeof entry.atr === "number" && entry.atr > 0) {
             newLive[key].atr = entry.atr;
           }
@@ -314,18 +321,15 @@ export default function MorgenroutineTab({
       // 3. Update watchlist
       let watchlistChanged = false;
       const newWatchlist = watchlist.map(w => {
-        const sym = yahooTickerForWatchlist(w);
-        if (!sym || !data.prices?.[sym]) return w;
-        const entry = data.prices[sym];
+        const candidates = yahooCandidatesForWatchlist(w);
+        const entry = firstEntryWithPrice(candidates);
+        if (!entry) return w;
         const next = { ...w };
-        if (typeof entry.price === "number") {
-          next.price = entry.price.toFixed(2);
-          updatedCount++;
-          watchlistChanged = true;
-        }
+        next.price = (entry.price as number).toFixed(2);
+        updatedCount++;
+        watchlistChanged = true;
         if (typeof entry.atr === "number" && entry.atr > 0) {
           next.atr = entry.atr.toFixed(2);
-          watchlistChanged = true;
         }
         return next;
       });
