@@ -6,6 +6,20 @@
   --font-mono: "Fira Code", "Fira Mono", monospace;
 }
 
+/* Fix mobile Safari horizontal scrolling / layout shifting */
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden !important;
+  position: relative;
+  margin: 0;
+  padding: 0;
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 /* Custom scroll bar tweaks */
 .no-scrollbar::-webkit-scrollbar {
   display: none;

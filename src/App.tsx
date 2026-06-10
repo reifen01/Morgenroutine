@@ -12,7 +12,8 @@ import {
   GraduationCap, 
   AlertTriangle,
   Info,
-  CheckCircle2
+  CheckCircle2,
+  FolderSync
 } from "lucide-react";
 import CompactHeader from "./components/CompactHeader";
 import MorgenroutineTab from "./components/MorgenroutineTab";
@@ -20,103 +21,452 @@ import RechnerTab from "./components/RechnerTab";
 import PortfolioTab from "./components/PortfolioTab";
 import AICoachTab from "./components/AICoachTab";
 import RegelwerkTab from "./components/RegelwerkTab";
-import { MarketState, LivePrices, PortfolioItem, ChecklistItem } from "./types";
+import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
+import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
+
+const getTodayDateStr = () => {
+  const d = new Date();
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 export default function App() {
   // Shared global state variables
-  const [routineDate, setRoutineDate] = useState("2026-06-01");
-  const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "regelwerk" | "ai-coach">("morgenroutine");
+  const initialDate = getTodayDateStr();
+  const [routineDate, setRoutineDate] = useState(initialDate);
+  const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
   
   // Market index states
-  const [marketState, setMarketState] = useState<MarketState>({
-    vix: null,
-    vxv: null,
-    vvix: 89.55,
-    wti: null,
-    gas: null,
-    distSpx: 2,
-    distNdx: 1
+  const [marketState, setMarketState] = useState<MarketState>(() => {
+    const saved = localStorage.getItem("morgenroutine_market_state");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error reading market state from local storage:", e);
+      }
+    }
+    return {
+      vix: null,
+      vxv: null,
+      vvix: null,
+      wti: null,
+      gas: null,
+      distSpx: 2,
+      distNdx: 1
+    };
   });
 
   // Assets tracking states with live dates synchronizing with parent routineDate
-  const [livePrices, setLivePrices] = useState<LivePrices>({
-    tsla: { price: null, date: "2026-06-01", atr: 15.50 },
-    now: { price: null, date: "2026-06-01", atr: 3.20 },
-    baba: { price: null, date: "2026-06-01", atr: 4.10 },
-    btc: { price: null, date: "2026-06-01", atr: 0 }
+  const [livePrices, setLivePrices] = useState<LivePrices>(() => {
+    const saved = localStorage.getItem("morgenroutine_live_prices");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error reading live prices from local storage:", e);
+      }
+    }
+    return {
+      tsla: { price: null, date: initialDate, atr: 15.50 },
+      now: { price: null, date: initialDate, atr: 3.20 },
+      baba: { price: null, date: initialDate, atr: 4.10 },
+      btc: { price: null, date: initialDate, atr: 0 }
+    };
   });
 
   // Portfolio items utilizing corrected hard anchors
-  const [portfolioData, setPortfolioData] = useState<PortfolioItem[]>([
-    {
-      id: "p1",
-      name: "TSLA Reinhard (Mutter)",
-      harterAnker: 185.19,
-      limitPreis: 320.00,
-      limitLabel: "Limit € 320,00",
-      tranchenGroesse: 30000,
-      status: "red",
-      stopKurs: 0,
-      key: "tsla",
-      beschreibung: "Kerninvestition. Harter Anker bei € 185,19."
-    },
-    {
-      id: "p2",
-      name: "TSLA Kit Anh (Ehemann)",
-      harterAnker: 200.00,
-      limitPreis: 320.00,
-      limitLabel: "Limit € 320,00",
-      tranchenGroesse: 40000,
-      status: "red",
-      stopKurs: 0,
-      key: "tsla",
-      beschreibung: "Erweiterte Absicherung. Harter Anker bei € 200,00."
-    },
-    {
-      id: "p3",
-      name: "ServiceNow (now)",
-      harterAnker: 80.00,
-      limitPreis: 80.00,
-      limitLabel: "Anker € 80,00",
-      tranchenGroesse: 25000,
-      status: "yellow",
-      stopKurs: 0,
-      key: "now",
-      beschreibung: "Harter Anker bei € 80,00 beachten."
-    },
-    {
-      id: "p4",
-      name: "Alibaba (BABA)",
-      harterAnker: 89.00,
-      limitPreis: 70.00,
-      limitLabel: "Anker € 70,00",
-      tranchenGroesse: 15000,
-      status: "yellow",
-      stopKurs: 0,
-      key: "baba",
-      beschreibung: "Harter Anker bei € 89,00 (Korrektur nach Handbuch)."
-    },
-    {
-      id: "p5",
-      name: "BTC Sparplan index",
-      harterAnker: 0.00,
-      limitPreis: 50000.00,
-      limitLabel: "Sparplan active",
-      tranchenGroesse: 1000,
-      status: "green",
-      stopKurs: 0.00,
-      key: "btc",
-      beschreibung: "Langfristiger BTC Sparplan (K1 + K2)."
+  const [portfolioData, setPortfolioData] = useState<PortfolioItem[]>(() => {
+    const saved = localStorage.getItem("morgenroutine_portfolio");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved) as PortfolioItem[];
+        return parsed.map((item: PortfolioItem) => {
+          const updated = { ...item };
+          if (updated.name.includes("Tesla") || updated.name.includes("Reinhard") || updated.name.includes("Mutter") || updated.name.includes("Absicherung")) {
+            updated.name = "Tesla, Inc.";
+            if (updated.id === "p1") {
+              updated.beschreibung = "Kerninvestition. Harter Anker bei € 185,19.";
+            } else {
+              updated.beschreibung = "Zusätzliche Position (Absicherung). Harter Anker bei € 200,00.";
+            }
+          } else if (updated.name.includes("Kit Anh") || updated.name.includes("Ehemann")) {
+            updated.name = "Tesla, Inc.";
+            updated.beschreibung = "Zusätzliche Position (Absicherung). Harter Anker bei € 200,00.";
+          } else if (updated.name === "ServiceNow (now)" || updated.name === "ServiceNow") {
+            updated.name = "ServiceNow, Inc.";
+          } else if (updated.name === "Alibaba (BABA)" || updated.name === "Alibaba") {
+            updated.name = "Alibaba Group Holding Ltd.";
+          } else if (updated.name === "BTC Sparplan index") {
+            updated.name = "Bitcoin Tracker Index";
+          }
+          
+          if (updated.key === "tsla") {
+            updated.ticker = "TSLA";
+            updated.isin = "US88160R1014";
+          } else if (updated.key === "now") {
+            updated.ticker = "NOW";
+            updated.isin = "US81762P1021";
+          } else if (updated.key === "baba") {
+            updated.ticker = "BABA";
+            updated.isin = "US01609W1027";
+          } else if (updated.key === "btc") {
+            updated.ticker = "BTC";
+            updated.isin = "DE000A27Z304";
+          }
+          return updated;
+        });
+      } catch (e) {
+        console.error("Error reading portfolio from local storage:", e);
+      }
     }
-  ]);
+    return [
+      {
+        id: "p1",
+        name: "Tesla, Inc.",
+        harterAnker: 185.19,
+        limitPreis: 320.00,
+        limitLabel: "Limit € 320,00",
+        tranchenGroesse: 30000,
+        status: "red",
+        stopKurs: 0,
+        key: "tsla",
+        ticker: "TSLA",
+        isin: "US88160R1014",
+        beschreibung: "Kerninvestition. Harter Anker bei € 185,19."
+      },
+      {
+        id: "p2",
+        name: "Tesla, Inc.",
+        harterAnker: 200.00,
+        limitPreis: 320.00,
+        limitLabel: "Limit € 320,00",
+        tranchenGroesse: 40000,
+        status: "red",
+        stopKurs: 0,
+        key: "tsla",
+        ticker: "TSLA",
+        isin: "US88160R1014",
+        beschreibung: "Zusätzliche Position (Absicherung). Harter Anker bei € 200,00."
+      },
+      {
+        id: "p3",
+        name: "ServiceNow, Inc.",
+        harterAnker: 80.00,
+        limitPreis: 80.00,
+        limitLabel: "Anker € 80,00",
+        tranchenGroesse: 25000,
+        status: "yellow",
+        stopKurs: 0,
+        key: "now",
+        ticker: "NOW",
+        isin: "US81762P1021",
+        beschreibung: "Harter Anker bei € 80,00 beachten."
+      },
+      {
+        id: "p4",
+        name: "Alibaba Group Holding Ltd.",
+        harterAnker: 89.00,
+        limitPreis: 70.00,
+        limitLabel: "Anker € 70,00",
+        tranchenGroesse: 15000,
+        status: "yellow",
+        stopKurs: 0,
+        key: "baba",
+        ticker: "BABA",
+        isin: "US01609W1027",
+        beschreibung: "Harter Anker bei € 89,00 (Korrektur nach Handbuch)."
+      },
+      {
+        id: "p5",
+        name: "Bitcoin Tracker Index",
+        harterAnker: 0.00,
+        limitPreis: 50000.00,
+        limitLabel: "Sparplan active",
+        tranchenGroesse: 1000,
+        status: "green",
+        stopKurs: 0.00,
+        key: "btc",
+        ticker: "BTC",
+        isin: "DE000A27Z304",
+        beschreibung: "Langfristiger BTC Sparplan (K1 + K2)."
+      }
+    ];
+  });
 
   // Checklist items
-  const [checklistData, setChecklistData] = useState<ChecklistItem[]>([
-    { id: "c1", title: "TSLA: Kauflimit bei € 320 in DADAT aktivieren", tranchenGroesse: 50000, status: "yellow", kategorie: "TSLA" },
-    { id: "c2", title: "NOW: Entscheidung abschließen (Gewinnmitnahme oder Stop)", tranchenGroesse: 20000, status: "green", kategorie: "NOW" },
-    { id: "c3", title: "BABA: Harten Anker im System festschreiben", tranchenGroesse: 20000, status: "red", kategorie: "BABA" }
-  ]);
+  const [checklistData, setChecklistData] = useState<ChecklistItem[]>(() => {
+    const saved = localStorage.getItem("morgenroutine_checklist");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error reading checklist from local storage:", e);
+      }
+    }
+    return [
+      { id: "c1", title: "TSLA: Kauflimit bei € 320 in DADAT aktivieren", tranchenGroesse: 50000, status: "yellow", kategorie: "TSLA" },
+      { id: "c2", title: "NOW: Entscheidung abschließen (Gewinnmitnahme oder Stop)", tranchenGroesse: 20000, status: "green", kategorie: "NOW" },
+      { id: "c3", title: "BABA: Harten Anker im System festschreiben", tranchenGroesse: 20000, status: "red", kategorie: "BABA" }
+    ];
+  });
+
+  // Realisierte Verkäufe / Trade-Historie
+  const [soldTrades, setSoldTrades] = useState<SoldTradeItem[]>(() => {
+    const saved = localStorage.getItem("morgenroutine_sold_trades");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.map((s) => {
+            const updated = { ...s };
+            if (!updated.depot || updated.depot === "Standard Depot") {
+              updated.depot = "Flatex";
+            }
+            if (!updated.besitzerName) {
+              updated.besitzerName = "Standard Besitzer";
+            }
+            return updated;
+          });
+        }
+        return parsed;
+      } catch (e) {
+        console.error("Error reading sold trades from local storage:", e);
+      }
+    }
+    return [
+      {
+        id: "s1",
+        name: "ServiceNow (NOW)",
+        key: "now",
+        verkaufsDatum: "2026-06-03",
+        kaufKurs: 680.00,
+        verkaufsKurs: 742.50,
+        anzahlAktien: 33.67,
+        gewinnVerlust: 2104.38,
+        kestBetrag: 578.70, // 27,5% KESt in Österreich
+        nettoGewinn: 1525.68,
+        notiz: "Unbestechlicher Ausstieg per Stop-Loss (Gewinn vollständig abgesichert).",
+        depot: "Flatex",
+        besitzerName: "Andres"
+      }
+    ];
+  });
+
+  // Portfolio Purchases - tracking of individual buy transactions
+  const [portfolioPurchases, setPortfolioPurchases] = useState<PortfolioPurchase[]>(() => {
+    const saved = localStorage.getItem("morgenroutine_purchases");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          // If BABA specifically has 168.54 from the old default, clean/migrate it to 168!
+          return parsed.map((p) => {
+            const updated = { ...p };
+            if (p.key === "baba" && p.anzahlAktien === 168.54) {
+              updated.anzahlAktien = 168.00;
+              updated.verbleibendeAnzahlAktien = 168.00;
+              updated.tatsaechlicheKosten = 14952.00;
+            }
+            if (!updated.depot || updated.depot === "Standard Depot") {
+              updated.depot = updated.key === "now" ? "DADAT" : "Flatex";
+            }
+            if (!updated.besitzerName) {
+              updated.besitzerName = "Standard Besitzer";
+            }
+            return updated;
+          });
+        }
+        return parsed;
+      } catch (e) {
+        console.error("Error reading portfolio purchases from local storage:", e);
+      }
+    }
+    return [
+      {
+        id: "buy_1",
+        name: "ServiceNow, Inc.",
+        key: "now",
+        kaufDatum: "2026-06-01",
+        kaufKurs: 80.00,
+        anzahlAktien: 1528,
+        tatsaechlicheKosten: 122240,
+        verbleibendeAnzahlAktien: 1528,
+        notiz: "Erster Kauf laut DADAT-Schnittstelle",
+        depot: "DADAT",
+        besitzerName: "Andres"
+      },
+      {
+        id: "buy_2",
+        name: "Tesla, Inc.",
+        key: "tsla",
+        kaufDatum: "2026-05-15",
+        kaufKurs: 185.19,
+        anzahlAktien: 162.00,
+        tatsaechlicheKosten: 30000.78,
+        verbleibendeAnzahlAktien: 162.00,
+        notiz: "Tranche 1 am harten Anker",
+        depot: "Flatex",
+        besitzerName: "Andres"
+      },
+      {
+        id: "buy_3",
+        name: "Alibaba Group Holding Ltd.",
+        key: "baba",
+        kaufDatum: "2026-05-20",
+        kaufKurs: 89.00,
+        anzahlAktien: 168.00,
+        tatsaechlicheKosten: 14952.00,
+        verbleibendeAnzahlAktien: 168.00,
+        notiz: "Asien-Anteil laut Regelwerk",
+        depot: "Flatex",
+        besitzerName: "Andres"
+      }
+    ];
+  });
+
+  // Custom managed list of Depots & Owners shifted up for global persistence and sync support
+  const [customDepots, setCustomDepots] = useState<string[]>(() => {
+    let baseList = ["Flatex", "Trade Republic", "DADAT", "DAB BNP Paribas", "Bitpanda"];
+    const saved = localStorage.getItem("morgenroutine_custom_depots");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          baseList = parsed;
+        }
+      } catch (e) {
+        console.error("Error loading custom depots from local storage:", e);
+      }
+    }
+
+    // Recover from trade histories if some broker has been wiped from config but remains in history
+    const activeDepotsSet = new Set<string>(baseList);
+    try {
+      const savedPurchases = localStorage.getItem("morgenroutine_purchases");
+      if (savedPurchases) {
+        const parsedPurchases = JSON.parse(savedPurchases);
+        if (Array.isArray(parsedPurchases)) {
+          parsedPurchases.forEach(p => {
+            if (p.depot) activeDepotsSet.add(p.depot);
+          });
+        }
+      }
+    } catch {}
+    try {
+      const savedSold = localStorage.getItem("morgenroutine_sold_trades");
+      if (savedSold) {
+        const parsedSold = JSON.parse(savedSold);
+        if (Array.isArray(parsedSold)) {
+          parsedSold.forEach(s => {
+            if (s.depot) activeDepotsSet.add(s.depot);
+          });
+        }
+      }
+    } catch {}
+
+    return Array.from(activeDepotsSet);
+  });
+
+  const [customBesitzer, setCustomBesitzer] = useState<string[]>(() => {
+    let baseList = ["Andres", "Familie", "Firmen-Depot", "Standard Besitzer"];
+    const saved = localStorage.getItem("morgenroutine_custom_besitzer");
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          baseList = parsed;
+        }
+      } catch (e) {
+        console.error("Error loading custom besitzer from local storage:", e);
+      }
+    }
+
+    // Recover from trade histories to ensure custom owners NEVER disappear from dropdown selectors!
+    const activeOwnersSet = new Set<string>(baseList);
+    try {
+      const savedPurchases = localStorage.getItem("morgenroutine_purchases");
+      if (savedPurchases) {
+        const parsedPurchases = JSON.parse(savedPurchases);
+        if (Array.isArray(parsedPurchases)) {
+          parsedPurchases.forEach(p => {
+            if (p.besitzerName) activeOwnersSet.add(p.besitzerName);
+          });
+        }
+      }
+    } catch {}
+    try {
+      const savedSold = localStorage.getItem("morgenroutine_sold_trades");
+      if (savedSold) {
+        const parsedSold = JSON.parse(savedSold);
+        if (Array.isArray(parsedSold)) {
+          parsedSold.forEach(s => {
+            if (s.besitzerName) activeOwnersSet.add(s.besitzerName);
+          });
+        }
+      }
+    } catch {}
+
+    return Array.from(activeOwnersSet);
+  });
+
+  const [depotStartingCash, setDepotStartingCash] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem("morgenroutine_depot_starting_cash");
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch (e) {
+        console.error("Error loading starting cash from local storage:", e);
+      }
+    }
+    return {
+      "Flatex": 50000,
+      "Trade Republic": 30000,
+      "DADAT": 80500,
+      "DAB BNP Paribas": 30000,
+      "Bitpanda": 10000
+    };
+  });
+
+  // Save changes to localStorage
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_portfolio", JSON.stringify(portfolioData));
+  }, [portfolioData]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_custom_depots", JSON.stringify(customDepots));
+  }, [customDepots]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_custom_besitzer", JSON.stringify(customBesitzer));
+  }, [customBesitzer]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_depot_starting_cash", JSON.stringify(depotStartingCash));
+  }, [depotStartingCash]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_checklist", JSON.stringify(checklistData));
+  }, [checklistData]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_sold_trades", JSON.stringify(soldTrades));
+  }, [soldTrades]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_purchases", JSON.stringify(portfolioPurchases));
+  }, [portfolioPurchases]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_market_state", JSON.stringify(marketState));
+  }, [marketState]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_live_prices", JSON.stringify(livePrices));
+  }, [livePrices]);
 
   // Toast systems
   const [toast, setToast] = useState<{ title: string; msg: string; type: "success" | "warning" | "error" } | null>(null);
@@ -166,7 +516,9 @@ export default function App() {
       textComment += `WTI Öl (${wti.toFixed(2)} $) und Erdgas (${gas.toFixed(2)} $) stabil unter den mathematischen Schutzlimits.`;
     }
 
-    return `${formattedDate};${vix.toFixed(2)};${vxv.toFixed(2)};${ratio.toFixed(2)};${marketState.vvix.toFixed(2)};7519.10;${wti.toFixed(2)};${gas.toFixed(2)};${tsla.toFixed(2)};${baba.toFixed(2)};${now.toFixed(2)};${btc.toFixed(2)};${statusLabel};${textComment}`;
+    const vvixVal = marketState.vvix || 0;
+
+    return `${formattedDate};${vix.toFixed(2)};${vxv.toFixed(2)};${ratio.toFixed(2)};${vvixVal.toFixed(2)};7519.10;${wti.toFixed(2)};${gas.toFixed(2)};${tsla.toFixed(2)};${baba.toFixed(2)};${now.toFixed(2)};${btc.toFixed(2)};${statusLabel};${textComment}`;
   };
 
   const handleCopyExcelLine = () => {
@@ -223,7 +575,7 @@ export default function App() {
       
       {/* Absolute Toast Component */}
       {toast && (
-        <div className="fixed top-24 right-4 z-50 animate-fade shadow-xl max-w-sm w-full pointer-events-auto">
+        <div className="fixed top-24 right-4 left-4 sm:left-auto sm:w-96 z-50 animate-fade shadow-xl pointer-events-auto">
           <div className="p-4 rounded-2xl border border-slate-100 bg-white flex items-start gap-3 shadow-lg shadow-slate-200">
             {toast.type === "success" && <CheckCircle2 className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />}
             {toast.type === "warning" && <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />}
@@ -293,18 +645,6 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab("ai-coach")}
-            className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "ai-coach"
-                ? "text-indigo-600 font-bold border-b-2 border-indigo-600"
-                : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
-            }`}
-          >
-            <MessageSquare className="h-5 w-5 animate-pulse text-indigo-600" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">AI-Handels-Coach</span>
-          </button>
-
-          <button
             onClick={() => setActiveTab("regelwerk")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
               activeTab === "regelwerk"
@@ -313,14 +653,26 @@ export default function App() {
             }`}
           >
             <GraduationCap className="h-5 w-5" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">Regeln</span>
+            <span className="text-[10px] sm:text-xs font-semibold mt-1">Regeln &amp; Coach</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab("workspace")}
+            className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
+              activeTab === "workspace"
+                ? "text-indigo-600 font-bold border-b-2 border-indigo-600"
+                : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
+            }`}
+          >
+            <FolderSync className="h-5 w-5" />
+            <span className="text-[10px] sm:text-xs font-semibold mt-1">Workspace</span>
           </button>
 
         </div>
       </nav>
 
       {/* MAIN VIEWPORT BODY */}
-      <main className="flex-1 overflow-y-auto p-4 sm:p-8 pb-16">
+      <main className="flex-1 overflow-y-auto w-full max-w-full overflow-x-hidden p-4 sm:p-8 pb-16">
         <div className="max-w-7xl mx-auto">
           {activeTab === "morgenroutine" && (
             <MorgenroutineTab 
@@ -337,7 +689,12 @@ export default function App() {
           )}
 
           {activeTab === "rechner" && (
-            <RechnerTab routineDate={routineDate} />
+            <RechnerTab 
+              routineDate={routineDate} 
+              livePrices={livePrices}
+              portfolioData={portfolioData}
+              onShowToast={showToast}
+            />
           )}
 
           {activeTab === "journal" && (
@@ -348,16 +705,49 @@ export default function App() {
               onPortfolioDataChange={setPortfolioData}
               checklistData={checklistData}
               onChecklistDataChange={setChecklistData}
+              soldTrades={soldTrades}
+              onSoldTradesChange={setSoldTrades}
+              portfolioPurchases={portfolioPurchases}
+              onPortfolioPurchasesChange={setPortfolioPurchases}
+              customDepots={customDepots}
+              onCustomDepotsChange={setCustomDepots}
+              customBesitzer={customBesitzer}
+              onCustomBesitzerChange={setCustomBesitzer}
+              depotStartingCash={depotStartingCash}
+              onDepotStartingCashChange={setDepotStartingCash}
               onLoadToCalculator={handleLoadToCalculator}
+              onShowToast={showToast}
             />
           )}
 
-          {activeTab === "ai-coach" && (
-            <AICoachTab routineDate={routineDate} />
+          {activeTab === "regelwerk" && (
+            <RegelwerkTab routineDate={routineDate} />
           )}
 
-          {activeTab === "regelwerk" && (
-            <RegelwerkTab />
+          {activeTab === "workspace" && (
+            <WorkspaceSyncTab 
+              marketState={marketState}
+              onMarketStateChange={setMarketState}
+              livePrices={livePrices}
+              onLivePricesChange={setLivePrices}
+              portfolioData={portfolioData}
+              onPortfolioDataChange={setPortfolioData}
+              checklistData={checklistData}
+              onChecklistDataChange={setChecklistData}
+              soldTrades={soldTrades}
+              onSoldTradesChange={setSoldTrades}
+              portfolioPurchases={portfolioPurchases}
+              onPortfolioPurchasesChange={setPortfolioPurchases}
+              customDepots={customDepots}
+              onCustomDepotsChange={setCustomDepots}
+              customBesitzer={customBesitzer}
+              onCustomBesitzerChange={setCustomBesitzer}
+              depotStartingCash={depotStartingCash}
+              onDepotStartingCashChange={setDepotStartingCash}
+              routineDate={routineDate}
+              csvExportString={getCSVLine()}
+              onShowToast={showToast}
+            />
           )}
         </div>
       </main>
