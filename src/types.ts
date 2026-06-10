@@ -77,6 +77,7 @@ export interface MarketState {
   vix: number | null;
   vxv: number | null;
   vvix: number | null;
+  spx: number | null;
   wti: number | null;
   gas: number | null;
   distSpx: number;

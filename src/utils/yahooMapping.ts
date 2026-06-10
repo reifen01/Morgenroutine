@@ -21,6 +21,13 @@ export type MarketKey = keyof typeof MARKET_SYMBOLS;
 export const YAHOO_TO_MARKET_KEY: Record<string, MarketKey> = Object.entries(MARKET_SYMBOLS)
   .reduce((acc, [k, v]) => ({ ...acc, [v]: k as MarketKey }), {} as Record<string, MarketKey>);
 
+// Yahoo periodically rate-limits or refuses the bare ^GSPC index quote.
+// SPY tracks the S&P 500 at a ~1:10 ratio, so multiplying SPY by 10 gives a
+// practical SPX surrogate when ^GSPC is unavailable. Symbol is always fetched
+// alongside the primary; resolution happens client-side.
+export const SPX_SURROGATE_SYMBOL = "SPY";
+export const SPX_SURROGATE_MULTIPLIER = 10;
+
 // Known portfolio key -> primary Yahoo ticker (Tradegate / XETRA EUR-listings preferred).
 // BABA.F (Frankfurt) is more reliable on Yahoo than BABA.DE which sometimes
 // returns no data — see FALLBACKS below.
