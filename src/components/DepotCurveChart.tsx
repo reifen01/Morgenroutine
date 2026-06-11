@@ -170,7 +170,7 @@ export default function DepotCurveChart({
       return (
         <div className="bg-slate-950 text-slate-100 p-4 rounded-xl border border-slate-800 shadow-xl font-sans text-xs space-y-2 max-w-xs">
           <div className="flex justify-between items-center border-b border-slate-800 pb-1.5 font-bold">
-            <span className="text-indigo-400">{data.date === "Start" ? "Depot initialisiert" : data.rawDate}</span>
+            <span className="text-slate-400">{data.date === "Start" ? "Depot initialisiert" : data.rawDate}</span>
             <span className="text-slate-400 text-[10px]">{data.tradeName}</span>
           </div>
           <div className="space-y-1 font-mono text-[11px]">
@@ -223,7 +223,7 @@ export default function DepotCurveChart({
       <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-50 pb-4 gap-4">
         <div>
           <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
-            <Activity className="h-5 w-5 text-indigo-600 shrink-0" />
+            <Activity className="h-5 w-5 text-slate-800 shrink-0" />
             📊 Depotwert-Entwicklung &amp; Trading-Statistiken
           </h3>
           <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
@@ -237,7 +237,7 @@ export default function DepotCurveChart({
             onClick={() => setChartView("balance")}
             className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
               chartView === "balance"
-                ? "bg-white text-indigo-600 shadow-3xs"
+                ? "bg-white text-slate-800 shadow-3xs"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -248,7 +248,7 @@ export default function DepotCurveChart({
             onClick={() => setChartView("profit")}
             className={`px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider rounded-lg transition-all cursor-pointer ${
               chartView === "profit"
-                ? "bg-white text-indigo-600 shadow-3xs"
+                ? "bg-white text-slate-800 shadow-3xs"
                 : "text-slate-500 hover:text-slate-800"
             }`}
           >
@@ -271,7 +271,7 @@ export default function DepotCurveChart({
 
         <div className="bg-slate-50/50 border border-slate-105 p-3 rounded-2xl flex flex-col justify-between shadow-2xs hover:border-slate-200 transition-all">
           <div className="flex justify-center items-center gap-1.5">
-            <Percent className="h-3.5 w-3.5 text-indigo-500" />
+            <Percent className="h-3.5 w-3.5 text-slate-600" />
             <span className="block text-[8px] font-bold text-slate-400 uppercase tracking-wider">Depot-Wachstum</span>
           </div>
           <span className={`block font-mono font-black text-xs sm:text-sm mt-1 tabular-nums ${metrics.performancePercent >= 0 ? "text-emerald-600" : "text-rose-600"}`}>

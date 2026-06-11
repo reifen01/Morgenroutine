@@ -1457,7 +1457,7 @@ export default function PortfolioTab({
       <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/15 space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-50 pb-4 gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-50 border border-indigo-100/70 rounded-xl text-indigo-600">
+            <div className="p-2.5 bg-slate-50 border border-slate-100/70 rounded-xl text-slate-800">
               <Wallet className="h-5 w-5" />
             </div>
             <div>
@@ -1477,7 +1477,7 @@ export default function PortfolioTab({
                 type="number"
                 value={cashReserve}
                 onChange={(e) => setCashReserve(Math.max(0, parseFloat(e.target.value) || 0))}
-                className="w-20 bg-white border border-slate-250 focus:border-indigo-500 rounded-lg px-1.5 py-0.5 text-right font-bold text-xs text-rose-600 focus:outline-none"
+                className="w-20 bg-white border border-slate-250 focus:border-slate-600 rounded-lg px-1.5 py-0.5 text-right font-bold text-xs text-rose-600 focus:outline-none"
               />
               <span className="text-[11px] font-bold text-slate-400 ml-1">€</span>
             </div>
@@ -1529,7 +1529,7 @@ export default function PortfolioTab({
                   ? "bg-rose-500" 
                   : reservedPercentage > 50 
                     ? "bg-amber-500" 
-                    : "bg-indigo-600"
+                    : "bg-slate-800"
               }`}
             ></div>
           </div>
@@ -1540,7 +1540,7 @@ export default function PortfolioTab({
       <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-2">
           <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-indigo-600 shrink-0" />
+            <TrendingUp className="h-5 w-5 text-slate-800 shrink-0" />
             💼 Aktives Portfolio ({atrMultiplier.toFixed(1)}x ATR Stop-Schutzmechanismus)
           </h3>
           <div id="portfolio-alarm-banner">
@@ -1564,7 +1564,7 @@ export default function PortfolioTab({
               id="toggle-pine-script-btn"
               type="button"
               onClick={() => setShowPineCode(!showPineCode)}
-              className="px-2.5 py-1 text-[10px] font-bold bg-white hover:bg-slate-100 text-indigo-600 border border-slate-250 rounded-lg transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto flex items-center gap-1.5 shadow-xs"
+              className="px-2.5 py-1 text-[10px] font-bold bg-white hover:bg-slate-100 text-slate-800 border border-slate-250 rounded-lg transition-all cursor-pointer whitespace-nowrap self-start sm:self-auto flex items-center gap-1.5 shadow-xs"
             >
               {showPineCode ? "Pine Script verbergen 🙈" : "TradingView Pine Script v5 zeigen 🖥️"}
             </button>
@@ -1605,7 +1605,7 @@ export default function PortfolioTab({
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1 flex justify-between items-center">
                 <span>Multiplikator (Multiplier m) *</span>
-                <span className="text-indigo-600 font-mono font-extrabold bg-indigo-50 px-1.5 py-0.5 rounded text-[11px]">{atrMultiplier.toFixed(1)}x</span>
+                <span className="text-slate-800 font-mono font-extrabold bg-slate-50 px-1.5 py-0.5 rounded text-[11px]">{atrMultiplier.toFixed(1)}x</span>
               </label>
               <div className="flex items-center gap-3">
                 <input
@@ -1616,7 +1616,7 @@ export default function PortfolioTab({
                   step="0.1"
                   value={atrMultiplier}
                   onChange={(e) => setAtrMultiplier(parseFloat(e.target.value))}
-                  className="flex-grow accent-indigo-600 cursor-ew-resize h-1 bg-slate-200 rounded-lg appearance-none"
+                  className="flex-grow accent-slate-800 cursor-ew-resize h-1 bg-slate-200 rounded-lg appearance-none"
                 />
                 <input
                   id="atr-multiplier-input"
@@ -1638,7 +1638,7 @@ export default function PortfolioTab({
                 <span className="text-emerald-400 font-bold">TradingView Pine Script (v5 Optimiert)</span>
                 <span className="text-[9px] text-slate-400">Verbinde die Schieberegler mit TV!</span>
               </div>
-              <pre className="overflow-x-auto text-[10px] max-h-52 bg-slate-950 p-2.5 rounded-lg text-indigo-200 select-all scrollbar-thin">
+              <pre className="overflow-x-auto text-[10px] max-h-52 bg-slate-950 p-2.5 rounded-lg text-slate-200 select-all scrollbar-thin">
 {`//@version=5
 indicator(title="Average True Range Stop Loss Finder [Morgenroutine]", shorttitle="ATR Stop", overlay=true)
 
@@ -1716,7 +1716,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 } else if (isTriggered) {
                   rowBgClass = "bg-rose-50/20 border-l-4 border-l-rose-500 hover:bg-rose-50/30";
                 } else if (item.status === 'green') {
-                  rowBgClass = "bg-indigo-50/10 hover:bg-indigo-50/20";
+                  rowBgClass = "bg-slate-50/10 hover:bg-slate-50/20";
                 } else if (item.status === 'red') {
                   rowBgClass = "bg-slate-50/50 hover:bg-slate-50/70";
                 }
@@ -1727,7 +1727,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                       <div className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
                         {item.name}
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[10px] text-indigo-600 font-extrabold">
+                      <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[10px] text-slate-800 font-extrabold">
                         <span>{item.ticker ? `Kürzel: ${item.ticker}` : item.key.toUpperCase()}</span>
                         {item.isin && (
                           <>
@@ -1746,7 +1746,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                       {currentPrice !== null ? (
                         <>
                           <div className="text-xs text-slate-800 font-bold mt-0.5">Live: € {formatAccounting(currentPrice)}</div>
-                          <div className={`text-[9px] font-bold mt-0.5 ${isDateMatching ? 'text-indigo-600' : 'text-rose-600 animate-pulse'}`}>
+                          <div className={`text-[9px] font-bold mt-0.5 ${isDateMatching ? 'text-slate-800' : 'text-rose-600 animate-pulse'}`}>
                             {isDateMatching ? `Prüfung: OK ✅` : `Alt: ${formatToGermanDate(priceDate)} ⚠️`}
                           </div>
                         </>
@@ -1766,7 +1766,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                           </span>
                         </div>
                       ) : item.key === 'btc' ? (
-                        <div className="inline-flex px-2.5 py-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-100/70 rounded-full uppercase leading-none">
+                        <div className="inline-flex px-2.5 py-1 text-[10px] font-bold text-slate-900 bg-slate-50 border border-slate-100/70 rounded-full uppercase leading-none">
                           🛡️ HODL SPARPLAN INDEX
                         </div>
                       ) : currentPrice === null ? (
@@ -1801,7 +1801,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                                 item.tranchenGroesse, 
                                 finalCalculatedStop
                               )}
-                              className="h-6 px-2 bg-indigo-50 hover:bg-indigo-100/70 text-indigo-700 border border-indigo-100/50 rounded-lg text-[9px] font-bold flex items-center gap-0.5 transition-all shadow-xs active:scale-95 cursor-pointer"
+                              className="h-6 px-2 bg-slate-50 hover:bg-slate-100/70 text-slate-900 border border-slate-100/50 rounded-lg text-[9px] font-bold flex items-center gap-0.5 transition-all shadow-xs active:scale-95 cursor-pointer"
                             >
                               🎯 Rechnen
                             </button>
@@ -1829,7 +1829,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                           step="1000"
                           value={item.tranchenGroesse}
                           onChange={(e) => handleTrancheChange(item.id, false, e.target.value)}
-                          className="w-20 sm:w-24 h-8 bg-white border border-slate-200 focus:border-indigo-500 rounded-lg px-2 text-right font-semibold text-xs sm:text-sm text-slate-800 focus:outline-none"
+                          className="w-20 sm:w-24 h-8 bg-white border border-slate-200 focus:border-slate-600 rounded-lg px-2 text-right font-semibold text-xs sm:text-sm text-slate-800 focus:outline-none"
                         />
                       </div>
                     </td>
@@ -1840,7 +1840,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                           onClick={() => handlePortfolioStatusChange(item.id, 'green')}
                           className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
                             item.status === 'green' 
-                              ? "bg-indigo-600 text-white shadow-xs" 
+                              ? "bg-slate-800 text-white shadow-xs" 
                               : "text-slate-600 bg-white hover:bg-slate-100"
                           }`}
                         >
@@ -1937,12 +1937,12 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                     value={newDepotInput}
                     onChange={(e) => setNewDepotInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomDepot(); } }}
-                    className="flex-1 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white text-xs"
+                    className="flex-1 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 font-semibold text-slate-800 focus:outline-none focus:border-slate-600 focus:bg-white text-xs"
                   />
                   <button
                     type="button"
                     onClick={handleAddCustomDepot}
-                    className="h-9 w-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm"
+                    className="h-9 w-9 bg-slate-800 hover:bg-slate-900 text-white rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -1978,12 +1978,12 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                     value={newBesitzerInput}
                     onChange={(e) => setNewBesitzerInput(e.target.value)}
                     onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); handleAddCustomBesitzer(); } }}
-                    className="flex-1 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 font-semibold text-slate-800 focus:outline-none focus:border-indigo-500 focus:bg-white text-xs"
+                    className="flex-1 h-9 bg-slate-50 border border-slate-200 rounded-lg px-2.5 font-semibold text-slate-800 focus:outline-none focus:border-slate-600 focus:bg-white text-xs"
                   />
                   <button
                     type="button"
                     onClick={handleAddCustomBesitzer}
-                    className="h-9 w-9 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm"
+                    className="h-9 w-9 bg-slate-800 hover:bg-slate-900 text-white rounded-lg flex items-center justify-center transition-all cursor-pointer active:scale-95 shadow-sm"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -2008,11 +2008,11 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
             </div>
 
             {/* 📥 BACKUP & BESITZER REKONSTRUKTION SPOND-PANEL */}
-            <div className="mt-6 pt-5 border-t border-slate-150 bg-indigo-50/40 rounded-2xl p-4 sm:p-5 border border-dashed border-indigo-200">
+            <div className="mt-6 pt-5 border-t border-slate-150 bg-slate-50/40 rounded-2xl p-4 sm:p-5 border border-dashed border-slate-200">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <h4 className="text-xs sm:text-sm font-bold text-slate-850 uppercase tracking-wide flex items-center gap-2">
-                    <RotateCcw className="h-4 w-4 text-indigo-600" />
+                    <RotateCcw className="h-4 w-4 text-slate-800" />
                     📥 System- &amp; Besitzer-Rettungscenter (Backup einlesen)
                   </h4>
                   <p className="text-[11px] text-slate-500 font-semibold leading-relaxed">
@@ -2021,7 +2021,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 </div>
                 
                 <div className="shrink-0">
-                  <label className="flex items-center gap-2 px-3.5 py-2.5 bg-indigo-600 hover:bg-indigo-700 active:scale-95 text-white text-[11px] font-bold uppercase tracking-wide rounded-xl cursor-pointer transition-all shadow-md shadow-indigo-100">
+                  <label className="flex items-center gap-2 px-3.5 py-2.5 bg-slate-800 hover:bg-slate-900 active:scale-95 text-white text-[11px] font-bold uppercase tracking-wide rounded-xl cursor-pointer transition-all shadow-md shadow-slate-100">
                     <RotateCcw className="h-3.5 w-3.5" />
                     <span>Lokales Backup laden</span>
                     <input
@@ -2047,8 +2047,8 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 <th className="py-3 px-4 text-right">Anschaffungswert (Aktiv)</th>
                 <th className="py-3 px-4 text-right">Aktueller Depotwert (Aktiv)</th>
                 <th className="py-3 px-4 text-right">Buchgewinn / -verlust</th>
-                <th className="py-3 px-4 text-right text-indigo-705">Aktuelles Cash (Konto)</th>
-                <th className="py-3 px-4 text-right text-indigo-900 font-bold">Depot Gesamtwert</th>
+                <th className="py-3 px-4 text-right text-slate-900">Aktuelles Cash (Konto)</th>
+                <th className="py-3 px-4 text-right text-slate-900 font-bold">Depot Gesamtwert</th>
                 <th className="py-3 px-4 text-right text-emerald-600">Realisierter Ertrag (Netto)</th>
               </tr>
             </thead>
@@ -2072,7 +2072,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                         <td className="py-3.5 px-4 font-bold text-slate-900">
                           {item.depot}
                         </td>
-                        <td className="py-3.5 px-4 font-bold text-indigo-600">
+                        <td className="py-3.5 px-4 font-bold text-slate-800">
                           {item.besitzerName}
                         </td>
                         <td className="py-3.5 px-4 text-right font-mono">
@@ -2081,7 +2081,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                             <input
                               type="number"
                               step="500"
-                              className="w-24 px-2 py-1 text-right text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg font-bold font-mono text-slate-900 focus:outline-none focus:border-indigo-500 focus:bg-white transition-all"
+                              className="w-24 px-2 py-1 text-right text-xs bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-lg font-bold font-mono text-slate-900 focus:outline-none focus:border-slate-600 focus:bg-white transition-all"
                               value={depotStartingCash[item.depot] !== undefined ? depotStartingCash[item.depot].toFixed(0) : "40000"}
                               onChange={(e) => {
                                 const val = parseFloat(e.target.value) || 0;
@@ -2104,10 +2104,10 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                             {bookGainIsProfit ? "+" : ""}{formatAccounting(bookGainLoss)} €
                           </span>
                         </td>
-                        <td className="py-3.5 px-4 text-right font-mono text-indigo-700">
+                        <td className="py-3.5 px-4 text-right font-mono text-slate-900">
                           € {formatAccounting(currentCash)}
                         </td>
-                        <td className="py-3.5 px-4 text-right font-mono text-indigo-950 font-bold bg-indigo-50/20">
+                        <td className="py-3.5 px-4 text-right font-mono text-slate-950 font-bold bg-slate-50/20">
                           € {formatAccounting(totalAssetVal)}
                         </td>
                         <td className="py-3.5 px-4 text-right font-mono">
@@ -2137,10 +2137,10 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                         {(overallTotals.activeValueSum - overallTotals.activeCostSum) >= 0 ? "+" : ""}{formatAccounting(overallTotals.activeValueSum - overallTotals.activeCostSum)} €
                       </span>
                     </td>
-                    <td className="py-4 px-4 text-right font-mono text-indigo-700">
+                    <td className="py-4 px-4 text-right font-mono text-slate-900">
                       € {formatAccounting(overallTotals.totalCashSum)}
                     </td>
-                    <td className="py-4 px-4 text-right font-mono text-indigo-950 font-extrabold bg-indigo-50/50">
+                    <td className="py-4 px-4 text-right font-mono text-slate-950 font-extrabold bg-slate-50/50">
                       € {formatAccounting(overallTotals.grandTotalValue)}
                     </td>
                     <td className="py-4 px-4 text-right font-mono">
@@ -2198,7 +2198,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 <th className="py-3 px-4 text-right">Aktueller Kurs</th>
                 <th className="py-3 px-4 text-right">Anschaffungswert</th>
                 <th className="py-3 px-4 text-right">Marktwert</th>
-                <th className="py-3 px-4 text-right text-indigo-700">Unrealisierter P/L-Gras</th>
+                <th className="py-3 px-4 text-right text-slate-900">Unrealisierter P/L-Gras</th>
                 <th className="py-3 px-4 text-center">Aktion</th>
               </tr>
             </thead>
@@ -2221,7 +2221,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                     <tr key={`${holding.key}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
                       <td className="py-3.5 px-4 whitespace-nowrap">
                         <div className="font-bold text-slate-900 text-sm">{holding.name}</div>
-                        <span className="inline-block px-1.5 py-0.5 rounded font-mono text-[9px] font-bold text-indigo-600 bg-indigo-50 uppercase mt-0.5">
+                        <span className="inline-block px-1.5 py-0.5 rounded font-mono text-[9px] font-bold text-slate-800 bg-slate-50 uppercase mt-0.5">
                           {String(holding.key).toUpperCase()}
                         </span>
                       </td>
@@ -2231,7 +2231,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                         </span>
                       </td>
                       <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-mono text-[10px] font-bold border border-indigo-150">
+                        <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200">
                           {holding.besitzerName}
                         </span>
                       </td>
@@ -2244,7 +2244,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                       <td className="py-3.5 px-4 text-right font-mono text-slate-700 whitespace-nowrap">
                         € {formatAccounting(livePr)}
                       </td>
-                      <td className="py-3.5 px-4 text-right font-mono text-indigo-900 whitespace-nowrap">
+                      <td className="py-3.5 px-4 text-right font-mono text-slate-900 whitespace-nowrap">
                         € {formatAccounting(holding.totalCost)}
                       </td>
                       <td className="py-3.5 px-4 text-right font-mono text-slate-900 whitespace-nowrap">
@@ -2385,7 +2385,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
       <div id="acquisition-journal-section" className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-50 border border-indigo-100/70 rounded-xl text-indigo-600">
+            <div className="p-2.5 bg-slate-50 border border-slate-100/70 rounded-xl text-slate-800">
               <Plus className="h-5 w-5" />
             </div>
             <div>
@@ -2412,7 +2412,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 setShowAddSaleForm(false);
               }
             }}
-            className="h-9 px-4 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95 cursor-pointer ml-auto sm:ml-0"
+            className="h-9 px-4 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm hover:shadow active:scale-95 cursor-pointer ml-auto sm:ml-0"
           >
             <Plus className="h-4 w-4" /> {showAddPurchaseForm ? "Formular schließen" : "Kauf manuell buchen"}
           </button>
@@ -2585,7 +2585,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
               </button>
               <button
                 type="submit"
-                className="h-10 px-5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-bold uppercase text-[10px] tracking-wider transition-all flex items-center gap-1 cursor-pointer"
+                className="h-10 px-5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl font-bold uppercase text-[10px] tracking-wider transition-all flex items-center gap-1 cursor-pointer"
               >
                 {editingPurchaseId ? "💾 Änderungen Speichern" : "📥 Kauf im Journal einbuchen"}
               </button>
@@ -2662,7 +2662,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                           <span className="block text-[9px] font-semibold text-slate-400 font-mono uppercase">
                             🗓️ {formatToGermanDate(purchase.kaufDatum)}
                           </span>
-                          <span className="block px-1.5 py-0.5 rounded font-mono text-[9px] font-extrabold text-indigo-600 bg-indigo-50 uppercase border border-indigo-100/50">
+                          <span className="block px-1.5 py-0.5 rounded font-mono text-[9px] font-extrabold text-slate-800 bg-slate-50 uppercase border border-slate-100/50">
                             {String(purchase.key).toUpperCase()}
                           </span>
                         </div>
@@ -2678,7 +2678,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                         </span>
                       </td>
                       <td className="py-4">
-                        <span className="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-mono text-[10px] font-bold border border-indigo-150 whitespace-nowrap">
+                        <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200 whitespace-nowrap">
                           {purchase.besitzerName || "Standard Besitzer"}
                         </span>
                       </td>
@@ -2695,7 +2695,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => handleStartEditPurchase(purchase)}
-                            className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-450 hover:text-indigo-600 transition-colors cursor-pointer"
+                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
                             title="Anschaffung ändern / bearbeiten"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -2882,7 +2882,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
               <div>
                 <div className="flex items-center justify-between mb-1">
                   <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide">Anzahl verkaufter Aktien *</label>
-                  <span className="text-[9px] bg-indigo-50 text-indigo-700 px-1.5 py-0.5 rounded font-bold font-mono">Gesamtmenge</span>
+                  <span className="text-[9px] bg-slate-50 text-slate-900 px-1.5 py-0.5 rounded font-bold font-mono">Gesamtmenge</span>
                 </div>
                 <input
                   type="number"
@@ -2906,7 +2906,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                   required
                   value={saleDepot}
                   onChange={(e) => setSaleDepot(e.target.value)}
-                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:border-indigo-505 focus:outline-none focus:ring-1 focus:ring-indigo-100 cursor-pointer"
+                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:border-slate-600 focus:outline-none focus:ring-1 focus:ring-slate-100 cursor-pointer"
                 >
                   <option value="" disabled>-- Depot auswählen --</option>
                   {customDepots.map(d => (
@@ -2927,7 +2927,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                   required
                   value={saleBesitzer}
                   onChange={(e) => setSaleBesitzer(e.target.value)}
-                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:border-indigo-505 focus:outline-none focus:ring-1 focus:ring-indigo-100 cursor-pointer"
+                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:border-slate-600 focus:outline-none focus:ring-1 focus:ring-slate-100 cursor-pointer"
                 >
                   <option value="" disabled>-- Besitzer auswählen --</option>
                   {customBesitzer.map(b => (
@@ -2952,7 +2952,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                     name="taxMethodRadio"
                     checked={saleTaxMethod === 'durchschnitt'}
                     onChange={() => setSaleTaxMethod('durchschnitt')}
-                    className="mt-0.5 text-indigo-600 h-4 w-4 focus:ring-indigo-500 cursor-pointer"
+                    className="mt-0.5 text-slate-800 h-4 w-4 focus:ring-slate-600 cursor-pointer"
                   />
                   <div>
                     <span className="block font-bold text-slate-800 text-xs">A: Gleitende Durchschnittsmethode</span>
@@ -2968,7 +2968,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                     name="taxMethodRadio"
                     checked={saleTaxMethod === 'FIFO'}
                     onChange={() => setSaleTaxMethod('FIFO')}
-                    className="mt-0.5 text-indigo-600 h-4 w-4 focus:ring-indigo-500 cursor-pointer"
+                    className="mt-0.5 text-slate-800 h-4 w-4 focus:ring-slate-600 cursor-pointer"
                   />
                   <div>
                     <span className="block font-bold text-slate-800 text-xs">B: FIFO-Methode (First-In, First-Out)</span>
@@ -3013,7 +3013,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                   </div>
                   <div className="bg-white border border-slate-150 p-2 rounded-lg col-span-2 sm:col-span-1">
                     <span className="block text-[8px] text-slate-400 uppercase font-bold">Effektive Anschaffungskosten</span>
-                    <span className="block text-xs font-bold text-indigo-600 font-mono mt-0.5">
+                    <span className="block text-xs font-bold text-slate-800 font-mono mt-0.5">
                       € {formatAccounting(taxCalculationPreview.totalPurchaseCost)}
                     </span>
                   </div>
@@ -3119,7 +3119,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                     </div>
                   </th>
                   <th className="pb-3 text-right text-slate-800">Volumen (€)</th>
-                  <th onClick={() => handleSortSales("gewinnVerlust")} className="pb-3 text-right text-indigo-850 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <th onClick={() => handleSortSales("gewinnVerlust")} className="pb-3 text-right text-slate-900 cursor-pointer hover:bg-slate-100 transition-colors">
                     <div className="flex items-center gap-1 justify-end">
                       <span>Brutto Ertrag</span>
                       <span className="text-[8px] text-slate-400">{saleSortField === "gewinnVerlust" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
@@ -3131,7 +3131,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                       <span className="text-[8px] text-slate-400">{saleSortField === "kestBetrag" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
                     </div>
                   </th>
-                  <th onClick={() => handleSortSales("nettoGewinn")} className="pb-3 text-right text-indigo-850 cursor-pointer hover:bg-slate-100 transition-colors">
+                  <th onClick={() => handleSortSales("nettoGewinn")} className="pb-3 text-right text-slate-900 cursor-pointer hover:bg-slate-100 transition-colors">
                     <div className="flex items-center gap-1 justify-end">
                       <span>Netto Ertrag</span>
                       <span className="text-[8px] text-slate-400">{saleSortField === "nettoGewinn" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
@@ -3156,7 +3156,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                           <span className={`inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
                             trade.taxMethod === 'FIFO'
                               ? "bg-amber-100/40 text-amber-800 border border-amber-200/40"
-                              : "bg-indigo-50 text-indigo-805 border border-indigo-150"
+                              : "bg-slate-50 text-slate-900 border border-slate-200"
                           }`} title={trade.taxMethod === 'FIFO' ? 'First-In, First-Out steuerliche Veräußerung' : 'Erfassung über den gleitenden Durchschnittspreis'}>
                             {trade.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
                           </span>
@@ -3173,7 +3173,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                         </span>
                       </td>
                       <td className="py-4">
-                        <span className="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-mono text-[10px] font-bold border border-indigo-150 whitespace-nowrap">
+                        <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200 whitespace-nowrap">
                           {trade.besitzerName || "Standard Besitzer"}
                         </span>
                       </td>
@@ -3206,7 +3206,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                         <div className="flex items-center justify-center gap-1.5">
                           <button
                             onClick={() => handleStartEditSale(trade)}
-                            className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-450 hover:text-indigo-600 transition-colors cursor-pointer"
+                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
                             title="Eintrag ändern / bearbeiten"
                           >
                             <Edit className="h-3.5 w-3.5" />
@@ -3244,7 +3244,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
       <div className="bg-white border border-slate-150 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10 animate-fade">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-3">
           <div className="flex items-center gap-3">
-            <div className="bg-indigo-50 border border-indigo-100 p-2.5 rounded-xl text-indigo-600">
+            <div className="bg-slate-50 border border-slate-100 p-2.5 rounded-xl text-slate-800">
               <Scale className="h-5 w-5" />
             </div>
             <div>
@@ -3282,7 +3282,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
               <button
                 type="button"
                 onClick={() => setShowAddChecklistItemForm(!showAddChecklistItemForm)}
-                className="text-xs font-bold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-slate-100 cursor-pointer"
+                className="text-xs font-bold text-slate-800 hover:text-slate-900 flex items-center gap-1 transition-colors px-2 py-1 rounded-lg hover:bg-slate-100 cursor-pointer"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Wert hinzufügen
@@ -3291,7 +3291,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
 
             {/* Form to add checklist item */}
             {showAddChecklistItemForm && (
-              <form onSubmit={handleAddChecklistItem} className="p-4 rounded-2xl border border-indigo-150 bg-indigo-50/5 space-y-3 shadow-xs animate-fade-in">
+              <form onSubmit={handleAddChecklistItem} className="p-4 rounded-2xl border border-slate-200 bg-slate-50/5 space-y-3 shadow-xs animate-fade-in">
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <div className="space-y-1">
                     <label className="text-[10.5px] font-bold text-slate-500 uppercase">Aktie / Asset auswählen</label>
@@ -3304,7 +3304,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                           setNewChecklistTitle(`${val}: Limit- oder Kauf-Aktion planen`);
                         }
                       }}
-                      className="w-full h-9 bg-white border border-slate-205 focus:border-indigo-500 rounded-lg px-2.5 text-xs text-slate-800 font-bold focus:outline-none"
+                      className="w-full h-9 bg-white border border-slate-205 focus:border-slate-600 rounded-lg px-2.5 text-xs text-slate-800 font-bold focus:outline-none"
                     >
                       <option value="">-- Bitte wählen --</option>
                       {eligibleStocks.map((stock) => (
@@ -3322,7 +3322,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                       step="1000"
                       value={newChecklistTranche}
                       onChange={(e) => setNewChecklistTranche(e.target.value)}
-                      className="w-full h-9 bg-white border border-slate-205 focus:border-indigo-500 rounded-lg px-2.5 text-xs text-slate-800 font-bold focus:outline-none"
+                      className="w-full h-9 bg-white border border-slate-205 focus:border-slate-600 rounded-lg px-2.5 text-xs text-slate-800 font-bold focus:outline-none"
                       placeholder="z.B. 20000"
                     />
                   </div>
@@ -3334,7 +3334,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                     type="text"
                     value={newChecklistTitle}
                     onChange={(e) => setNewChecklistTitle(e.target.value)}
-                    className="w-full h-9 bg-white border border-slate-205 focus:border-indigo-500 rounded-lg px-2.5 text-xs text-slate-800 font-medium focus:outline-none"
+                    className="w-full h-9 bg-white border border-slate-205 focus:border-slate-600 rounded-lg px-2.5 text-xs text-slate-800 font-medium focus:outline-none"
                     placeholder="z.B. TSLA: Kauflimit bei € 320 aktivieren"
                   />
                 </div>
@@ -3353,7 +3353,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                   </button>
                   <button
                     type="submit"
-                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition shadow-xs cursor-pointer"
+                    className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-slate-800 hover:bg-slate-900 transition shadow-xs cursor-pointer"
                   >
                     Hinzufügen
                   </button>
@@ -3374,8 +3374,8 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                   let statusLabel = "🔴 DEAKTIVIERT";
                   
                   if (chk.status === 'green') {
-                    borderClass = "border-indigo-150 bg-indigo-50/10 shadow-sm shadow-indigo-100/10 animate-fade-in";
-                    badgeClass = "bg-indigo-50 text-indigo-700 border border-indigo-100/50";
+                    borderClass = "border-slate-200 bg-slate-50/10 shadow-sm shadow-slate-100/10 animate-fade-in";
+                    badgeClass = "bg-slate-50 text-slate-900 border border-slate-100/50";
                     statusLabel = "🟢 RESERVIERT";
                   } else if (chk.status === 'yellow') {
                     borderClass = "border-amber-150 bg-amber-50/10";
@@ -3402,7 +3402,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                             step="1000"
                             value={chk.tranchenGroesse}
                             onChange={(e) => handleTrancheChange(chk.id, true, e.target.value)}
-                            className="w-24 h-7 bg-white border border-slate-205 focus:border-indigo-500 rounded px-1.5 text-slate-800 font-bold focus:outline-none"
+                            className="w-24 h-7 bg-white border border-slate-205 focus:border-slate-600 rounded px-1.5 text-slate-800 font-bold focus:outline-none"
                           />
                         </div>
                       </div>
@@ -3412,7 +3412,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                           <button 
                             type="button"
                             onClick={() => handleChecklistStatusChange(chk.id, 'green')} 
-                            className={`h-7 w-8 sm:h-8 sm:w-9 rounded-lg text-xs font-bold transition-all cursor-pointer ${chk.status === 'green' ? 'bg-indigo-600 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-205'}`}
+                            className={`h-7 w-8 sm:h-8 sm:w-9 rounded-lg text-xs font-bold transition-all cursor-pointer ${chk.status === 'green' ? 'bg-slate-800 text-white shadow-xs' : 'bg-white text-slate-700 hover:bg-slate-205'}`}
                             title="Budget reservieren"
                           >🟢</button>
                           <button 

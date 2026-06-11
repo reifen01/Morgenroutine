@@ -1411,6 +1411,22 @@ Dokument unbestechlich fertiggestellt.
     event.target.value = "";
   };
 
+  const handleCopyCSVLine = () => {
+    navigator.clipboard.writeText(csvExportString).then(() => {
+      onShowToast(
+        "Excel-Zeile kopiert",
+        "📋 CSV-Zeile wurde in die Zwischenablage kopiert. Mit Strg+V in dein Excel-Journal einfügen.",
+        "success"
+      );
+    }).catch(() => {
+      onShowToast(
+        "Kopier-Fehler",
+        "Kopieren in die Zwischenablage fehlgeschlagen. Wähle den Text im Feld manuell aus.",
+        "error"
+      );
+    });
+  };
+
   const handleCopyCodeToClipboard = () => {
     // Generate reconstruction blueprint file output for AI upload
     const codeFormat = `
@@ -1451,7 +1467,7 @@ ${csvExportString}
       <div className="bg-slate-50 border border-slate-200 rounded-2xl p-3.5 space-y-2 relative transition-all hover:bg-slate-100/50">
         <div className="flex items-center justify-between gap-2">
           <div>
-            <span className="text-[9px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-150/40 px-2 py-0.5 rounded-md uppercase tracking-wider block w-fit">
+            <span className="text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-200/40 px-2 py-0.5 rounded-md uppercase tracking-wider block w-fit">
               KI-Chat Vorlage (Prompt)
             </span>
             <h5 className="text-[11px] font-bold text-slate-800 mt-1">{title}</h5>
@@ -1495,7 +1511,7 @@ ${csvExportString}
       {/* 1. Header Card with Connection Status */}
       <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div className="flex items-center gap-4">
-          <div className="h-14 w-14 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600">
+          <div className="h-14 w-14 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-800">
             <FolderSync className="h-7 w-7" />
           </div>
           <div>
@@ -1529,7 +1545,7 @@ ${csvExportString}
           <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={handleOAuthLogin}
-              className="px-5 h-11 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase tracking-wide rounded-xl shadow-md transition-all active:scale-98 cursor-pointer flex items-center gap-2"
+              className="px-5 h-11 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs uppercase tracking-wide rounded-xl shadow-md transition-all active:scale-98 cursor-pointer flex items-center gap-2"
             >
               <ShieldCheck className="h-4 w-4" /> Mit Google Anmelden
             </button>
@@ -1561,7 +1577,7 @@ ${csvExportString}
               value={customAccessToken}
               onChange={(e) => setCustomAccessToken(e.target.value)}
               placeholder="ya29.a0AxooC9..." 
-              className="flex-1 h-11 bg-slate-950 border border-slate-800 rounded-xl px-4 text-xs font-mono text-slate-200 placeholder-slate-700 focus:outline-none focus:border-indigo-500"
+              className="flex-1 h-11 bg-slate-950 border border-slate-800 rounded-xl px-4 text-xs font-mono text-slate-200 placeholder-slate-700 focus:outline-none focus:border-slate-600"
             />
             <button 
               onClick={handleApplyCustomToken}
@@ -1576,16 +1592,16 @@ ${csvExportString}
       {/* ================================================================ */}
       {/* 2. SECURITY LOCKBOX: LOCAL PROTOCOLS & REMOTE SYNC PANEL         */}
       {/* ================================================================ */}
-      <div className="bg-gradient-to-br from-indigo-950 to-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl text-white space-y-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-indigo-900/60 pb-5">
+      <div className="bg-gradient-to-br from-slate-950 to-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-xl text-white space-y-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-900/60 pb-5">
           <div className="flex items-start gap-3.5">
-            <div className="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-2xl text-indigo-400 shrink-0">
-              <Key className="h-6 w-6 text-indigo-400" />
+            <div className="p-3 bg-slate-600/10 border border-slate-600/20 rounded-2xl text-slate-400 shrink-0">
+              <Key className="h-6 w-6 text-slate-400" />
             </div>
             <div>
               <h3 className="text-base font-bold tracking-tight text-white flex items-center gap-2">
                 Unbestechlicher Zugangsdaten-Tresor &amp; Profile-Manager
-                <span className="bg-indigo-500/20 border border-indigo-500/30 text-indigo-300 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
+                <span className="bg-slate-600/20 border border-slate-600/30 text-slate-300 text-[9px] font-extrabold px-2.5 py-0.5 rounded-full uppercase tracking-wider">
                   Sicher &amp; Synchron
                 </span>
               </h3>
@@ -1598,10 +1614,10 @@ ${csvExportString}
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-1">
           {/* SEC 1: LOKALE SPEICHERUNG & ORDNER */}
-          <div className="bg-indigo-950/40 border border-indigo-900/40 p-5 rounded-2xl flex flex-col justify-between space-y-4">
+          <div className="bg-slate-950/40 border border-slate-900/40 p-5 rounded-2xl flex flex-col justify-between space-y-4">
             <div className="space-y-3.5">
               <div className="flex items-center gap-2">
-                <span className="h-2 w-2 rounded-full bg-indigo-400"></span>
+                <span className="h-2 w-2 rounded-full bg-slate-400"></span>
                 <h4 className="text-xs font-extrabold tracking-widest text-slate-300 uppercase">
                   Option A: Lokale Browser-Profile &amp; Dateiexport
                 </h4>
@@ -1617,7 +1633,7 @@ ${csvExportString}
                   <select
                     value={selectedLocalProfileName}
                     onChange={(e) => handleLoadLocalProfile(e.target.value)}
-                    className="flex-1 h-10 bg-slate-950 border border-slate-800 rounded-xl px-3 text-xs font-semibold text-slate-200 outline-none focus:border-indigo-500 cursor-pointer"
+                    className="flex-1 h-10 bg-slate-950 border border-slate-800 rounded-xl px-3 text-xs font-semibold text-slate-200 outline-none focus:border-slate-600 cursor-pointer"
                   >
                     <option value="">-- Letzte Sitzung (Standard) --</option>
                     {Object.keys(localProfiles).map((name) => (
@@ -1641,11 +1657,11 @@ ${csvExportString}
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-indigo-900/30">
+            <div className="grid grid-cols-2 gap-2 pt-2 border-t border-slate-900/30">
               <button
                 type="button"
                 onClick={() => handleSaveLocalProfile()}
-                className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-[10.5px] uppercase tracking-wide rounded-xl transition-all cursor-pointer"
+                className="h-9 px-3.5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-[10.5px] uppercase tracking-wide rounded-xl transition-all cursor-pointer"
               >
                 💾 Als Profil sichern
               </button>
@@ -1660,7 +1676,7 @@ ${csvExportString}
               </button>
 
               <label className="col-span-2 h-9 bg-slate-850 hover:bg-slate-800 text-slate-300 border border-slate-750 rounded-xl font-bold text-[10.5px] uppercase tracking-wide transition-all cursor-pointer flex items-center justify-center gap-1.5 mt-1">
-                <Upload className="h-3 w-3 text-indigo-400" /> Profil-Datei (.json) importieren
+                <Upload className="h-3 w-3 text-slate-400" /> Profil-Datei (.json) importieren
                 <input
                   type="file"
                   accept=".json"
@@ -1672,7 +1688,7 @@ ${csvExportString}
           </div>
 
           {/* SEC 2: SCHNELLE CLOUD-SYNCHRONISIERUNG MIT PIN */}
-          <div className="bg-indigo-950/40 border border-indigo-900/40 p-5 rounded-2xl flex flex-col justify-between space-y-4">
+          <div className="bg-slate-950/40 border border-slate-900/40 p-5 rounded-2xl flex flex-col justify-between space-y-4">
             <div className="space-y-3.5">
               <div className="flex items-center gap-2">
                 <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
@@ -1692,7 +1708,7 @@ ${csvExportString}
                     value={profileName}
                     onChange={(e) => setProfileName(e.target.value)}
                     placeholder="z.B. Fenzl-Zentrale"
-                    className="w-full h-10 bg-slate-950 border border-slate-800 rounded-xl px-3 text-xs font-semibold text-slate-200 outline-none focus:border-indigo-500 placeholder:text-slate-800"
+                    className="w-full h-10 bg-slate-950 border border-slate-800 rounded-xl px-3 text-xs font-semibold text-slate-200 outline-none focus:border-slate-600 placeholder:text-slate-800"
                   />
                 </div>
 
@@ -1704,13 +1720,13 @@ ${csvExportString}
                     value={profilePin}
                     onChange={(e) => setProfilePin(e.target.value.replace(/\D/g, ""))}
                     placeholder="z.B. 1234"
-                    className="w-full h-10 bg-slate-950 border border-slate-800 rounded-xl px-3 text-xs font-mono font-bold tracking-widest text-slate-200 outline-none focus:border-indigo-500 placeholder:text-slate-800 text-center"
+                    className="w-full h-10 bg-slate-950 border border-slate-800 rounded-xl px-3 text-xs font-mono font-bold tracking-widest text-slate-200 outline-none focus:border-slate-600 placeholder:text-slate-800 text-center"
                   />
                 </div>
               </div>
             </div>
 
-            <div className="flex gap-2 pt-2 border-t border-indigo-900/30">
+            <div className="flex gap-2 pt-2 border-t border-slate-900/30">
               <button
                 type="button"
                 disabled={isCloudSyncLoading}
@@ -1724,7 +1740,7 @@ ${csvExportString}
                 type="button"
                 disabled={isCloudSyncLoading}
                 onClick={handleCloudLoadProfile}
-                className="flex-1 h-9.5 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 text-white font-bold text-[10.5px] uppercase tracking-wide rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
+                className="flex-1 h-9.5 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-800 text-white font-bold text-[10.5px] uppercase tracking-wide rounded-xl shadow-md transition-all cursor-pointer flex items-center justify-center gap-1.5"
               >
                 {isCloudSyncLoading ? "Ruft ab..." : "☁️ Aus Cloud abrufen"}
               </button>
@@ -1734,11 +1750,43 @@ ${csvExportString}
 
         {/* Dynamic status alert footer for the secure box */}
         <div className="bg-slate-950/60 p-3 rounded-2xl text-[10px] text-slate-350 flex items-center gap-2 border border-slate-900 leading-normal font-semibold">
-          <span className="h-1.5 w-1.5 rounded-full bg-indigo-500 shrink-0"></span>
+          <span className="h-1.5 w-1.5 rounded-full bg-slate-600 shrink-0"></span>
           <span>
             <strong>Aktiver Status:</strong> {targetSpreadsheetId ? `Sammeltabelle verknüpft (ID: ...${targetSpreadsheetId.substring(Math.max(0, targetSpreadsheetId.length - 8))})` : "Tagesdatei-Modus"} 
             {clientId && ` | Google Client-ID geladen (ID: ...${clientId.substring(0, 10)}...)`}.
           </span>
+        </div>
+      </div>
+
+      {/* Quick Excel CSV export — moved from header for less clutter */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-700 shrink-0">
+            <FileSpreadsheet className="h-6 w-6" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">
+              Excel-Zeile (CSV) für heute
+            </h3>
+            <p className="text-xs text-slate-500 mb-3">
+              Eine fertige CSV-Zeile mit allen Tageswerten. Per Klick in die Zwischenablage und mit Strg+V in dein Tages-Journal in Excel einfügen.
+            </p>
+            <textarea
+              value={csvExportString}
+              readOnly
+              rows={2}
+              className="w-full text-[11px] font-mono bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-700 select-all focus:outline-none focus:ring-2 focus:ring-slate-300 mb-3"
+              onClick={(e) => (e.currentTarget as HTMLTextAreaElement).select()}
+            />
+            <button
+              type="button"
+              onClick={handleCopyCSVLine}
+              className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors active:scale-95"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              CSV-Zeile in die Zwischenablage kopieren
+            </button>
+          </div>
         </div>
       </div>
 
@@ -1815,7 +1863,7 @@ ${csvExportString}
                   }}
                   disabled={!accessToken}
                   placeholder="ID der Sammeltabelle..."
-                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs font-mono text-slate-900 focus:border-indigo-500 focus:outline-none disabled:opacity-60"
+                  className="w-full h-10 bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs font-mono text-slate-900 focus:border-slate-600 focus:outline-none disabled:opacity-60"
                 />
                 <span className="text-[9px] text-slate-450 mt-1 block font-medium">Tippfehler oder gelöschtes Dokument führt zu &quot;Tabellen ID Fehler&quot;. Ggf. ID leeren!</span>
               </div>
@@ -1989,14 +2037,14 @@ ${csvExportString}
           <div className="flex items-start md:items-center justify-between gap-3 flex-1">
             <div>
               <h3 className="text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-                <Database className="h-4.5 w-4.5 text-indigo-500" /> unbestechliche Datensicherungen (Google Drive Backups)
+                <Database className="h-4.5 w-4.5 text-slate-600" /> unbestechliche Datensicherungen (Google Drive Backups)
               </h3>
               <p className="text-xs text-slate-500 mt-1 font-medium">Verwalte vollwertige JSON-Zustände deines Dashboards, die direkt in deiner privaten Google Drive gesichert sind.</p>
             </div>
             <button
               type="button"
               onClick={() => setActiveHelpSection("drive")}
-              className="h-5 w-5 rounded-full bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 text-indigo-850 font-extrabold text-[10.5px] flex items-center justify-center transition-all shadow-xs cursor-pointer select-none shrink-0"
+              className="h-5 w-5 rounded-full bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-900 font-extrabold text-[10.5px] flex items-center justify-center transition-all shadow-xs cursor-pointer select-none shrink-0"
               title="Hilfe zum Google Drive Backup-System anzeigen"
             >
               ?
@@ -2005,7 +2053,7 @@ ${csvExportString}
           <button
             onClick={handleCreateBackup}
             disabled={isLoading || !accessToken}
-            className="px-4 h-10 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold text-xs uppercase rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
+            className="px-4 h-10 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-100 disabled:text-slate-400 text-white font-bold text-xs uppercase rounded-xl transition-all shadow-md flex items-center justify-center gap-1.5 cursor-pointer"
           >
             <Upload className="h-4 w-4" /> Neues Backup hochladen
           </button>
@@ -2015,7 +2063,7 @@ ${csvExportString}
           <div className="mb-6 bg-slate-50/50 border border-slate-200/60 rounded-2xl p-4 sm:p-5 space-y-4">
             <div>
               <h4 className="text-xs font-extrabold text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
-                <FolderSync className="h-4 w-4 text-indigo-500" /> Google Drive Backup-Speicherort
+                <FolderSync className="h-4 w-4 text-slate-600" /> Google Drive Backup-Speicherort
               </h4>
               <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed font-semibold">
                 Wähle frei aus, wo Backups, Sheets und Docs abgelegt werden sollen. Erstelle einfach auf Knopfdruck einen sauberen Ordner namens <strong>&quot;Morgenroutine Backups&quot;</strong>, um deinen Drive-Root blitzblank zu halten.
@@ -2057,7 +2105,7 @@ ${csvExportString}
                     setTimeout(() => fetchDriveBackups(val), 100);
                   }}
                   placeholder="ID (z. B. 1c_X...B) oder füge einfach den kompletten Google Drive Browser-Link hier ein"
-                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 text-xs font-mono text-slate-900 focus:border-indigo-500 focus:outline-none placeholder:text-slate-400 transition-all"
+                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 text-xs font-mono text-slate-900 focus:border-slate-600 focus:outline-none placeholder:text-slate-400 transition-all"
                 />
                 {folderIdWarning && (
                   <div className="mt-2 p-3 bg-amber-50 border border-amber-200/60 rounded-xl text-[11px] text-amber-900 leading-normal font-semibold animate-fadeIn">
@@ -2071,10 +2119,10 @@ ${csvExportString}
                   type="button"
                   onClick={handleSyncOrCreateFolder}
                   disabled={isLoading}
-                  className="h-10 px-4 bg-indigo-50 hover:bg-indigo-100 active:bg-indigo-200/80 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
+                  className="h-10 px-4 bg-slate-50 hover:bg-slate-100 active:bg-slate-200/80 text-slate-900 border border-slate-200 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5 cursor-pointer"
                   title="Sucht nach dem Ordner 'Morgenroutine Backups' in deinem Drive oder erstellt ihn automatisch."
                 >
-                  <RefreshCcw className="h-3.5 w-3.5 text-indigo-600 animate-pulse-subtle" /> Ordner automatisch erstellen &amp; nutzen
+                  <RefreshCcw className="h-3.5 w-3.5 text-slate-800 animate-pulse-subtle" /> Ordner automatisch erstellen &amp; nutzen
                 </button>
 
                 {targetFolderId && (
@@ -2099,14 +2147,14 @@ ${csvExportString}
               <span className="font-bold text-slate-800 block">💡 Lokaler Windows-Pfad (H:\...) vs. Google Drive Cloud-ID:</span>
               <p>
                 Dein Pfad <code className="bg-slate-200/80 px-1 py-0.5 rounded text-[10px] text-slate-800 font-mono font-bold select-all">H:\Meine Ablage\...\! Morgenroutine KI</code> ist ein lokaler Windows-Ordnerpfad von deinem PC (erzeugt durch die &apos;Google Drive für Desktop&apos; App). 
-                Diese Web-App läuft im Browser und kommuniziert direkt mit Google in der Cloud. Der Browser hat aus Sicherheitsgründen keinen Zugriff auf deinen lokalen Laufwerksbuchstaben <code className="bg-slate-200/85 px-1 font-mono text-indigo-700 font-bold">H:</code>.
+                Diese Web-App läuft im Browser und kommuniziert direkt mit Google in der Cloud. Der Browser hat aus Sicherheitsgründen keinen Zugriff auf deinen lokalen Laufwerksbuchstaben <code className="bg-slate-200/85 px-1 font-mono text-slate-900 font-bold">H:</code>.
               </p>
               <p className="border-t border-slate-200/50 pt-1.5">
                 <strong>Zwei einfache Lösungen, um deinen Wunschordner zu verknüpfen:</strong>
               </p>
               <ul className="list-disc list-inside space-y-1 pl-1 text-[10.5px]">
                 <li>
-                  <strong>Methode A (Einfachste):</strong> Trage deine genaue Ordner-ID <code className="bg-slate-200/80 px-1 py-0.5 rounded text-[10.5px] text-indigo-700 font-mono font-bold select-all">1c_X1DWudBOLkeeKq4z0w8HSUioTkLPSB</code> oben ein.
+                  <strong>Methode A (Einfachste):</strong> Trage deine genaue Ordner-ID <code className="bg-slate-200/80 px-1 py-0.5 rounded text-[10.5px] text-slate-900 font-mono font-bold select-all">1c_X1DWudBOLkeeKq4z0w8HSUioTkLPSB</code> oben ein.
                 </li>
                 <li>
                   <strong>Methode B (Bequem):</strong> Öffne den Ordner in deinem normalen Webbrowser. Kopiere einfach die <strong>Internetadresse (URL)</strong> oben aus der Adresszeile deines Browsers und füge sie oben ein. Die App zieht sich die ID automatisch daraus!
@@ -2133,7 +2181,7 @@ ${csvExportString}
           </div>
         ) : isLoading ? (
           <div className="py-12 flex flex-col items-center justify-center">
-            <RefreshCcw className="h-8 w-8 text-indigo-600 animate-spin" />
+            <RefreshCcw className="h-8 w-8 text-slate-800 animate-spin" />
             <span className="text-xs text-slate-500 mt-3 font-semibold">Datenspeicher wird abgefragt...</span>
           </div>
         ) : backupFiles.length === 0 ? (
@@ -2191,7 +2239,7 @@ ${csvExportString}
           {/* Left Panel: Instructions with icons */}
           <div className="flex-1 space-y-6">
             <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
-              <div className="p-2.5 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-600">
+              <div className="p-2.5 bg-slate-50 border border-slate-100 rounded-xl text-slate-800">
                 <Smartphone className="h-5 w-5" />
               </div>
               <div>
@@ -2210,28 +2258,28 @@ ${csvExportString}
 
             <div className="space-y-4 text-xs font-semibold text-slate-650">
               <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold text-[11px] shrink-0">1</span>
+                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-slate-50 text-slate-800 border border-slate-100 font-bold text-[11px] shrink-0">1</span>
                 <p className="leading-relaxed pt-0.5">
                   Öffne den <strong>direkten App-Link</strong> unten im Safari-Browser auf deinem iPhone. Du kannst den Link einfach kopieren oder den QR-Code rechts direkt mit deiner iPhone-Kamera scannen.
                 </p>
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold text-[11px] shrink-0">2</span>
+                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-slate-50 text-slate-800 border border-slate-100 font-bold text-[11px] shrink-0">2</span>
                 <p className="leading-relaxed pt-0.5">
                   Tippe in der unteren Safari-Menüleiste auf das <strong>Teilen-Symbol (Share-Button)</strong> <span className="inline-block bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-bold">📤</span>.
                 </p>
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold text-[11px] shrink-0">3</span>
+                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-slate-50 text-slate-800 border border-slate-100 font-bold text-[11px] shrink-0">3</span>
                 <p className="leading-relaxed pt-0.5">
                   Scrolle ein Stück nach unten und wähle die Option <strong>&quot;Zum Home-Bildschirm&quot;</strong> (Add to Home Screen) <span className="inline-block bg-slate-100 border border-slate-200 px-1.5 py-0.5 rounded font-bold">➕</span>.
                 </p>
               </div>
 
               <div className="flex items-start gap-3">
-                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-indigo-50 text-indigo-600 border border-indigo-100 font-bold text-[11px] shrink-0">4</span>
+                <span className="flex items-center justify-center h-6 w-6 rounded-full bg-slate-50 text-slate-800 border border-slate-100 font-bold text-[11px] shrink-0">4</span>
                 <p className="leading-relaxed pt-0.5">
                   Name prüfen (<strong>Handels-Wächter</strong>) und oben rechts auf <strong>Hinzufügen</strong> klicken. Das Icon wird nun unbestechlich auf deinem iPhone-Home-Bildschirm platziert!
                 </p>
@@ -2252,7 +2300,7 @@ ${csvExportString}
                     navigator.clipboard.writeText(window.location.origin);
                     onShowToast("App-Link kopiert", "🟢 Der direkte Link wurde erfolgreich kopiert!", "success");
                   }}
-                  className="h-10 px-4 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
+                  className="h-10 px-4 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-sm cursor-pointer"
                 >
                   <Copy className="h-3.5 w-3.5" /> Kopieren
                 </button>
@@ -2270,7 +2318,7 @@ ${csvExportString}
               </span>
               <div className="relative group">
                 {/* Outer shadow aura */}
-                <div className="absolute -inset-1.5 bg-gradient-to-tr from-indigo-500/20 to-emerald-500/20 rounded-[24%] blur-md opacity-75 group-hover:opacity-100 transition-opacity"></div>
+                <div className="absolute -inset-1.5 bg-gradient-to-tr from-slate-600/20 to-emerald-500/20 rounded-[24%] blur-md opacity-75 group-hover:opacity-100 transition-opacity"></div>
                 
                 {/* Curved iOS App Icon Squirkle (Rounded 22%) */}
                 <div className="relative h-24 w-24 bg-slate-900 rounded-[22%] border border-slate-200/20 shadow-xl overflow-hidden flex items-center justify-center">
@@ -2292,7 +2340,7 @@ ${csvExportString}
             {/* Live QR-Code Generator */}
             <div className="w-full border-t border-slate-200/60 pt-5 space-y-2 flex flex-col items-center">
               <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1">
-                <QrCode className="h-3.5 w-3.5 text-indigo-500" /> Direkt mit der Kamera scannen
+                <QrCode className="h-3.5 w-3.5 text-slate-600" /> Direkt mit der Kamera scannen
               </span>
               <div className="bg-white p-2.5 rounded-2xl border border-slate-200/50 shadow-sm flex items-center justify-center">
                 <img 
@@ -2315,7 +2363,7 @@ ${csvExportString}
       {/* Handbuch für Anfänger - Setup-Anleitung im Google-Cloud-Look */}
       <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-100 animate-fade">
         <div className="flex items-center gap-3 border-b border-slate-50 pb-4">
-          <div className="p-2 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-600">
+          <div className="p-2 bg-slate-50 border border-slate-100 rounded-xl text-slate-800">
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
@@ -2358,7 +2406,7 @@ ${csvExportString}
           <div className="flex items-start gap-2">
             <span className="flex items-center justify-center h-5 w-5 rounded-full bg-slate-100 text-slate-705 font-bold text-[10px] mt-0.5 shrink-0">1</span>
             <p className="leading-relaxed">
-              Öffne die <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:underline inline-flex items-center gap-0.5 font-bold">Google Cloud Console <ExternalLink className="h-3 w-3" /></a>. Erstelle ein neues Projekt oder wähle dein bestehendes aus.
+              Öffne die <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" className="text-slate-800 hover:underline inline-flex items-center gap-0.5 font-bold">Google Cloud Console <ExternalLink className="h-3 w-3" /></a>. Erstelle ein neues Projekt oder wähle dein bestehendes aus.
             </p>
           </div>
 
@@ -2495,14 +2543,14 @@ ${csvExportString}
               value={clientId}
               onChange={(e) => handleSaveClientId(e.target.value)}
               placeholder="z.B. 123456789-vsh7s9...apps.googleusercontent.com"
-              className="flex-1 h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-mono text-slate-800 focus:border-indigo-500 focus:bg-white focus:outline-none transition-all"
+              className="flex-1 h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-mono text-slate-800 focus:border-slate-600 focus:bg-white focus:outline-none transition-all"
             />
             <button 
               onClick={() => {
                 handleSaveClientId(clientId);
                 onShowToast("Client-ID gespeichert", "🟢 Deine Google Client-ID wurde unbestechlich lokal gesichert!", "success");
               }}
-              className="h-11 px-5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-98 cursor-pointer"
+              className="h-11 px-5 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs uppercase rounded-xl transition-all flex items-center gap-1.5 shadow-md active:scale-98 cursor-pointer"
             >
               Speichern
             </button>
@@ -2531,11 +2579,11 @@ ${csvExportString}
 
             {/* Header mit passendem Icon & Sektion */}
             <div className="flex items-center gap-4 border-b border-slate-100 pb-4">
-              <div className="h-12 w-12 bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center text-indigo-600 font-extrabold text-xl select-none">
+              <div className="h-12 w-12 bg-slate-50 border border-slate-100 rounded-2xl flex items-center justify-center text-slate-800 font-extrabold text-xl select-none">
                 ?
               </div>
               <div>
-                <span className="block text-[10px] font-bold text-indigo-600 uppercase tracking-widest font-mono">
+                <span className="block text-[10px] font-bold text-slate-800 uppercase tracking-widest font-mono">
                   Funktions- &amp; Praxis-Guide
                 </span>
                 <h3 className="text-base font-bold text-slate-900">
@@ -2586,7 +2634,7 @@ ${csvExportString}
 
                   <div className="pt-4 border-t border-slate-100 space-y-2">
                     <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Kopierbare Prompts für deinen KI-Chat:
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-600"></span> Kopierbare Prompts für deinen KI-Chat:
                     </h4>
                     {renderCopyablePrompt(
                       "Journal-Daten & Vola analysieren",
@@ -2627,7 +2675,7 @@ ${csvExportString}
 
                   <div className="pt-4 border-t border-slate-100 space-y-2">
                     <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Kopierbare Prompts für deinen KI-Chat:
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-600"></span> Kopierbare Prompts für deinen KI-Chat:
                     </h4>
                     {renderCopyablePrompt(
                       "Regelwerk unbestechlich schärfen",
@@ -2668,7 +2716,7 @@ ${csvExportString}
 
                   <div className="pt-4 border-t border-slate-100 space-y-2">
                     <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Kopierbare Prompts für deinen KI-Chat:
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-600"></span> Kopierbare Prompts für deinen KI-Chat:
                     </h4>
                     {renderCopyablePrompt(
                       "Komplett-Dossier & Risiko-Analyse",
@@ -2683,7 +2731,7 @@ ${csvExportString}
                 <>
                   <div>
                     <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Beschreibung der Funktion:
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-600"></span> Beschreibung der Funktion:
                     </h4>
                     <p className="text-slate-600 leading-relaxed font-medium">
                       Der unbestechliche Datenspeicher sichert komplette Backups deines Systems verschlüsselt und sicher direkt in der Google Cloud (Google Drive). So gehen deine Daten selbst bei einem Browserwechsel, einer Cookie-Löschung oder einem Systemabsturz niemals verloren.
@@ -2692,7 +2740,7 @@ ${csvExportString}
 
                   <div>
                     <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Vorgehensweise im Detail:
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-600"></span> Vorgehensweise im Detail:
                     </h4>
                     <ol className="list-decimal list-inside space-y-1.5 pl-1 font-medium text-slate-600 space-y-2">
                       <li>
@@ -2712,7 +2760,7 @@ ${csvExportString}
 
                   <div className="pt-4 border-t border-slate-100 space-y-2">
                     <h4 className="text-[11px] font-bold text-slate-800 uppercase tracking-wide mb-1 flex items-center gap-1.5">
-                      <span className="h-1.5 w-1.5 rounded-full bg-indigo-500"></span> Kopierbare Prompts für deinen KI-Chat:
+                      <span className="h-1.5 w-1.5 rounded-full bg-slate-600"></span> Kopierbare Prompts für deinen KI-Chat:
                     </h4>
                     {renderCopyablePrompt(
                       "Automatisierte Drive-Verzeichnispflege",

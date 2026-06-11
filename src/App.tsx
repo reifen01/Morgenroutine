@@ -649,7 +649,7 @@ export default function App() {
       {toast && (
         <div className="fixed top-24 right-4 left-4 sm:left-auto sm:w-96 z-50 animate-fade shadow-xl pointer-events-auto">
           <div className="p-4 rounded-2xl border border-slate-100 bg-white flex items-start gap-3 shadow-lg shadow-slate-200">
-            {toast.type === "success" && <CheckCircle2 className="h-5 w-5 text-indigo-600 shrink-0 mt-0.5" />}
+            {toast.type === "success" && <CheckCircle2 className="h-5 w-5 text-slate-800 shrink-0 mt-0.5" />}
             {toast.type === "warning" && <AlertTriangle className="h-5 w-5 text-amber-500 shrink-0 mt-0.5" />}
             {toast.type === "error" && <AlertTriangle className="h-5 w-5 text-rose-600 shrink-0 mt-0.5" />}
             
@@ -672,7 +672,6 @@ export default function App() {
       <CompactHeader
         routineDate={routineDate}
         onDateChange={setRoutineDate}
-        onCopyExcelLine={handleCopyExcelLine}
         onOpenHelp={() => setHelpOpen(true)}
         onCheckForUpdate={handleCheckForUpdate}
         updateAvailable={pwaUpdate.needRefresh}
@@ -694,7 +693,7 @@ export default function App() {
             onClick={() => setActiveTab("morgenroutine")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
               activeTab === "morgenroutine"
-                ? "text-indigo-600 font-bold border-b-2 border-indigo-600"
+                ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
           >
@@ -706,7 +705,7 @@ export default function App() {
             onClick={() => setActiveTab("rechner")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
               activeTab === "rechner"
-                ? "text-indigo-600 font-bold border-b-2 border-indigo-600"
+                ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
           >
@@ -718,7 +717,7 @@ export default function App() {
             onClick={() => setActiveTab("journal")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
               activeTab === "journal"
-                ? "text-indigo-600 font-bold border-b-2 border-indigo-600"
+                ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
           >
@@ -730,7 +729,7 @@ export default function App() {
             onClick={() => setActiveTab("regelwerk")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
               activeTab === "regelwerk"
-                ? "text-indigo-600 font-bold border-b-2 border-indigo-600"
+                ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
           >
@@ -742,7 +741,7 @@ export default function App() {
             onClick={() => setActiveTab("workspace")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
               activeTab === "workspace"
-                ? "text-indigo-600 font-bold border-b-2 border-indigo-600"
+                ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
           >

@@ -1360,7 +1360,7 @@ export default function MorgenroutineTab({
         <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-lg shadow-slate-250/10 md:col-span-2">
           <div>
             <h2 className="text-base sm:text-lg font-bold text-slate-900 font-display flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-indigo-600"></span>
+              <span className="h-2 w-2 rounded-full bg-slate-800"></span>
               📋 MORGENROUTINE — {formatToGermanDate(routineDate)}
             </h2>
             <p className="text-xs sm:text-sm text-slate-500 mt-2 font-medium leading-relaxed">
@@ -1512,8 +1512,8 @@ export default function MorgenroutineTab({
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
-                <div className="flex items-center gap-2 text-indigo-600 font-bold">
-                  <span className="p-1 bg-indigo-50 border border-indigo-100 rounded-lg text-xs">1</span>
+                <div className="flex items-center gap-2 text-slate-800 font-bold">
+                  <span className="p-1 bg-slate-50 border border-slate-100 rounded-lg text-xs">1</span>
                   <span>Tages-Sicherheitsprüfung</span>
                 </div>
                 <p className="text-slate-600 leading-relaxed font-semibold">
@@ -1551,13 +1551,13 @@ export default function MorgenroutineTab({
       <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl text-white animate-fadeIn text-left">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
           <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-indigo-500/20 border border-indigo-500/30 rounded-lg text-indigo-400">
+            <div className="p-1.5 bg-slate-600/20 border border-slate-600/30 rounded-lg text-slate-400">
               <Zap className="h-4 w-4 fill-amber-400 text-amber-400" />
             </div>
             <div>
               <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-100 font-display flex items-center gap-2">
                 Daten Schnell-Import Center
-                <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-indigo-500/20 border border-indigo-500/30 text-indigo-300">KI-Lösung</span>
+                <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-slate-600/20 border border-slate-600/30 text-slate-300">KI-Lösung</span>
               </h3>
               <p className="text-[10px] text-slate-400 font-medium leading-relaxed mt-0.5">
                 Spielt deine Tagesdaten rasant ein – entweder per Text-Kopie oder vollautomatisch per Screenshot!
@@ -1571,7 +1571,7 @@ export default function MorgenroutineTab({
               onClick={() => setActiveImportTab("text")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeImportTab === "text"
-                  ? "bg-indigo-650 text-white shadow-sm"
+                  ? "bg-slate-800 text-white shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -1582,7 +1582,7 @@ export default function MorgenroutineTab({
               onClick={() => setActiveImportTab("screenshot")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeImportTab === "screenshot"
-                  ? "bg-indigo-650 text-white shadow-sm"
+                  ? "bg-slate-800 text-white shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -1593,7 +1593,7 @@ export default function MorgenroutineTab({
               onClick={() => setActiveImportTab("live")}
               className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeImportTab === "live"
-                  ? "bg-indigo-650 text-white shadow-sm"
+                  ? "bg-slate-800 text-white shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
@@ -1610,7 +1610,7 @@ export default function MorgenroutineTab({
                 onChange={(e) => setTvImportText(e.target.value)}
                 rows={3} 
                 placeholder="Füge deine TradingView-Daten hier ein...&#10;z.B. (VIX unter 16,31 oder im Spaltenlayout)" 
-                className="w-full p-3 bg-slate-950 border border-slate-850 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 placeholder-slate-700 resize-none h-24"
+                className="w-full p-3 bg-slate-950 border border-slate-850 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 placeholder-slate-700 resize-none h-24"
               />
             </div>
             <div className="flex flex-col justify-between md:w-64 shrink-0 gap-3">
@@ -1621,7 +1621,7 @@ export default function MorgenroutineTab({
               <button 
                 type="button" 
                 onClick={handleImportTradingViewData} 
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full h-11 bg-slate-800 hover:bg-slate-900 active:bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
               >
                 <Zap className="h-4 w-4 fill-current text-amber-300" /> Einlesen &amp; Zuordnen
               </button>
@@ -1645,7 +1645,7 @@ export default function MorgenroutineTab({
                 }}
                 className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden ${
                   isDragging 
-                    ? "border-indigo-400 bg-indigo-950/40 scale-[0.99]" 
+                    ? "border-slate-400 bg-slate-950/40 scale-[0.99]" 
                     : "border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-950"
                 }`}
                 onClick={() => {
@@ -1673,7 +1673,7 @@ export default function MorgenroutineTab({
                     />
                     <div className="text-left flex-1 min-w-0">
                       <p className="text-xs font-bold text-slate-200 truncate">{screenshotFile?.name}</p>
-                      <p className="text-[10px] text-indigo-400 font-semibold uppercase mt-0.5">
+                      <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
                         {(screenshotFile ? screenshotFile.size / 1024 : 0).toFixed(0)} KB • Bereit für KI-Analyse
                       </p>
                       <button
@@ -1691,7 +1691,7 @@ export default function MorgenroutineTab({
                   </div>
                 ) : (
                   <div className="flex flex-col items-center justify-center">
-                    <UploadCloud className={`h-8 w-8 mb-2 text-indigo-400 ${isDragging ? 'animate-bounce' : ''}`} />
+                    <UploadCloud className={`h-8 w-8 mb-2 text-slate-400 ${isDragging ? 'animate-bounce' : ''}`} />
                     <p className="text-xs font-semibold text-slate-200">
                       Zieh deinen Screenshot von TradingView / Broker hierher
                     </p>
@@ -1755,7 +1755,7 @@ export default function MorgenroutineTab({
                 type="button"
                 onClick={handleFetchLivePrices}
                 disabled={isFetchingLive}
-                className="w-full h-11 bg-indigo-600 hover:bg-indigo-700 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
+                className="w-full h-11 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
               >
                 {isFetchingLive ? (
                   <>
@@ -1781,7 +1781,7 @@ export default function MorgenroutineTab({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
             <div className="flex items-start gap-2.5">
               <div className="p-1.5 bg-slate-800/40 border border-slate-700/50 rounded-lg shrink-0 mt-0.5">
-                <Clipboard className="h-4 w-4 text-indigo-400" />
+                <Clipboard className="h-4 w-4 text-slate-400" />
               </div>
               <div>
                 <div className="flex items-center gap-2 flex-wrap">
@@ -1822,7 +1822,7 @@ export default function MorgenroutineTab({
               <button
                 type="button"
                 onClick={handleApplyCache}
-                className="px-4 py-2 bg-indigo-600/30 hover:bg-indigo-650 border border-indigo-550/40 text-indigo-200 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all self-start sm:self-center cursor-pointer shrink-0 inline-flex items-center gap-1.5 shadow-sm"
+                className="px-4 py-2 bg-slate-800/30 hover:bg-slate-800 border border-slate-700/40 text-slate-200 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all self-start sm:self-center cursor-pointer shrink-0 inline-flex items-center gap-1.5 shadow-sm"
               >
                 📥 Letzten Cache laden ({new Date(importCache.timestamp).toLocaleDateString('de-DE', {day: 'numeric', month: 'short'})})
               </button>
@@ -1908,7 +1908,7 @@ export default function MorgenroutineTab({
           {/* Volatilitäts-Trio & Energie-Indikatoren Table */}
           <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-1.5 h-4 rounded bg-indigo-600 block"></span>
+              <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
               🚦 Volatilitäts-Trio &amp; Energie-Schranken
             </h3>
             
@@ -2051,7 +2051,7 @@ export default function MorgenroutineTab({
                   )}
                   
                   {/* WTI Row */}
-                  <tr className="hover:bg-slate-50 transition-colors bg-indigo-50/10">
+                  <tr className="hover:bg-slate-50 transition-colors bg-slate-50/10">
                     <td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>WTI Oil ($ pro Barrel)</span>
@@ -2091,7 +2091,7 @@ export default function MorgenroutineTab({
                   )}
                   
                   {/* Henry Hub Gas Row */}
-                  <tr className="hover:bg-slate-50 transition-colors bg-indigo-50/10">
+                  <tr className="hover:bg-slate-50 transition-colors bg-slate-50/10">
                     <td className="p-3 pl-4">
                       <div className="font-bold text-slate-905 text-sm sm:text-base flex items-center gap-1.5">
                         <span>Henry Hub Gas ($)</span>
@@ -2138,7 +2138,7 @@ export default function MorgenroutineTab({
           {/* Limit- & Nachkaufüberwachung Table */}
           <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2 pb-2.5 border-b border-slate-50">
-              <span className="w-1.5 h-4 rounded bg-indigo-600 block"></span>
+              <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
               🚦 Limit- &amp; Nachkauf-Wächter (Live-Positionen)
             </h3>
             
@@ -2195,7 +2195,7 @@ export default function MorgenroutineTab({
                       } else {
                         // Premium above threshold
                         signalBadge = (
-                          <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-indigo-600 border border-slate-100 text-[10px] font-bold">
+                          <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-800 border border-slate-100 text-[10px] font-bold">
                             +{formatAccounting(diff)} €
                           </span>
                         );
@@ -2206,7 +2206,7 @@ export default function MorgenroutineTab({
                       <tr key={asset.key} className="hover:bg-slate-50 transition-colors">
                         <td className="py-4 text-slate-900">
                           <div className="font-bold text-slate-900 leading-tight">{asset.name}</div>
-                          <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[10px] text-indigo-600 font-extrabold">
+                          <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[10px] text-slate-800 font-extrabold">
                             <span>Kürzel: {asset.ticker}</span>
                             <span className="text-slate-300">•</span>
                             <span className="text-slate-500 font-semibold font-mono font-sans text-[10px]">ISIN: {asset.isin}</span>
@@ -2245,7 +2245,7 @@ export default function MorgenroutineTab({
           {/* Data Updater card */}
           <div id="daily-inputs-card" className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest pb-3 border-b border-slate-50 flex items-center gap-2">
-              <span className="w-1.5 h-4 rounded bg-indigo-600 block"></span>
+              <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
               Tages-Eingaben
             </h3>
             
@@ -2267,7 +2267,7 @@ export default function MorgenroutineTab({
                     value={vix}
                     onChange={(val) => handleMarketFieldChangeNum("vix", val)}
                     placeholder="z.B. 16,91"
-                    className={`w-full h-11 border focus:border-indigo-500 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
+                    className={`w-full h-11 border focus:border-slate-600 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
                       vix === null 
                         ? "bg-amber-50/20 border-amber-300 ring-2 ring-amber-100 placeholder-amber-400" 
                         : "bg-slate-50 border-slate-200"
@@ -2289,7 +2289,7 @@ export default function MorgenroutineTab({
                     value={vxv}
                     onChange={(val) => handleMarketFieldChangeNum("vxv", val)}
                     placeholder="z.B. 20,03"
-                    className={`w-full h-11 border focus:border-indigo-500 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
+                    className={`w-full h-11 border focus:border-slate-600 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
                       vxv === null 
                         ? "bg-amber-50/20 border-amber-300 ring-2 ring-amber-100 placeholder-amber-400" 
                         : "bg-slate-50 border-slate-200"
@@ -2314,7 +2314,7 @@ export default function MorgenroutineTab({
                     value={wti}
                     onChange={(val) => handleMarketFieldChangeNum("wti", val)}
                     placeholder="z.B. 89,15"
-                    className={`w-full h-11 border focus:border-indigo-500 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
+                    className={`w-full h-11 border focus:border-slate-600 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
                       wti === null 
                         ? "bg-amber-50/20 border-amber-300 ring-2 ring-amber-100 placeholder-amber-400" 
                         : "bg-slate-50 border-slate-200"
@@ -2336,7 +2336,7 @@ export default function MorgenroutineTab({
                     value={gas}
                     onChange={(val) => handleMarketFieldChangeNum("gas", val)}
                     placeholder="z.B. 3,017"
-                    className={`w-full h-11 border focus:border-indigo-500 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
+                    className={`w-full h-11 border focus:border-slate-600 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
                       gas === null 
                         ? "bg-amber-50/20 border-amber-300 ring-2 ring-amber-100 placeholder-amber-400" 
                         : "bg-slate-50 border-slate-200"
@@ -2358,7 +2358,7 @@ export default function MorgenroutineTab({
                     value={marketState.vvix}
                     onChange={(val) => handleMarketFieldChangeNum("vvix", val)}
                     placeholder="z.B. 95,20"
-                    className={`w-full h-11 border focus:border-indigo-500 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
+                    className={`w-full h-11 border focus:border-slate-600 rounded-xl px-3 font-mono text-xs sm:text-sm font-bold focus:outline-none transition-all ${
                       marketState.vvix === null 
                         ? "bg-amber-50/20 border-amber-300 ring-2 ring-amber-100 placeholder-amber-400" 
                         : "bg-slate-50 border-slate-200"
@@ -2519,8 +2519,8 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
 
                 {distDaysReasoning && (
                   <div className="p-3 text-[11px] text-slate-600 bg-slate-50 border border-slate-150 rounded-xl leading-relaxed">
-                    <span className="font-bold text-indigo-750 block mb-1 flex items-center gap-1">
-                      <Sparkles className="h-3.5 w-3.5 text-indigo-500 fill-indigo-100" />
+                    <span className="font-bold text-slate-900 block mb-1 flex items-center gap-1">
+                      <Sparkles className="h-3.5 w-3.5 text-slate-600 fill-slate-100" />
                       AI Verteilungsanalyse:
                     </span>
                     {distDaysReasoning}
@@ -2531,14 +2531,14 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
               {/* Asset Prices Fields */}
               <div className="pt-4 border-t border-slate-100 space-y-4">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="block text-[10px] font-bold text-indigo-650 uppercase tracking-widest">
+                  <span className="block text-[10px] font-bold text-slate-800 uppercase tracking-widest">
                     Live-Assetkurse (€) &amp; ATR
                   </span>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
                       onClick={() => setShowLivePriceConverter(!showLivePriceConverter)}
-                      className="inline-flex items-center gap-1 text-[9px] bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-100 py-1 px-1.5 rounded-lg font-bold font-sans cursor-pointer whitespace-nowrap"
+                      className="inline-flex items-center gap-1 text-[9px] bg-slate-50 text-slate-900 hover:bg-slate-100 border border-slate-100 py-1 px-1.5 rounded-lg font-bold font-sans cursor-pointer whitespace-nowrap"
                       title="USD-Eingaben in Euro umrechnen"
                       id="usd-eur-mr-conv-btn"
                     >
@@ -2547,7 +2547,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                     <button
                       type="button"
                       onClick={() => toggleHelp('atr')}
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-lg text-indigo-600 hover:text-indigo-850 hover:bg-indigo-100/80 bg-indigo-50 border border-indigo-100/60 shadow-xs transition-all cursor-pointer shrink-0"
+                      className="inline-flex items-center justify-center w-5 h-5 rounded-lg text-slate-800 hover:text-slate-900 hover:bg-slate-100/80 bg-slate-50 border border-slate-100/60 shadow-xs transition-all cursor-pointer shrink-0"
                       title="Hilfe anzeigen"
                     >
                       <HelpCircle className="h-3.5 w-3.5" />
@@ -2556,8 +2556,8 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                 </div>
 
                 {showLivePriceConverter && (
-                  <div className="p-3.5 bg-gradient-to-br from-indigo-50 to-slate-50 border border-indigo-100 rounded-2xl space-y-2 text-[11px] animate-fade-in shadow-xs">
-                    <div className="font-bold text-indigo-950 flex items-center gap-1 text-[11px]">
+                  <div className="p-3.5 bg-gradient-to-br from-slate-50 to-slate-50 border border-slate-100 rounded-2xl space-y-2 text-[11px] animate-fade-in shadow-xs">
+                    <div className="font-bold text-slate-950 flex items-center gap-1 text-[11px]">
                       <span>🇺🇸 ➔ 🇪🇺 USD-Eingaben in Euro (€) konvertieren</span>
                     </div>
                     <p className="text-slate-600 leading-relaxed text-[10.5px]">
@@ -2565,20 +2565,20 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                     </p>
                     <div className="flex items-end gap-2">
                       <div className="flex-1">
-                        <label className="block text-[9px] font-black text-indigo-700 uppercase tracking-wider mb-1">
+                        <label className="block text-[9px] font-black text-slate-900 uppercase tracking-wider mb-1">
                           Wechselkurs (EUR/USD)
                         </label>
                         <input
                           type="text"
                           value={mrFxRate}
                           onChange={(e) => setMrFxRate(e.target.value)}
-                          className="h-9 w-full bg-white border border-indigo-200 focus:border-indigo-500 rounded-xl text-center font-mono font-black text-slate-800 text-xs focus:outline-none"
+                          className="h-9 w-full bg-white border border-slate-200 focus:border-slate-600 rounded-xl text-center font-mono font-black text-slate-800 text-xs focus:outline-none"
                         />
                       </div>
                       <button
                         type="button"
                         onClick={handleMrConvertUsdToEur}
-                        className="h-9 px-4 bg-indigo-650 hover:bg-indigo-700 text-white font-extrabold rounded-xl text-[11px] transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
+                        className="h-9 px-4 bg-slate-800 hover:bg-slate-900 text-white font-extrabold rounded-xl text-[11px] transition-all cursor-pointer shadow-sm active:scale-95 whitespace-nowrap"
                       >
                         Jetzt umrechnen 🚀
                       </button>
@@ -2587,7 +2587,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                 )}
 
                 {helpId === 'atr' && (
-                  <div className="p-4 text-xs text-indigo-950 bg-indigo-50/50 rounded-2xl border-l-4 border-indigo-400 pl-4 pr-4 leading-relaxed font-semibold space-y-1.5">
+                  <div className="p-4 text-xs text-slate-950 bg-slate-50/50 rounded-2xl border-l-4 border-slate-400 pl-4 pr-4 leading-relaxed font-semibold space-y-1.5">
                     <p>
                       <strong>Was bedeutet die Average True Range (ATR)?</strong><br />
                       Die ATR misst die historische Volatilität eines Assets über einen bestimmten Zeitraum (z.B. ATR = 15,50 € bei TSLA bedeutet, dass die Aktie pro Tag durchschnittlich um ca. 15,50 € schwankt).
@@ -2595,7 +2595,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                     <p>
                       In unserem unbestechlichen Risk &amp; Stop-Loss Schutzkonzept wird dieses Maß berechnet:
                     </p>
-                    <div className="mt-1 py-1 px-3 bg-indigo-100/60 border border-indigo-200 rounded font-mono text-[11px] text-indigo-900 font-bold inline-block">
+                    <div className="mt-1 py-1 px-3 bg-slate-100/60 border border-slate-200 rounded font-mono text-[11px] text-slate-900 font-bold inline-block">
                       Stop-Loss = MAX(Harter Anker, Aktueller Kurs - 2 * ATR)
                     </div>
                     <p className="mt-1">
@@ -2634,7 +2634,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                         value={livePrices.tsla.price}
                         onChange={(val) => handleLivePriceFieldChangeNum("tsla", "price", val)}
                         placeholder="Preis (€)"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
+                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
                       />
                       <DecimalInput
                         value={livePrices.tsla.atr}
@@ -2647,7 +2647,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                         value={formatToGermanDate(livePrices.tsla.date)}
                         onChange={(e) => handleLivePriceFieldChange("tsla", "date", parseCleanDate(e.target.value))}
                         placeholder="Datum"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-indigo-500 focus:outline-none"
+                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -2683,7 +2683,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                         value={livePrices.now.price}
                         onChange={(val) => handleLivePriceFieldChangeNum("now", "price", val)}
                         placeholder="Preis (€)"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
+                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
                       />
                       <DecimalInput
                         value={livePrices.now.atr}
@@ -2696,7 +2696,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                         value={formatToGermanDate(livePrices.now.date)}
                         onChange={(e) => handleLivePriceFieldChange("now", "date", parseCleanDate(e.target.value))}
                         placeholder="Datum"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-indigo-500 focus:outline-none"
+                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -2732,7 +2732,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                         value={livePrices.baba.price}
                         onChange={(val) => handleLivePriceFieldChangeNum("baba", "price", val)}
                         placeholder="Preis (€)"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
+                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
                       />
                       <DecimalInput
                         value={livePrices.baba.atr}
@@ -2745,7 +2745,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                         value={formatToGermanDate(livePrices.baba.date)}
                         onChange={(e) => handleLivePriceFieldChange("baba", "date", parseCleanDate(e.target.value))}
                         placeholder="Datum"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-indigo-500 focus:outline-none"
+                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -2781,7 +2781,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                         value={livePrices.btc.price}
                         onChange={(val) => handleLivePriceFieldChangeNum("btc", "price", val)}
                         placeholder="Preis (€)"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
+                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
                       />
                       <DecimalInput
                         value={livePrices.btc.atr}
@@ -2794,7 +2794,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                         value={formatToGermanDate(livePrices.btc.date)}
                         onChange={(e) => handleLivePriceFieldChange("btc", "date", parseCleanDate(e.target.value))}
                         placeholder="Datum"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-indigo-500 focus:outline-none"
+                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
                       />
                     </div>
                   </div>
@@ -2822,7 +2822,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                 <button
                   type="button"
                   onClick={onCopyExcelLine}
-                  className="w-full h-11 bg-indigo-650 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold tracking-tight flex items-center justify-center gap-2 transition-colors shadow-sm active:scale-98 cursor-pointer"
+                  className="w-full h-11 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold tracking-tight flex items-center justify-center gap-2 transition-colors shadow-sm active:scale-98 cursor-pointer"
                 >
                   <Clipboard className="h-4.5 w-4.5" /> Exportzeile kopieren
                 </button>

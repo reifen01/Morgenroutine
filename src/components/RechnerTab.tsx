@@ -466,12 +466,12 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-50 pb-4">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
-                <Calculator className="h-5 w-5 text-indigo-650" />
+                <Calculator className="h-5 w-5 text-slate-800" />
                 Aktien-Positionsgrößen &amp; Risiko-Rechner
               </h2>
               <button
                 onClick={handleResetForm}
-                className="text-slate-400 hover:text-indigo-650 p-2 rounded-xl hover:bg-slate-50 transition-colors"
+                className="text-slate-400 hover:text-slate-800 p-2 rounded-xl hover:bg-slate-50 transition-colors"
                 title="Formular zurücksetzen"
               >
                 <RefreshCw className="h-4 w-4" />
@@ -479,10 +479,10 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
             </div>
 
             {/* UNIFIED GLOBALE BLITZ-SUCHE (NAME, TICKER, WKN, ISIN) */}
-            <div className="bg-slate-50/75 border border-slate-150 rounded-2xl p-4.5 space-y-2.5 relative shadow-xs hover:border-indigo-150 transition-all duration-200">
+            <div className="bg-slate-50/75 border border-slate-150 rounded-2xl p-4.5 space-y-2.5 relative shadow-xs hover:border-slate-200 transition-all duration-200">
               <div className="flex items-center gap-2">
-                <Search className="h-4.5 w-4.5 text-indigo-650 shrink-0" />
-                <span className="text-xs font-black text-indigo-950 uppercase tracking-widest">
+                <Search className="h-4.5 w-4.5 text-slate-800 shrink-0" />
+                <span className="text-xs font-black text-slate-950 uppercase tracking-widest">
                   ⚡ Blitz-Auswahl &amp; Suche (Name, Ticker, WKN oder ISIN)
                 </span>
               </div>
@@ -495,17 +495,17 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   value={globalSearchQuery}
                   onChange={(e) => setGlobalSearchQuery(e.target.value)}
                   placeholder="Z.b. Apple, Mercedes, Tesla, US0378331005, 865985..."
-                  className="w-full h-10.5 bg-white border border-slate-200 focus:border-indigo-500 hover:border-slate-300 focus:ring-1 focus:ring-indigo-500 rounded-xl px-3.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none transition-all duration-200 font-semibold"
+                  className="w-full h-10.5 bg-white border border-slate-200 focus:border-slate-600 hover:border-slate-300 focus:ring-1 focus:ring-slate-600 rounded-xl px-3.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none transition-all duration-200 font-semibold"
                 />
                 
                 {isSearchingGlobal && (
-                  <div className="absolute right-3.5 top-3.5 animate-spin rounded-full h-4 w-4 border-2 border-indigo-600 border-t-transparent" />
+                  <div className="absolute right-3.5 top-3.5 animate-spin rounded-full h-4 w-4 border-2 border-slate-800 border-t-transparent" />
                 )}
 
                 {/* Proposals Dropdown container */}
                 {globalSuggestions.length > 0 && (
                   <div className="absolute left-0 right-0 mt-2 bg-white border border-slate-200 rounded-2xl shadow-2xl z-55 max-h-60 overflow-y-auto divide-y divide-slate-100">
-                    <div className="p-2.5 text-[9px] font-extrabold text-indigo-600 bg-indigo-50/65 sticky top-0 uppercase tracking-wider">
+                    <div className="p-2.5 text-[9px] font-extrabold text-slate-800 bg-slate-50/65 sticky top-0 uppercase tracking-wider">
                       Gefundene Treffer (Anklicken zum Ausfüllen):
                     </div>
                     {globalSuggestions.map((s, idx) => (
@@ -560,9 +560,9 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   inputMode="decimal"
                   value={depotCapital}
                   onChange={(e) => setDepotCapital(e.target.value)}
-                  className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
+                  className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                 />
-                <span className="text-[10px] text-indigo-650 font-bold mt-2 block">
+                <span className="text-[10px] text-slate-800 font-bold mt-2 block">
                   Aktuell unbestechlich hinterlegt: {formatAccounting(parseCleanFloat(depotCapital))} €
                 </span>
               </div>
@@ -573,7 +573,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                 <select
                   value={calcMode}
                   onChange={(e) => setCalcMode(e.target.value as "shares" | "stop")}
-                  className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-indigo-500 rounded-xl px-3 font-semibold text-slate-800 focus:outline-none text-xs sm:text-sm cursor-pointer transition-all"
+                  className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl px-3 font-semibold text-slate-800 focus:outline-none text-xs sm:text-sm cursor-pointer transition-all"
                 >
                   <option value="shares">Stückzahl aus festem Stop-Loss berechnen</option>
                   <option value="stop">Maximalen Stop-Loss aus Tranchenbudget herleiten 🎯</option>
@@ -590,7 +590,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   type="text"
                   value={ticker}
                   onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                  className="w-full h-11 bg-white border border-slate-200 focus:border-indigo-500 rounded-xl px-4 font-bold text-slate-900 focus:outline-none transition-colors"
+                  className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-bold text-slate-900 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -602,7 +602,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     <button
                       type="button"
                       onClick={handleConvertToEuro}
-                      className="text-[9.5px] text-indigo-600 hover:text-indigo-850 font-black flex items-center gap-0.5 whitespace-nowrap cursor-pointer transition-all bg-indigo-50 border border-indigo-150/55 py-0.5 px-1.5 rounded-lg active:scale-95"
+                      className="text-[9.5px] text-slate-800 hover:text-slate-900 font-black flex items-center gap-0.5 whitespace-nowrap cursor-pointer transition-all bg-slate-50 border border-slate-200/55 py-0.5 px-1.5 rounded-lg active:scale-95"
                       title="Alle eingegebenen USD/Fremdwährungswerte im Rechner mit diesem Wechselkurs in Euro konvertieren"
                     >
                       In € umrechnen 🔄
@@ -614,7 +614,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   inputMode="decimal"
                   value={fxRate}
                   onChange={(e) => setFxRate(e.target.value)}
-                  className="w-full h-11 bg-white border border-slate-200 focus:border-indigo-500 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
+                  className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                 />
               </div>
               <div>
@@ -624,7 +624,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                 <select
                   value={riskPct}
                   onChange={(e) => setRiskPct(e.target.value)}
-                  className="w-full h-11 bg-white border border-slate-200 focus:border-indigo-500 rounded-xl px-3 font-bold text-slate-800 focus:outline-none cursor-pointer transition-all"
+                  className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-3 font-bold text-slate-800 focus:outline-none cursor-pointer transition-all"
                 >
                   <option value="0.5">0,5 % Risiko (Halb-Sperre bei WTI ≥ 100$)</option>
                   <option value="1.0">1,0 % Risiko (Eiserner Standard-Sicherheitsgurt)</option>
@@ -644,7 +644,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   inputMode="decimal"
                   value={entryPrice}
                   onChange={(e) => setEntryPrice(e.target.value)}
-                  className="w-full h-11 bg-white border border-slate-200 focus:border-indigo-500 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
+                  className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                 />
               </div>
               
@@ -658,7 +658,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     inputMode="decimal"
                     value={stopPrice}
                     onChange={(e) => setStopPrice(e.target.value)}
-                    className="w-full h-11 bg-white border border-slate-200 focus:border-indigo-500 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
+                    className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                   />
                 </div>
               ) : (
@@ -765,10 +765,10 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-2">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
-                <TrendingDown className="h-5 w-5 text-indigo-650 animate-pulse" />
+                <TrendingDown className="h-5 w-5 text-slate-800 animate-pulse" />
                 🖥️ Pine Script ATR Stop-Loss Finder (TradingView Sync)
               </h3>
-              <span className="text-[10px] bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-xl font-mono font-bold uppercase whitespace-nowrap border border-indigo-100 shadow-3xs">
+              <span className="text-[10px] bg-slate-50 text-slate-900 px-2.5 py-1 rounded-xl font-mono font-bold uppercase whitespace-nowrap border border-slate-100 shadow-3xs">
                 m = {atrCalcMult.toFixed(1)}x
               </span>
             </div>
@@ -840,7 +840,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   value={atrCalcAsset}
                   onChange={(e) => setAtrCalcAsset(e.target.value.toUpperCase())}
                   placeholder="z.B. GOOG, AAPL..."
-                  className="w-full h-11 bg-white border border-slate-200 focus:border-indigo-500 rounded-xl px-4 font-bold text-slate-950 focus:outline-none text-xs transition-colors"
+                  className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-bold text-slate-950 focus:outline-none text-xs transition-colors"
                 />
               </div>
             </div>
@@ -848,7 +848,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-50/50 p-4 rounded-2xl border border-slate-105">
               {/* Manuell eingegebener ATR-Wert */}
               <div>
-                <label className="block text-[10px] font-bold text-indigo-750 uppercase mb-1.5 tracking-wider font-sans">
+                <label className="block text-[10px] font-bold text-slate-900 uppercase mb-1.5 tracking-wider font-sans">
                   ATR-Wert ({currencyLabel}) *
                 </label>
                 <input
@@ -856,7 +856,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   inputMode="decimal"
                   value={atrCalcValue}
                   onChange={(e) => setAtrCalcValue(e.target.value)}
-                  className="w-full h-10 bg-white font-mono font-bold border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:border-indigo-500 text-xs text-center"
+                  className="w-full h-10 bg-white font-mono font-bold border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:border-slate-600 text-xs text-center"
                   placeholder="z.B. 15.5"
                 />
               </div>
@@ -871,7 +871,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   inputMode="decimal"
                   value={atrCalcEntry}
                   onChange={(e) => setAtrCalcEntry(e.target.value)}
-                  className="w-full h-10 bg-white font-mono font-bold border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:border-indigo-500 text-xs text-center"
+                  className="w-full h-10 bg-white font-mono font-bold border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:border-slate-600 text-xs text-center"
                 />
               </div>
 
@@ -886,7 +886,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     inputMode="decimal"
                     value={atrCalcLow}
                     onChange={(e) => setAtrCalcLow(e.target.value)}
-                    className="w-full h-10 bg-white font-mono font-semibold border border-slate-200 rounded-xl px-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-xs text-center"
+                    className="w-full h-10 bg-white font-mono font-semibold border border-slate-200 rounded-xl px-3 text-slate-800 focus:outline-none focus:border-slate-600 text-xs text-center"
                   />
                 </div>
               ) : (
@@ -899,7 +899,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     inputMode="decimal"
                     value={atrCalcHigh}
                     onChange={(e) => setAtrCalcHigh(e.target.value)}
-                    className="w-full h-10 bg-white font-mono font-semibold border border-slate-200 rounded-xl px-3 text-slate-800 focus:outline-none focus:border-indigo-500 text-xs text-center"
+                    className="w-full h-10 bg-white font-mono font-semibold border border-slate-200 rounded-xl px-3 text-slate-800 focus:outline-none focus:border-slate-600 text-xs text-center"
                   />
                 </div>
               )}
@@ -908,7 +908,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
               <div>
                 <label className="block text-[10px] font-bold text-slate-450 uppercase mb-1.5 tracking-wider flex justify-between items-center">
                   <span>Multiplier (m)</span>
-                  <span className="text-indigo-650 font-bold font-mono text-[9px]">{atrCalcMult.toFixed(1)}x</span>
+                  <span className="text-slate-800 font-bold font-mono text-[9px]">{atrCalcMult.toFixed(1)}x</span>
                 </label>
                 <div className="flex items-center gap-1.5">
                   <input
@@ -933,7 +933,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                 <div className="space-y-1.5 text-xs font-mono">
                   <div className="flex justify-between">
                     <span className="text-slate-500">ATR Puffer ({atrCalcMult}x ATR):</span>
-                    <span className="font-bold text-indigo-700">{(parsedAtrValue * atrCalcMult).toFixed(2)} {currentCurrency}</span>
+                    <span className="font-bold text-slate-900">{(parsedAtrValue * atrCalcMult).toFixed(2)} {currentCurrency}</span>
                   </div>
                   {atrCalcDirection === "long" ? (
                     <>
@@ -963,7 +963,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
               <div className="flex flex-col justify-between gap-3 bg-slate-900 border border-slate-800 text-slate-100 rounded-2xl p-4 shadow-sm">
                 <div className="space-y-1 font-sans">
-                  <span className="block text-[10px] font-bold text-indigo-300 uppercase tracking-widest flex items-center gap-1">
+                  <span className="block text-[10px] font-bold text-slate-300 uppercase tracking-widest flex items-center gap-1">
                     <Sparkles className="h-3.5 w-3.5 text-yellow-405 shrink-0" />
                     Vollautomatischer Übertrag
                   </span>
@@ -975,7 +975,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                 <button
                   type="button"
                   onClick={handleApplyAtrStopToCalculator}
-                  className="w-full py-2.5 px-3 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer text-xs"
+                  className="w-full py-2.5 px-3 bg-slate-800 hover:bg-slate-600 text-white font-bold rounded-xl transition-all shadow-md active:scale-95 flex items-center justify-center gap-2 cursor-pointer text-xs"
                 >
                   <span>Morgenroutine ATR-Stopp einsetzen 🚀</span>
                   <ArrowRight className="h-4 w-4" />
@@ -1017,11 +1017,11 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                 {watchlist.map((item, index) => (
                   <div 
                     key={index}
-                    className="group border border-slate-150 rounded-2xl p-4.5 bg-slate-50/55 hover:bg-slate-50 hover:border-indigo-200 hover:shadow-sm transition-all duration-200 flex flex-col justify-between gap-3"
+                    className="group border border-slate-150 rounded-2xl p-4.5 bg-slate-50/55 hover:bg-slate-50 hover:border-slate-200 hover:shadow-sm transition-all duration-200 flex flex-col justify-between gap-3"
                   >
                     <div className="space-y-1">
                       <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-extrabold text-slate-900 group-hover:text-indigo-650 font-mono transition-colors">
+                        <span className="text-sm font-extrabold text-slate-900 group-hover:text-slate-800 font-mono transition-colors">
                           {item.symbol}
                         </span>
                         <button
@@ -1068,7 +1068,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                           "success"
                         );
                       }}
-                      className="w-full py-1.5 px-3 bg-white hover:bg-indigo-600 border border-slate-200 hover:border-indigo-600 text-slate-700 hover:text-white font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-[11px]"
+                      className="w-full py-1.5 px-3 bg-white hover:bg-slate-800 border border-slate-200 hover:border-slate-800 text-slate-700 hover:text-white font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-[11px]"
                     >
                       <Star className="h-3 w-3 fill-amber-400 stroke-amber-500 text-amber-500" />
                       <span>In Rechner laden</span>
@@ -1095,17 +1095,17 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   value={stockSearchQuery}
                   onChange={(e) => setStockSearchQuery(e.target.value)}
                   placeholder="Z.b. Apple, TSLA, Mercedes, US0378331005, 865985..."
-                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 text-xs text-slate-900 placeholder-slate-405 focus:outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+                  className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 text-xs text-slate-900 placeholder-slate-405 focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600"
                 />
                 
                 {isSearchingStocks && (
-                  <div className="absolute right-3 top-8.5 animate-spin rounded-full h-4 w-4 border-2 border-indigo-500 border-t-transparent" />
+                  <div className="absolute right-3 top-8.5 animate-spin rounded-full h-4 w-4 border-2 border-slate-600 border-t-transparent" />
                 )}
 
                 {/* Suggestions Dropdown */}
                 {stockSuggestions.length > 0 && (
                   <div className="absolute left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-xl z-50 max-h-56 overflow-y-auto divide-y divide-slate-100">
-                    <div className="p-2 text-[9px] font-bold text-indigo-600 bg-indigo-50/55 sticky top-0 uppercase tracking-wider">
+                    <div className="p-2 text-[9px] font-bold text-slate-800 bg-slate-50/55 sticky top-0 uppercase tracking-wider">
                       Empfohlene Treffer (Klicken zum Auto-Ausfüllen):
                     </div>
                     {stockSuggestions.map((s, idx) => (
@@ -1152,7 +1152,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     value={wlSymbol}
                     onChange={(e) => setWlSymbol(e.target.value.toUpperCase())}
                     placeholder="AAPL"
-                    className="w-full h-9 bg-white border border-slate-200 rounded-xl px-2.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-indigo-500"
+                    className="w-full h-9 bg-white border border-slate-200 rounded-xl px-2.5 text-xs font-mono font-bold text-slate-900 focus:outline-none focus:border-slate-600"
                   />
                 </div>
                 <div>
@@ -1162,7 +1162,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     value={wlName}
                     onChange={(e) => setWlName(e.target.value)}
                     placeholder="Apple Inc."
-                    className="w-full h-9 bg-white border border-slate-200 rounded-xl px-2.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-indigo-500"
+                    className="w-full h-9 bg-white border border-slate-200 rounded-xl px-2.5 text-xs font-semibold text-slate-900 focus:outline-none focus:border-slate-600"
                   />
                 </div>
                 <div>
@@ -1173,7 +1173,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     value={wlAtr}
                     onChange={(e) => setWlAtr(e.target.value)}
                     placeholder="5.25"
-                    className="w-full h-9 bg-white border border-slate-200 rounded-xl px-2.5 text-xs font-mono font-semibold text-slate-950 focus:outline-none focus:border-indigo-500"
+                    className="w-full h-9 bg-white border border-slate-200 rounded-xl px-2.5 text-xs font-mono font-semibold text-slate-950 focus:outline-none focus:border-slate-600"
                   />
                 </div>
                 <div>
@@ -1184,7 +1184,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     value={wlPrice}
                     onChange={(e) => setWlPrice(e.target.value)}
                     placeholder="220.50"
-                    className="w-full h-9 bg-white border border-slate-200 rounded-xl px-2.5 text-xs font-mono font-semibold text-slate-900 focus:outline-none focus:border-indigo-500"
+                    className="w-full h-9 bg-white border border-slate-200 rounded-xl px-2.5 text-xs font-mono font-semibold text-slate-900 focus:outline-none focus:border-slate-600"
                   />
                 </div>
               </div>
@@ -1298,9 +1298,9 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
             {/* Short Invert Check */}
             {crvValue !== null && crvValue >= 1.5 && (
-              <div className="p-4 rounded-2xl bg-indigo-50/50 text-indigo-900 border border-indigo-100/70 text-xs font-semibold leading-relaxed space-y-1">
-                <div className="flex items-center gap-1.5 text-indigo-700 font-bold text-[11px] uppercase tracking-wider mb-1 font-sans">
-                  <ShieldCheck className="h-4.5 w-4.5 text-indigo-650" />
+              <div className="p-4 rounded-2xl bg-slate-50/50 text-slate-900 border border-slate-100/70 text-xs font-semibold leading-relaxed space-y-1">
+                <div className="flex items-center gap-1.5 text-slate-900 font-bold text-[11px] uppercase tracking-wider mb-1 font-sans">
+                  <ShieldCheck className="h-4.5 w-4.5 text-slate-800" />
                   Sicherheitsposition Bereit ✅
                 </div>
                 <p className="opacity-90 font-sans">Mathematische Limits sind eingehalten. Vergewissere dich, dass deine psychologischen Checks komplett sind, um die Disziplingarantie freizugeben.</p>
