@@ -3,12 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { FileSpreadsheet, HelpCircle, ArrowUp } from "lucide-react";
+import { HelpCircle, ArrowUp } from "lucide-react";
 
 interface CompactHeaderProps {
   routineDate: string;
   onDateChange: (val: string) => void;
-  onCopyExcelLine: () => void;
   onOpenHelp: () => void;
   onCheckForUpdate: () => void;
   updateAvailable: boolean;
@@ -19,7 +18,6 @@ interface CompactHeaderProps {
 export default function CompactHeader({
   routineDate,
   onDateChange,
-  onCopyExcelLine,
   onOpenHelp,
   onCheckForUpdate,
   updateAvailable,
@@ -43,87 +41,72 @@ export default function CompactHeader({
       onDateChange(`${deMatch[3]}-${deMatch[2]}-${deMatch[1]}`);
       return;
     }
-    
+
     // Also accept generic input
     onDateChange(val);
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 shrink-0 z-40 px-3 sm:px-10 py-4 flex items-center justify-between h-20 shadow-sm shadow-slate-100 gap-2 max-w-full overflow-hidden">
-      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
-        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center h-11 w-11 shadow-sm overflow-hidden shrink-0">
-          <img src="/icon.svg" alt="Depotroutine Logo" className="h-9 w-9" />
-        </div>
+    <header className="bg-white border-b border-slate-200 shrink-0 z-40 px-3 sm:px-8 py-3 flex items-center justify-between gap-2 max-w-full overflow-hidden shadow-sm shadow-slate-100">
+      <div className="flex items-center gap-3 min-w-0">
+        <button
+          type="button"
+          onClick={updateAvailable ? onApplyUpdate : onCheckForUpdate}
+          title={
+            updateAvailable
+              ? `Neue Version verfügbar — Klick zum Aktualisieren (aktueller Build: ${__BUILD_VERSION__})`
+              : `Aktuelle Version: ${__BUILD_VERSION__} — Klick prüft auf Updates`
+          }
+          className="bg-white border border-slate-200 rounded-2xl flex items-center justify-center h-14 w-14 shadow-sm overflow-hidden shrink-0 hover:border-slate-300 transition-colors cursor-pointer"
+        >
+          <img src="/icon.svg" alt="Morgenroutine Logo" className="h-12 w-12" />
+        </button>
         <div className="min-w-0">
-          <div className="flex items-center gap-2">
+          <h1 className="text-xl font-bold tracking-tight text-slate-900 font-display leading-tight">
+            Morgenroutine
+          </h1>
+          <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
+            Handels-Wächter
+          </p>
+          {updateAvailable && (
             <button
               type="button"
-              onClick={updateAvailable ? onApplyUpdate : onCheckForUpdate}
-              title={
-                updateAvailable
-                  ? `Neue Version verfügbar — Klick zum Aktualisieren (aktueller Build: ${__BUILD_VERSION__})`
-                  : `Aktuelle Version: ${__BUILD_VERSION__} — Klick prüft auf Updates`
-              }
-              className="text-lg font-bold tracking-tight text-indigo-600 hover:text-indigo-700 transition-colors cursor-pointer"
+              onClick={onApplyUpdate}
+              className="mt-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition-colors animate-pulse"
+              title="Neue Version verfügbar — Klick zum Aktualisieren"
             >
-              Depotroutine
+              <ArrowUp className="w-3 h-3" />
+              Update verfügbar
             </button>
-            {updateAvailable && (
-              <button
-                type="button"
-                onClick={onApplyUpdate}
-                className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition-colors animate-pulse"
-                title="Neue Version verfügbar — Klick zum Aktualisieren"
-              >
-                <ArrowUp className="w-3 h-3" />
-                Update verfügbar
-              </button>
-            )}
-            <span className="hidden sm:inline w-1.5 h-1.5 rounded-full bg-slate-300"></span>
-            <h1 className="hidden sm:inline text-sm font-bold tracking-tight text-slate-900 font-display">
-              MORGENROUTINE &amp; HANDELS-WÄCHTER
-            </h1>
-          </div>
-          <p className="text-[10px] text-slate-400 font-bold tracking-widest uppercase mt-0.5">
-            Sicherheitsfokus • Desktop &amp; Mobil • unbestechlich
-          </p>
+          )}
         </div>
       </div>
-      
+
       <div className="flex items-center gap-2 shrink-0">
-        {/* Zentraler Routine-Datumswähler */}
-        <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200">
-          <span className="text-[10px] font-bold text-slate-400 font-mono tracking-widest">DATUM</span>
+        <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
+          <span className="text-[9px] font-bold text-slate-400 font-mono tracking-widest hidden sm:inline">DATUM</span>
           <input
             type="text"
             value={getDeDateString(routineDate)}
             onChange={(e) => handleInputValueChange(e.target.value)}
             placeholder="TT.MM.JJJJ"
-            className="w-20 sm:w-24 text-xs sm:text-sm font-bold font-mono bg-transparent text-indigo-600 focus:outline-none focus:ring-0 placeholder-slate-400"
+            className="w-[78px] text-[11px] font-bold font-mono bg-transparent text-slate-800 focus:outline-none focus:ring-0 placeholder-slate-400"
           />
         </div>
-        
-        {/* Quick Excel Export Button im Header */}
-        <button
-          onClick={onCopyExcelLine}
-          className="flex items-center justify-center h-9 w-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 rounded-xl shadow-xs transition-all active:scale-95 duration-200"
-          title="Excel-Zeile kopieren (Strg+V)"
-        >
-          <FileSpreadsheet className="h-4.5 w-4.5" />
-        </button>
 
         <button
           onClick={onOpenHelp}
-          className="flex items-center justify-center h-9 w-9 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded-xl shadow-xs transition-all active:scale-95 duration-200 shrink-0"
-          title="Handbuch / Regel-Hilfe öffnen (zeigt Hilfe zum aktuellen Tab)"
+          className="flex items-center justify-center h-8 w-8 bg-slate-50 hover:bg-slate-100 text-slate-700 hover:text-slate-900 border border-slate-200 rounded-lg shadow-xs transition-all active:scale-95 duration-200 shrink-0"
+          title="Handbuch / Regel-Hilfe öffnen"
         >
-          <HelpCircle className="h-4.5 w-4.5" />
+          <HelpCircle className="h-4 w-4" />
         </button>
 
         <span
-          className={`h-2.5 w-2.5 rounded-full ${
+          className={`h-2 w-2 rounded-full ${
             isSystemReady ? "bg-emerald-500 shadow-lg shadow-emerald-500/50 animate-pulse" : "bg-slate-300"
           }`}
+          title={isSystemReady ? "System bereit" : "System nicht bereit"}
         ></span>
       </div>
     </header>

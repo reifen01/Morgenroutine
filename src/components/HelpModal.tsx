@@ -91,15 +91,15 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
         className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-indigo-50">
+        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-indigo-600" />
+            <BookOpen className="w-5 h-5 text-slate-800" />
             <h2 className="font-bold text-slate-900">Handbuch</h2>
             <a
               href="https://github.com/reifen01/Morgenroutine/blob/main/HANDBUCH.md"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1 ml-2"
+              className="text-xs text-slate-800 hover:text-slate-900 flex items-center gap-1 ml-2"
               title="Auf GitHub öffnen"
             >
               GitHub <ExternalLink className="w-3 h-3" />
@@ -108,7 +108,7 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
               href="/anleitung.html"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+              className="text-xs text-slate-800 hover:text-slate-900 flex items-center gap-1"
               title="Installations-Anleitung öffnen"
             >
               Installation <ExternalLink className="w-3 h-3" />
@@ -137,7 +137,7 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
                     "w-full text-left px-3 py-1.5 transition-colors " +
                     (s.level === 3 ? "pl-6 text-xs " : "font-semibold ") +
                     (activeSlug === s.slug
-                      ? "bg-indigo-100 text-indigo-700"
+                      ? "bg-slate-100 text-slate-900"
                       : "text-slate-600 hover:bg-slate-100")
                   }
                   title={s.title}
@@ -169,7 +169,7 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
                     <table className="text-xs border-collapse border border-slate-200">{children}</table>
                   </div>
                 ),
-                thead: ({ children }) => <thead className="bg-indigo-50">{children}</thead>,
+                thead: ({ children }) => <thead className="bg-slate-50">{children}</thead>,
                 th: ({ children }) => <th className="text-left px-2 py-1.5 border border-slate-200 font-semibold text-slate-900">{children}</th>,
                 td: ({ children }) => <td className="px-2 py-1.5 border border-slate-200 align-top">{children}</td>,
                 code: ({ children, className }) => {
@@ -181,11 +181,11 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
                 },
                 pre: ({ children }) => <pre className="my-2">{children}</pre>,
                 blockquote: ({ children }) => (
-                  <blockquote className="border-l-4 border-indigo-300 pl-4 my-3 italic text-slate-600">{children}</blockquote>
+                  <blockquote className="border-l-4 border-slate-300 pl-4 my-3 italic text-slate-600">{children}</blockquote>
                 ),
                 hr: () => <hr className="my-6 border-slate-200" />,
                 a: ({ children, href }) => (
-                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-indigo-600 hover:text-indigo-800 underline">
+                  <a href={href} target="_blank" rel="noopener noreferrer" className="text-slate-800 hover:text-slate-900 underline">
                     {children}
                   </a>
                 ),

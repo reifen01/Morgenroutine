@@ -528,17 +528,17 @@ export function CombinedJournal({
     if (salesThatConsumed.length === 0) return null;
 
     return (
-      <div className="mt-2 space-y-1 bg-indigo-50/20 border border-indigo-100/60 p-2.5 rounded-xl text-[10px] shadow-sm max-w-[280px]">
-        <span className="block text-[8px] text-indigo-500 uppercase tracking-widest font-extrabold mb-1">
+      <div className="mt-2 space-y-1 bg-slate-50/20 border border-slate-100/60 p-2.5 rounded-xl text-[10px] shadow-sm max-w-[280px]">
+        <span className="block text-[8px] text-slate-600 uppercase tracking-widest font-extrabold mb-1">
           💸 Teilrealisierungen (Ausgangskanäle)
         </span>
         {salesThatConsumed.map((sale) => {
           const lot = sale.consumedLots!.find(l => l.purchaseId === purchaseId);
           const qtyUsed = lot ? lot.sharesFromLot : 0;
           return (
-            <div key={`purchase-${purchaseId}-sale-${sale.id}`} className="flex items-center justify-between text-slate-600 gap-1.5 border-b border-dashed border-indigo-100/30 last:border-b-0 py-0.5">
+            <div key={`purchase-${purchaseId}-sale-${sale.id}`} className="flex items-center justify-between text-slate-600 gap-1.5 border-b border-dashed border-slate-100/30 last:border-b-0 py-0.5">
               <span>• Realisiert am {formatToGermanDate(sale.verkaufsDatum)} (@ € {formatAccounting(sale.verkaufsKurs)})</span>
-              <span className="font-mono font-extrabold text-indigo-700 bg-indigo-50 px-1 border border-indigo-150/50 rounded">-{qtyUsed.toFixed(4)} Stk</span>
+              <span className="font-mono font-extrabold text-slate-900 bg-slate-50 px-1 border border-slate-200/50 rounded">-{qtyUsed.toFixed(4)} Stk</span>
             </div>
           );
         })}
@@ -553,7 +553,7 @@ export function CombinedJournal({
       <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
           <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-indigo-50 border border-indigo-100/70 rounded-xl text-indigo-600">
+            <div className="p-2.5 bg-slate-50 border border-slate-100/70 rounded-xl text-slate-800">
               <History className="h-5 w-5" />
             </div>
             <div>
@@ -581,7 +581,7 @@ export function CombinedJournal({
                   setShowAddSaleForm(false);
                 }
               }}
-              className="h-9 px-3.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+              className="h-9 px-3.5 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
             >
               <Plus className="h-4 w-4" /> {showAddPurchaseForm ? "Formular schließen" : "📥 Kauf buchen"}
             </button>
@@ -1076,7 +1076,7 @@ export function CombinedJournal({
                     name="taxMethodRadio"
                     checked={saleTaxMethod === 'durchschnitt'}
                     onChange={() => setSaleTaxMethod('durchschnitt')}
-                    className="mt-0.5 text-indigo-600 h-4 w-4 focus:ring-indigo-500 cursor-pointer"
+                    className="mt-0.5 text-slate-800 h-4 w-4 focus:ring-slate-600 cursor-pointer"
                   />
                   <div>
                     <span className="block font-bold text-slate-800 text-xs">A: Gleitende Durchschnittsmethode</span>
@@ -1092,7 +1092,7 @@ export function CombinedJournal({
                     name="taxMethodRadio"
                     checked={saleTaxMethod === 'FIFO'}
                     onChange={() => setSaleTaxMethod('FIFO')}
-                    className="mt-0.5 text-indigo-600 h-4 w-4 focus:ring-indigo-500 cursor-pointer"
+                    className="mt-0.5 text-slate-800 h-4 w-4 focus:ring-slate-600 cursor-pointer"
                   />
                   <div>
                     <span className="block font-bold text-slate-800 text-xs">B: FIFO-Methode (First-In, First-Out)</span>
@@ -1259,7 +1259,7 @@ export function CombinedJournal({
                 <button
                   type="button"
                   onClick={() => setTxTypeFilter('buy')}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${txTypeFilter === 'buy' ? 'bg-indigo-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700'}`}
+                  className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${txTypeFilter === 'buy' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700'}`}
                 >
                   📥 Käufe
                 </button>
@@ -1297,7 +1297,7 @@ export function CombinedJournal({
               onClick={() => setJournalTab('combined')}
               className={`pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider relative transition-all cursor-pointer ${
                 journalTab === 'combined'
-                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  ? 'text-slate-800 border-b-2 border-slate-800'
                   : 'text-slate-400 hover:text-slate-600 border-b-2 border-transparent'
               }`}
             >
@@ -1307,7 +1307,7 @@ export function CombinedJournal({
               onClick={() => setJournalTab('purchases')}
               className={`pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider relative transition-all cursor-pointer ${
                 journalTab === 'purchases'
-                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  ? 'text-slate-800 border-b-2 border-slate-800'
                   : 'text-slate-400 hover:text-slate-600 border-b-2 border-transparent'
               }`}
             >
@@ -1317,7 +1317,7 @@ export function CombinedJournal({
               onClick={() => setJournalTab('sales')}
               className={`pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider relative transition-all cursor-pointer ${
                 journalTab === 'sales'
-                  ? 'text-indigo-600 border-b-2 border-indigo-600'
+                  ? 'text-slate-800 border-b-2 border-slate-800'
                   : 'text-slate-400 hover:text-slate-600 border-b-2 border-transparent'
               }`}
             >
@@ -1395,7 +1395,7 @@ export function CombinedJournal({
                         </td>
                         <td className="py-4">
                           <span className="block font-bold text-slate-900 text-sm sm:text-base">{tx.name}</span>
-                          <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-indigo-700 bg-indigo-50 border border-indigo-100/40 rounded uppercase mt-1">
+                          <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase mt-1">
                             {String(tx.key).toUpperCase()}
                           </span>
                           {tx.notiz && (
@@ -1409,7 +1409,7 @@ export function CombinedJournal({
                             </p>
                           )}
                           {tx.ziele && (
-                            <p className="text-[10px] text-slate-700 font-medium italic mt-1.5 max-w-[200px] whitespace-normal leading-tight border-l-2 border-indigo-500 pl-2">
+                            <p className="text-[10px] text-slate-700 font-medium italic mt-1.5 max-w-[200px] whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
                               <b>Ziele:</b> " {tx.ziele} "
                             </p>
                           )}
@@ -1418,7 +1418,7 @@ export function CombinedJournal({
                           <span className="block px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[9.5px] font-bold border border-slate-200 max-w-max whitespace-nowrap">
                             🏢 {tx.depot}
                           </span>
-                          <span className="block px-2 py-0.5 rounded bg-indigo-50 text-indigo-700 font-mono text-[9.5px] font-bold border border-indigo-100 max-w-max mt-1 whitespace-nowrap">
+                          <span className="block px-2 py-0.5 rounded bg-slate-50 text-slate-900 font-mono text-[9.5px] font-bold border border-slate-100 max-w-max mt-1 whitespace-nowrap">
                             👤 {tx.besitzerName}
                           </span>
                         </td>
@@ -1473,7 +1473,7 @@ export function CombinedJournal({
                                 <span className={`px-1.5 py-0.5 rounded-md font-mono text-[8px] tracking-wide border ${
                                   tx.taxMethod === 'FIFO'
                                     ? 'bg-amber-100/40 text-amber-800 border-amber-200/40'
-                                    : 'bg-indigo-50 text-indigo-800 border border-indigo-150'
+                                    : 'bg-slate-50 text-slate-900 border border-slate-200'
                                 }`}>
                                   {tx.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
                                 </span>
@@ -1501,7 +1501,7 @@ export function CombinedJournal({
                               <>
                                 <button
                                   onClick={() => handleStartEditPurchase(tx.originalItem)}
-                                  className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                                  className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
                                   title="Kauf bearbeiten"
                                 >
                                   <Edit className="h-3.5 w-3.5" />
@@ -1522,7 +1522,7 @@ export function CombinedJournal({
                               <>
                                 <button
                                   onClick={() => handleStartEditSale(tx.originalItem)}
-                                  className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-400 hover:text-indigo-600 transition-colors cursor-pointer"
+                                  className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
                                   title="Verkauf bearbeiten"
                                 >
                                   <Edit className="h-3.5 w-3.5" />
@@ -1631,7 +1631,7 @@ export function CombinedJournal({
                             <span className="block text-[9px] font-semibold text-slate-400 font-mono uppercase">
                               🗓️ {formatToGermanDate(purchase.kaufDatum)}
                             </span>
-                            <span className="block px-1.5 py-0.5 rounded font-mono text-[9px] font-extrabold text-indigo-600 bg-indigo-50 uppercase border border-indigo-100/50">
+                            <span className="block px-1.5 py-0.5 rounded font-mono text-[9px] font-extrabold text-slate-800 bg-slate-50 uppercase border border-slate-100/50">
                               {String(purchase.key).toUpperCase()}
                             </span>
                           </div>
@@ -1646,7 +1646,7 @@ export function CombinedJournal({
                             </p>
                           )}
                           {purchase.ziele && (
-                            <p className="text-[10px] text-slate-700 font-medium italic mt-1.5 max-w-[245px] whitespace-normal leading-tight border-l-2 border-indigo-500 pl-2">
+                            <p className="text-[10px] text-slate-700 font-medium italic mt-1.5 max-w-[245px] whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
                               <b>Ziele:</b> " {purchase.ziele} "
                             </p>
                           )}
@@ -1657,7 +1657,7 @@ export function CombinedJournal({
                           </span>
                         </td>
                         <td className="py-4">
-                          <span className="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-mono text-[10px] font-bold border border-indigo-150 whitespace-nowrap">
+                          <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200 whitespace-nowrap">
                             {purchase.besitzerName || "Standard Besitzer"}
                           </span>
                         </td>
@@ -1674,7 +1674,7 @@ export function CombinedJournal({
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               onClick={() => handleStartEditPurchase(purchase)}
-                              className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-450 hover:text-indigo-600 transition-colors cursor-pointer"
+                              className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
                               title="Anschaffung ändern / bearbeiten"
                             >
                               <Edit className="h-3.5 w-3.5" />
@@ -1787,7 +1787,7 @@ export function CombinedJournal({
                             <span className={`inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
                               trade.taxMethod === 'FIFO'
                                 ? "bg-amber-100/40 text-amber-800 border border-amber-200/40"
-                                : "bg-indigo-50 text-indigo-700 border border-indigo-150"
+                                : "bg-slate-50 text-slate-900 border border-slate-200"
                             }`} title={trade.taxMethod === 'FIFO' ? 'First-In, First-Out steuerliche Veräußerung' : 'Erfassung über den gleitenden Durchschnittspreis'}>
                               {trade.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
                             </span>
@@ -1804,7 +1804,7 @@ export function CombinedJournal({
                           </span>
                         </td>
                         <td className="py-4">
-                          <span className="px-2 py-1 rounded bg-indigo-50 text-indigo-700 font-mono text-[10px] font-bold border border-indigo-150 whitespace-nowrap">
+                          <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200 whitespace-nowrap">
                             {trade.besitzerName || "Standard Besitzer"}
                           </span>
                         </td>
@@ -1837,7 +1837,7 @@ export function CombinedJournal({
                           <div className="flex items-center justify-center gap-1.5">
                             <button
                               onClick={() => handleStartEditSale(trade)}
-                              className="p-1.5 hover:bg-indigo-50 rounded-lg text-slate-450 hover:text-indigo-600 transition-colors cursor-pointer"
+                              className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
                               title="Eintrag ändern / bearbeiten"
                             >
                               <Edit className="h-3.5 w-3.5" />

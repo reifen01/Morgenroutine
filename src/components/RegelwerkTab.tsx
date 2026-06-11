@@ -32,7 +32,7 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
           onClick={() => setActiveSubTab("regeln")}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs sm:text-xs font-bold transition-all cursor-pointer ${
             activeSubTab === "regeln"
-              ? "bg-white text-indigo-600 shadow-sm"
+              ? "bg-white text-slate-800 shadow-sm"
               : "text-slate-500 hover:text-slate-800"
           }`}
         >
@@ -44,7 +44,7 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
           onClick={() => setActiveSubTab("coach")}
           className={`flex-1 flex items-center justify-center gap-1.5 py-2 px-3 rounded-xl text-xs sm:text-xs font-bold transition-all cursor-pointer ${
             activeSubTab === "coach"
-              ? "bg-white text-indigo-600 shadow-sm"
+              ? "bg-white text-slate-800 shadow-sm"
               : "text-slate-500 hover:text-slate-800"
           }`}
         >
@@ -59,7 +59,7 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
       {/* Tab Header block */}
       <div className="border-b border-slate-50 pb-4">
         <h2 className="text-base sm:text-lg font-bold text-slate-900 flex items-center gap-2 font-display">
-          <GraduationCap className="h-5 w-5 text-indigo-600" />
+          <GraduationCap className="h-5 w-5 text-slate-800" />
           Master-Regelwerk (Unbestechliche Handelsbestimmungen)
         </h2>
         <p className="text-xs text-slate-400 font-semibold mt-1">
@@ -68,12 +68,12 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
       </div>
 
       {/* Die 7 größten Denkfehler (Rene's PDF) */}
-      <div className="bg-indigo-50/20 border border-indigo-100/70 rounded-2xl p-5 sm:p-6 space-y-4">
-        <h3 className="text-sm sm:text-base font-bold text-indigo-950 flex items-center gap-1.5 font-display">
-          <ShieldAlert className="h-4.5 w-4.5 text-indigo-650" />
+      <div className="bg-slate-50/20 border border-slate-100/70 rounded-2xl p-5 sm:p-6 space-y-4">
+        <h3 className="text-sm sm:text-base font-bold text-slate-950 flex items-center gap-1.5 font-display">
+          <ShieldAlert className="h-4.5 w-4.5 text-slate-800" />
           🧠 Die 7 größten Denkfehler von Tradern (René Berteit)
         </h3>
-        <p className="text-xs text-indigo-900/80 font-medium leading-relaxed">
+        <p className="text-xs text-slate-900/80 font-medium leading-relaxed">
           Das unbestechliche System schützt dein Kapital vor deinem eigenen Ego. Präge dir diese psychologischen Hürden ein:
         </p>
         
@@ -105,7 +105,7 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
       {/* Section 2: US-Handelszeiten & Taktisches Timing */}
       <div className="bg-slate-50/50 border border-slate-100 rounded-2xl p-5 sm:p-6 space-y-4">
         <h3 className="text-xs sm:text-sm font-bold text-slate-800 flex items-center gap-1.5 font-display uppercase tracking-widest">
-          <Clock className="h-4.5 w-4.5 text-indigo-650" />
+          <Clock className="h-4.5 w-4.5 text-slate-800" />
           ⏱️ US-Handelszeiten &amp; Taktisches Timing (Österreich-Klausel)
         </h3>
         
@@ -131,13 +131,13 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
             </p>
           </div>
 
-          <div className="p-4 bg-indigo-50/30 border border-indigo-100 rounded-xl space-y-1.5 shadow-sm">
-            <span className="font-bold text-indigo-950 block text-xs sm:text-sm flex items-center gap-0.5 uppercase tracking-wide">
+          <div className="p-4 bg-slate-50/30 border border-slate-100 rounded-xl space-y-1.5 shadow-sm">
+            <span className="font-bold text-slate-950 block text-xs sm:text-sm flex items-center gap-0.5 uppercase tracking-wide">
               3.3 Das Goldene Window (16:00 - 21:30)
             </span>
             <p className="text-slate-750 text-xs font-medium leading-relaxed font-sans">
               Die Wallstreet-Profis haben ihre Richtung für den Handelstag festgeschrieben. Spreads schrumpfen auf ein absolutes Minimum zusammen (Spreads oft &lt; 0.1%).
-              <br/><strong className="text-indigo-700">Systemregel: Das einzig zulässige Zeitfenster für deine Nachkäufe und Platzierungen!</strong>
+              <br/><strong className="text-slate-900">Systemregel: Das einzig zulässige Zeitfenster für deine Nachkäufe und Platzierungen!</strong>
             </p>
           </div>
         </div>
@@ -147,9 +147,9 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs sm:text-sm">
         
         {/* Risk & rounding rules */}
-        <div className="p-5 bg-indigo-50/10 border border-indigo-100/50 rounded-2xl space-y-2">
+        <div className="p-5 bg-slate-50/10 border border-slate-100/50 rounded-2xl space-y-2">
           <h4 className="font-bold text-slate-900 flex items-center gap-1.5 font-display text-sm">
-            <Percent className="h-4.5 w-4.5 text-indigo-600" />
+            <Percent className="h-4.5 w-4.5 text-slate-800" />
             1. Die 1%-Positionsgröße &amp; Abrundung
           </h4>
           <p className="text-slate-650 text-xs leading-relaxed font-medium">
@@ -159,9 +159,9 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
         </div>
 
         {/* Dynamic ATR stop rules */}
-        <div className="p-5 bg-indigo-50/10 border border-indigo-100/50 rounded-2xl space-y-2">
+        <div className="p-5 bg-slate-50/10 border border-slate-100/50 rounded-2xl space-y-2">
           <h4 className="font-bold text-slate-900 flex items-center gap-1.5 font-display text-sm">
-            <Compass className="h-4.5 w-4.5 text-indigo-600" />
+            <Compass className="h-4.5 w-4.5 text-slate-800" />
             2. Mathematische Stop-Loss Bestimmung (2x ATR)
           </h4>
           <p className="text-slate-650 text-xs leading-relaxed font-medium">
@@ -173,7 +173,7 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
         {/* Clean Slate weekend check */}
         <div className="p-5 bg-slate-50/50 border border-slate-100 rounded-2xl space-y-2">
           <h4 className="font-bold text-slate-900 flex items-center gap-1.5 font-display text-sm">
-            <FileText className="h-4.5 w-4.5 text-indigo-600" />
+            <FileText className="h-4.5 w-4.5 text-slate-800" />
             3. Der wöchentliche "Clean Slate"-Test (Tabula Rasa)
           </h4>
           <p className="text-slate-650 text-xs leading-relaxed font-medium">
@@ -186,7 +186,7 @@ export default function RegelwerkTab({ routineDate }: RegelwerkTabProps) {
         {/* Austrian taxes specs */}
         <div className="p-5 bg-slate-50/50 border border-slate-100 rounded-2xl space-y-2">
           <h4 className="font-bold text-slate-900 flex items-center gap-1.5 font-display text-sm">
-            <Coins className="h-4.5 w-4.5 text-indigo-650" />
+            <Coins className="h-4.5 w-4.5 text-slate-800" />
             4. Österreichs steuereinfaches Recht (DADAT-Konto)
           </h4>
           <p className="text-slate-650 text-xs leading-relaxed font-medium">

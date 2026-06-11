@@ -34,7 +34,7 @@ export default defineConfig(() => {
           name: 'Morgenroutine & Handels-Wächter',
           short_name: 'Morgenroutine',
           description: 'Tägliche Handels-Morgenroutine, Portfolio-Tracking und KI-Coach.',
-          theme_color: '#4f46e5',
+          theme_color: '#1e293b',
           background_color: '#F4F4F7',
           display: 'standalone',
           orientation: 'portrait',

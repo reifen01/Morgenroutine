@@ -90,17 +90,17 @@ export default function PWAInstallPrompt() {
           </div>
           <ol className="text-xs text-slate-600 space-y-2 mt-3">
             <li className="flex gap-2">
-              <span className="font-bold text-indigo-600">1.</span>
+              <span className="font-bold text-slate-800">1.</span>
               <span>
                 Tippe unten auf das <Share className="inline h-4 w-4 text-blue-500" /> Teilen-Symbol
               </span>
             </li>
             <li className="flex gap-2">
-              <span className="font-bold text-indigo-600">2.</span>
+              <span className="font-bold text-slate-800">2.</span>
               <span>Wähle <strong>"Zum Home-Bildschirm"</strong></span>
             </li>
             <li className="flex gap-2">
-              <span className="font-bold text-indigo-600">3.</span>
+              <span className="font-bold text-slate-800">3.</span>
               <span>Tippe oben rechts auf <strong>"Hinzufügen"</strong></span>
             </li>
           </ol>
@@ -112,8 +112,8 @@ export default function PWAInstallPrompt() {
   return (
     <div className="fixed bottom-4 right-4 left-4 sm:left-auto sm:w-96 z-50">
       <div className="p-4 rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200 flex items-start gap-3">
-        <div className="h-10 w-10 rounded-xl bg-indigo-100 flex items-center justify-center shrink-0">
-          <Download className="h-5 w-5 text-indigo-600" />
+        <div className="h-10 w-10 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
+          <Download className="h-5 w-5 text-slate-800" />
         </div>
         <div className="flex-1 min-w-0">
           <h4 className="text-sm font-bold text-slate-900">App installieren</h4>
@@ -123,7 +123,7 @@ export default function PWAInstallPrompt() {
           <div className="flex gap-2 mt-3">
             <button
               onClick={handleInstall}
-              className="text-xs font-semibold text-white bg-indigo-600 hover:bg-indigo-700 px-3 py-1.5 rounded-lg transition-colors"
+              className="text-xs font-semibold text-white bg-slate-800 hover:bg-slate-900 px-3 py-1.5 rounded-lg transition-colors"
             >
               Installieren
             </button>
