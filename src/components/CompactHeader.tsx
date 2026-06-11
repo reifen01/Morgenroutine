@@ -10,6 +10,7 @@ interface CompactHeaderProps {
   onDateChange: (val: string) => void;
   onCopyExcelLine: () => void;
   onOpenHelp: () => void;
+  onCheckForUpdate: () => void;
   isSystemReady: boolean;
 }
 
@@ -18,6 +19,7 @@ export default function CompactHeader({
   onDateChange,
   onCopyExcelLine,
   onOpenHelp,
+  onCheckForUpdate,
   isSystemReady,
 }: CompactHeaderProps) {
   // Convert YYYY-MM-DD back to DD.MM.YYYY for display
@@ -51,12 +53,14 @@ export default function CompactHeader({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold tracking-tight text-indigo-600">LUMINA</span>
-            <span
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200"
-              title="Build-Version (Commit-SHA)"
+            <button
+              type="button"
+              onClick={onCheckForUpdate}
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors cursor-pointer"
+              title="Auf Updates prüfen — Klick lädt die neueste Version (falls vorhanden)"
             >
               {__BUILD_VERSION__}
-            </span>
+            </button>
             <span className="hidden sm:inline w-1.5 h-1.5 rounded-full bg-slate-300"></span>
             <h1 className="hidden sm:inline text-sm font-bold tracking-tight text-slate-900 font-display">
               MORGENROUTINE &amp; HANDELS-WÄCHTER

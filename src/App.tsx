@@ -54,6 +54,39 @@ export default function App() {
     "ai-coach": "disziplin-quote",
     workspace: "was-die-app-heute-kann",
   };
+
+  const handleCheckForUpdate = async () => {
+    if (!("serviceWorker" in navigator)) {
+      showToast("Update-Suche", "Dein Browser unterstützt keine Service Worker.", "warning");
+      return;
+    }
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        showToast("Update-Suche", "Kein Service Worker registriert — bitte Seite neu laden.", "warning");
+        return;
+      }
+      showToast("Suche nach Updates…", `Aktuelle Version: ${__BUILD_VERSION__}`, "success");
+      await registration.update();
+      // The update() call resolves once Vercel has been checked.
+      // If a new SW is installing/waiting, PWAUpdatePrompt's onNeedRefresh
+      // will fire and show the update banner. Otherwise, the version is
+      // already current.
+      setTimeout(() => {
+        if (registration.waiting || registration.installing) {
+          showToast(
+            "Update gefunden",
+            "Eine neue Version wird geladen. Sieh dir das Banner unten rechts an.",
+            "success"
+          );
+        } else {
+          showToast("Bereits aktuell", `Du bist auf der neuesten Version (${__BUILD_VERSION__}).`, "success");
+        }
+      }, 1500);
+    } catch (err: any) {
+      showToast("Update-Suche fehlgeschlagen", err?.message || "Unbekannter Fehler", "error");
+    }
+  };
   
   // Market index states
   const [marketState, setMarketState] = useState<MarketState>(() => {
@@ -650,6 +683,7 @@ export default function App() {
         onDateChange={setRoutineDate}
         onCopyExcelLine={handleCopyExcelLine}
         onOpenHelp={() => setHelpOpen(true)}
+        onCheckForUpdate={handleCheckForUpdate}
         isSystemReady={isSystemReady}
       />
 
