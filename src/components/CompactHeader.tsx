@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CloudSun, FileSpreadsheet, BookOpen, HelpCircle, ArrowUp } from "lucide-react";
+import { FileSpreadsheet, HelpCircle, ArrowUp } from "lucide-react";
 
 interface CompactHeaderProps {
   routineDate: string;
@@ -49,12 +49,12 @@ export default function CompactHeader({
   };
 
   return (
-    <header className="bg-white border-b border-slate-200 shrink-0 z-40 px-6 sm:px-10 py-4 flex items-center justify-between h-20 shadow-sm shadow-slate-100">
-      <div className="flex items-center gap-4">
-        <div className="bg-indigo-50 border border-indigo-100 p-2.5 rounded-2xl text-indigo-600 flex items-center justify-center h-11 w-11 shadow-sm">
-          <CloudSun className="h-5.5 w-5.5 text-indigo-500" />
+    <header className="bg-white border-b border-slate-200 shrink-0 z-40 px-3 sm:px-10 py-4 flex items-center justify-between h-20 shadow-sm shadow-slate-100 gap-2 max-w-full overflow-hidden">
+      <div className="flex items-center gap-2 sm:gap-4 min-w-0">
+        <div className="bg-indigo-50 border border-indigo-100 rounded-2xl flex items-center justify-center h-11 w-11 shadow-sm overflow-hidden shrink-0">
+          <img src="/icon.svg" alt="Depotroutine Logo" className="h-9 w-9" />
         </div>
-        <div>
+        <div className="min-w-0">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -66,7 +66,7 @@ export default function CompactHeader({
               }
               className="text-lg font-bold tracking-tight text-indigo-600 hover:text-indigo-700 transition-colors cursor-pointer"
             >
-              LUMINA
+              Depotroutine
             </button>
             {updateAvailable && (
               <button
@@ -90,7 +90,7 @@ export default function CompactHeader({
         </div>
       </div>
       
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 shrink-0">
         {/* Zentraler Routine-Datumswähler */}
         <div className="flex items-center gap-2 bg-slate-50 px-3.5 py-1.5 rounded-xl border border-slate-200">
           <span className="text-[10px] font-bold text-slate-400 font-mono tracking-widest">DATUM</span>
@@ -114,21 +114,11 @@ export default function CompactHeader({
 
         <button
           onClick={onOpenHelp}
-          className="flex items-center justify-center h-9 w-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 rounded-xl shadow-xs transition-all active:scale-95 duration-200"
+          className="flex items-center justify-center h-9 w-9 bg-indigo-50 hover:bg-indigo-100 text-indigo-600 hover:text-indigo-700 border border-indigo-200 rounded-xl shadow-xs transition-all active:scale-95 duration-200 shrink-0"
           title="Handbuch / Regel-Hilfe öffnen (zeigt Hilfe zum aktuellen Tab)"
         >
           <HelpCircle className="h-4.5 w-4.5" />
         </button>
-
-        <a
-          href="/anleitung.html"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="flex items-center justify-center h-9 w-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 rounded-xl shadow-xs transition-all active:scale-95 duration-200"
-          title="Installations-Anleitung öffnen"
-        >
-          <BookOpen className="h-4 w-4" />
-        </a>
 
         <span
           className={`h-2.5 w-2.5 rounded-full ${

@@ -104,6 +104,15 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
             >
               GitHub <ExternalLink className="w-3 h-3" />
             </a>
+            <a
+              href="/anleitung.html"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-indigo-600 hover:text-indigo-800 flex items-center gap-1"
+              title="Installations-Anleitung öffnen"
+            >
+              Installation <ExternalLink className="w-3 h-3" />
+            </a>
           </div>
           <button
             onClick={onClose}
