@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CloudSun, FileSpreadsheet, BookOpen } from "lucide-react";
+import { CloudSun, FileSpreadsheet, BookOpen, HelpCircle } from "lucide-react";
 
 interface CompactHeaderProps {
   routineDate: string;
   onDateChange: (val: string) => void;
   onCopyExcelLine: () => void;
+  onOpenHelp: () => void;
   isSystemReady: boolean;
 }
 
@@ -16,6 +17,7 @@ export default function CompactHeader({
   routineDate,
   onDateChange,
   onCopyExcelLine,
+  onOpenHelp,
   isSystemReady,
 }: CompactHeaderProps) {
   // Convert YYYY-MM-DD back to DD.MM.YYYY for display
@@ -86,6 +88,14 @@ export default function CompactHeader({
           title="Excel-Zeile kopieren (Strg+V)"
         >
           <FileSpreadsheet className="h-4.5 w-4.5" />
+        </button>
+
+        <button
+          onClick={onOpenHelp}
+          className="flex items-center justify-center h-9 w-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 rounded-xl shadow-xs transition-all active:scale-95 duration-200"
+          title="Handbuch / Regel-Hilfe öffnen (zeigt Hilfe zum aktuellen Tab)"
+        >
+          <HelpCircle className="h-4.5 w-4.5" />
         </button>
 
         <a
