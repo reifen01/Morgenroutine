@@ -3,12 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CloudSun, FileSpreadsheet, BookOpen } from "lucide-react";
+import { CloudSun, FileSpreadsheet, BookOpen, HelpCircle } from "lucide-react";
 
 interface CompactHeaderProps {
   routineDate: string;
   onDateChange: (val: string) => void;
   onCopyExcelLine: () => void;
+  onOpenHelp: () => void;
+  onCheckForUpdate: () => void;
   isSystemReady: boolean;
 }
 
@@ -16,6 +18,8 @@ export default function CompactHeader({
   routineDate,
   onDateChange,
   onCopyExcelLine,
+  onOpenHelp,
+  onCheckForUpdate,
   isSystemReady,
 }: CompactHeaderProps) {
   // Convert YYYY-MM-DD back to DD.MM.YYYY for display
@@ -49,12 +53,14 @@ export default function CompactHeader({
         <div>
           <div className="flex items-center gap-2">
             <span className="text-lg font-bold tracking-tight text-indigo-600">LUMINA</span>
-            <span
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200"
-              title="Build-Version (Commit-SHA)"
+            <button
+              type="button"
+              onClick={onCheckForUpdate}
+              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors cursor-pointer"
+              title="Auf Updates prüfen — Klick lädt die neueste Version (falls vorhanden)"
             >
               {__BUILD_VERSION__}
-            </span>
+            </button>
             <span className="hidden sm:inline w-1.5 h-1.5 rounded-full bg-slate-300"></span>
             <h1 className="hidden sm:inline text-sm font-bold tracking-tight text-slate-900 font-display">
               MORGENROUTINE &amp; HANDELS-WÄCHTER
@@ -86,6 +92,14 @@ export default function CompactHeader({
           title="Excel-Zeile kopieren (Strg+V)"
         >
           <FileSpreadsheet className="h-4.5 w-4.5" />
+        </button>
+
+        <button
+          onClick={onOpenHelp}
+          className="flex items-center justify-center h-9 w-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 border border-slate-200 hover:border-indigo-200 rounded-xl shadow-xs transition-all active:scale-95 duration-200"
+          title="Handbuch / Regel-Hilfe öffnen (zeigt Hilfe zum aktuellen Tab)"
+        >
+          <HelpCircle className="h-4.5 w-4.5" />
         </button>
 
         <a

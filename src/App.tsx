@@ -16,6 +16,7 @@ import {
   FolderSync
 } from "lucide-react";
 import CompactHeader from "./components/CompactHeader";
+import HelpModal from "./components/HelpModal";
 import MorgenroutineTab from "./components/MorgenroutineTab";
 import RechnerTab from "./components/RechnerTab";
 import PortfolioTab from "./components/PortfolioTab";
@@ -41,6 +42,51 @@ export default function App() {
   const initialDate = getTodayDateStr();
   const [routineDate, setRoutineDate] = useState(initialDate);
   const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
+  const [helpOpen, setHelpOpen] = useState(false);
+
+  // Map each tab to a fitting Handbuch section slug (substring match works,
+  // see HelpModal's parseSections + startsWith logic).
+  const helpSectionForTab: Record<typeof activeTab, string> = {
+    morgenroutine: "live-abruf",
+    rechner: "stop-loss-berechnung",
+    journal: "steuern",
+    regelwerk: "regel-handbuch",
+    "ai-coach": "disziplin-quote",
+    workspace: "was-die-app-heute-kann",
+  };
+
+  const handleCheckForUpdate = async () => {
+    if (!("serviceWorker" in navigator)) {
+      showToast("Update-Suche", "Dein Browser unterstützt keine Service Worker.", "warning");
+      return;
+    }
+    try {
+      const registration = await navigator.serviceWorker.getRegistration();
+      if (!registration) {
+        showToast("Update-Suche", "Kein Service Worker registriert — bitte Seite neu laden.", "warning");
+        return;
+      }
+      showToast("Suche nach Updates…", `Aktuelle Version: ${__BUILD_VERSION__}`, "success");
+      await registration.update();
+      // The update() call resolves once Vercel has been checked.
+      // If a new SW is installing/waiting, PWAUpdatePrompt's onNeedRefresh
+      // will fire and show the update banner. Otherwise, the version is
+      // already current.
+      setTimeout(() => {
+        if (registration.waiting || registration.installing) {
+          showToast(
+            "Update gefunden",
+            "Eine neue Version wird geladen. Sieh dir das Banner unten rechts an.",
+            "success"
+          );
+        } else {
+          showToast("Bereits aktuell", `Du bist auf der neuesten Version (${__BUILD_VERSION__}).`, "success");
+        }
+      }, 1500);
+    } catch (err: any) {
+      showToast("Update-Suche fehlgeschlagen", err?.message || "Unbekannter Fehler", "error");
+    }
+  };
   
   // Market index states
   const [marketState, setMarketState] = useState<MarketState>(() => {
@@ -632,11 +678,19 @@ export default function App() {
       )}
 
       {/* COMPACT TOP HEADER */}
-      <CompactHeader 
+      <CompactHeader
         routineDate={routineDate}
         onDateChange={setRoutineDate}
         onCopyExcelLine={handleCopyExcelLine}
+        onOpenHelp={() => setHelpOpen(true)}
+        onCheckForUpdate={handleCheckForUpdate}
         isSystemReady={isSystemReady}
+      />
+
+      <HelpModal
+        isOpen={helpOpen}
+        onClose={() => setHelpOpen(false)}
+        initialSection={helpSectionForTab[activeTab]}
       />
 
       {/* COMPACT NAVIGATION BAR */}
