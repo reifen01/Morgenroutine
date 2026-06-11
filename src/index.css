@@ -12,12 +12,13 @@ body,
 #root {
   width: 100%;
   max-width: 100%;
-  overflow-x: hidden !important;
+  overflow-x: clip !important;
   position: relative;
   margin: 0;
   padding: 0;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  touch-action: pan-y;
 }
 
 /* PWA Safe Areas for iPhone notch / Dynamic Island */
