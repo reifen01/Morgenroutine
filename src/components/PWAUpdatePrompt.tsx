@@ -1,37 +1,13 @@
-import { useEffect, useState } from 'react';
 import { RefreshCw, X } from 'lucide-react';
-import { registerSW } from 'virtual:pwa-register';
 
-const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000;
+interface PWAUpdatePromptProps {
+  needRefresh: boolean;
+  onApply: () => void;
+  onDismiss: () => void;
+}
 
-export default function PWAUpdatePrompt() {
-  const [needRefresh, setNeedRefresh] = useState(false);
-  const [updateSW, setUpdateSW] = useState<((reload?: boolean) => Promise<void>) | null>(null);
-
-  useEffect(() => {
-    const update = registerSW({
-      onNeedRefresh() {
-        setNeedRefresh(true);
-      },
-      onRegisteredSW(_swUrl, registration) {
-        if (!registration) return;
-        setInterval(() => {
-          registration.update().catch(() => {});
-        }, UPDATE_CHECK_INTERVAL_MS);
-      },
-    });
-    setUpdateSW(() => update);
-  }, []);
-
+export default function PWAUpdatePrompt({ needRefresh, onApply, onDismiss }: PWAUpdatePromptProps) {
   if (!needRefresh) return null;
-
-  const handleUpdate = () => {
-    if (updateSW) {
-      updateSW(true);
-    } else {
-      window.location.reload();
-    }
-  };
 
   return (
     <div className="fixed bottom-4 right-4 z-50 max-w-sm bg-indigo-600 text-white rounded-lg shadow-2xl p-4 flex items-start gap-3 animate-in slide-in-from-bottom-4">
@@ -42,14 +18,14 @@ export default function PWAUpdatePrompt() {
           Eine aktualisierte Version der Morgenroutine wurde geladen.
         </div>
         <button
-          onClick={handleUpdate}
+          onClick={onApply}
           className="bg-white text-indigo-700 font-semibold px-3 py-1.5 rounded text-sm hover:bg-indigo-50 transition"
         >
           Jetzt aktualisieren
         </button>
       </div>
       <button
-        onClick={() => setNeedRefresh(false)}
+        onClick={onDismiss}
         className="text-indigo-200 hover:text-white p-1 -mr-1 -mt-1"
         aria-label="Schließen"
       >
