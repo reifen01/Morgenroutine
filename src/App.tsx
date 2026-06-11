@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import CompactHeader from "./components/CompactHeader";
 import HelpModal from "./components/HelpModal";
+import { usePWAUpdate } from "./usePWAUpdate";
 import MorgenroutineTab from "./components/MorgenroutineTab";
 import RechnerTab from "./components/RechnerTab";
 import PortfolioTab from "./components/PortfolioTab";
@@ -43,6 +44,7 @@ export default function App() {
   const [routineDate, setRoutineDate] = useState(initialDate);
   const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
   const [helpOpen, setHelpOpen] = useState(false);
+  const pwaUpdate = usePWAUpdate();
 
   // Map each tab to a fitting Handbuch section slug (substring match works,
   // see HelpModal's parseSections + startsWith logic).
@@ -56,36 +58,21 @@ export default function App() {
   };
 
   const handleCheckForUpdate = async () => {
-    if (!("serviceWorker" in navigator)) {
-      showToast("Update-Suche", "Dein Browser unterstützt keine Service Worker.", "warning");
-      return;
-    }
-    try {
-      const registration = await navigator.serviceWorker.getRegistration();
-      if (!registration) {
+    showToast("Suche nach Updates…", `Aktuelle Version: ${__BUILD_VERSION__}`, "success");
+    const result = await pwaUpdate.checkForUpdate();
+    setTimeout(() => {
+      if (result.status === "available") {
+        showToast(
+          "Update gefunden",
+          'Eine neue Version steht bereit. Klick „Update verfügbar" oben oder das Banner unten rechts.',
+          "success"
+        );
+      } else if (result.status === "no-sw") {
         showToast("Update-Suche", "Kein Service Worker registriert — bitte Seite neu laden.", "warning");
-        return;
+      } else {
+        showToast("Bereits aktuell", `Du bist auf der neuesten Version (${__BUILD_VERSION__}).`, "success");
       }
-      showToast("Suche nach Updates…", `Aktuelle Version: ${__BUILD_VERSION__}`, "success");
-      await registration.update();
-      // The update() call resolves once Vercel has been checked.
-      // If a new SW is installing/waiting, PWAUpdatePrompt's onNeedRefresh
-      // will fire and show the update banner. Otherwise, the version is
-      // already current.
-      setTimeout(() => {
-        if (registration.waiting || registration.installing) {
-          showToast(
-            "Update gefunden",
-            "Eine neue Version wird geladen. Sieh dir das Banner unten rechts an.",
-            "success"
-          );
-        } else {
-          showToast("Bereits aktuell", `Du bist auf der neuesten Version (${__BUILD_VERSION__}).`, "success");
-        }
-      }, 1500);
-    } catch (err: any) {
-      showToast("Update-Suche fehlgeschlagen", err?.message || "Unbekannter Fehler", "error");
-    }
+    }, 1500);
   };
   
   // Market index states
@@ -652,7 +639,11 @@ export default function App() {
       {!onboardingDone && <OnboardingScreen onComplete={() => setOnboardingDone(true)} />}
 
       <PWAInstallPrompt />
-      <PWAUpdatePrompt />
+      <PWAUpdatePrompt
+        needRefresh={pwaUpdate.needRefresh}
+        onApply={pwaUpdate.applyUpdate}
+        onDismiss={pwaUpdate.dismiss}
+      />
 
       {/* Absolute Toast Component */}
       {toast && (
@@ -684,6 +675,8 @@ export default function App() {
         onCopyExcelLine={handleCopyExcelLine}
         onOpenHelp={() => setHelpOpen(true)}
         onCheckForUpdate={handleCheckForUpdate}
+        updateAvailable={pwaUpdate.needRefresh}
+        onApplyUpdate={pwaUpdate.applyUpdate}
         isSystemReady={isSystemReady}
       />
 

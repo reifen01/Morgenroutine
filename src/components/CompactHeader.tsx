@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { CloudSun, FileSpreadsheet, BookOpen, HelpCircle } from "lucide-react";
+import { CloudSun, FileSpreadsheet, BookOpen, HelpCircle, ArrowUp } from "lucide-react";
 
 interface CompactHeaderProps {
   routineDate: string;
@@ -11,6 +11,8 @@ interface CompactHeaderProps {
   onCopyExcelLine: () => void;
   onOpenHelp: () => void;
   onCheckForUpdate: () => void;
+  updateAvailable: boolean;
+  onApplyUpdate: () => void;
   isSystemReady: boolean;
 }
 
@@ -20,6 +22,8 @@ export default function CompactHeader({
   onCopyExcelLine,
   onOpenHelp,
   onCheckForUpdate,
+  updateAvailable,
+  onApplyUpdate,
   isSystemReady,
 }: CompactHeaderProps) {
   // Convert YYYY-MM-DD back to DD.MM.YYYY for display
@@ -52,15 +56,29 @@ export default function CompactHeader({
         </div>
         <div>
           <div className="flex items-center gap-2">
-            <span className="text-lg font-bold tracking-tight text-indigo-600">LUMINA</span>
             <button
               type="button"
-              onClick={onCheckForUpdate}
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-100 text-slate-500 border border-slate-200 hover:bg-indigo-50 hover:text-indigo-700 hover:border-indigo-200 transition-colors cursor-pointer"
-              title="Auf Updates prüfen — Klick lädt die neueste Version (falls vorhanden)"
+              onClick={updateAvailable ? onApplyUpdate : onCheckForUpdate}
+              title={
+                updateAvailable
+                  ? `Neue Version verfügbar — Klick zum Aktualisieren (aktueller Build: ${__BUILD_VERSION__})`
+                  : `Aktuelle Version: ${__BUILD_VERSION__} — Klick prüft auf Updates`
+              }
+              className="text-lg font-bold tracking-tight text-indigo-600 hover:text-indigo-700 transition-colors cursor-pointer"
             >
-              {__BUILD_VERSION__}
+              LUMINA
             </button>
+            {updateAvailable && (
+              <button
+                type="button"
+                onClick={onApplyUpdate}
+                className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 border border-amber-300 hover:bg-amber-200 transition-colors animate-pulse"
+                title="Neue Version verfügbar — Klick zum Aktualisieren"
+              >
+                <ArrowUp className="w-3 h-3" />
+                Update verfügbar
+              </button>
+            )}
             <span className="hidden sm:inline w-1.5 h-1.5 rounded-full bg-slate-300"></span>
             <h1 className="hidden sm:inline text-sm font-bold tracking-tight text-slate-900 font-display">
               MORGENROUTINE &amp; HANDELS-WÄCHTER
