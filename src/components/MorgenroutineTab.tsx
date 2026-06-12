@@ -93,6 +93,7 @@ interface MorgenroutineTabProps {
   onCopyExcelLine: () => void;
   csvExportString: string;
   onShowToast?: (title: string, msg: string, type: "success" | "warning" | "error") => void;
+  onOpenRestoreBackup?: () => void;
 }
 
 export default function MorgenroutineTab({
@@ -107,6 +108,7 @@ export default function MorgenroutineTab({
   onCopyExcelLine,
   csvExportString,
   onShowToast,
+  onOpenRestoreBackup,
 }: MorgenroutineTabProps) {
    // Help tooltips visibility state
   const [helpId, setHelpId] = useState<string | null>(null);
@@ -1355,34 +1357,51 @@ export default function MorgenroutineTab({
   return (
     <div className="space-y-6">
 
-      {/* 🌐 QUICK-ACTION: Live-Daten in einem Klick — der Daily-Driver. */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-md flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-        <div className="flex-1 min-w-0">
+      {/* 🌐 QUICK-ACTION: Live-Daten in einem Klick — der Daily-Driver.
+          Aufgeteilt in zwei Aktionen: öffentliche Marktwerte vs. private Aktien-Liste. */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-md space-y-3">
+        <div>
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             🌐 Heute starten
           </h3>
           <p className="text-xs text-slate-500 mt-0.5 leading-snug">
-            Holt automatisch VIX, VXV, VVIX, SPX, WTI, Gas, deine Aktienkurse, ATR und Distribution Days von Yahoo Finance.
+            Zwei Schritte für deine Morgenroutine.
             {lastLiveFetchAt && (
               <span className="block mt-1 text-[11px] text-slate-400 font-mono">
-                Zuletzt: {new Date(lastLiveFetchAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+                Marktwerte zuletzt: {new Date(lastLiveFetchAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
               </span>
             )}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleFetchLivePrices}
-          disabled={isFetchingLive}
-          className={
-            "shrink-0 inline-flex items-center justify-center gap-2 font-bold rounded-xl px-5 py-3 text-sm transition-all shadow-md active:scale-[0.98] " +
-            (isFetchingLive
-              ? "bg-slate-300 text-slate-500 cursor-not-allowed"
-              : "bg-slate-900 hover:bg-slate-800 text-white")
-          }
-        >
-          {isFetchingLive ? "Lade…" : "🌐 Jetzt abrufen"}
-        </button>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <button
+            type="button"
+            onClick={handleFetchLivePrices}
+            disabled={isFetchingLive}
+            className={
+              "flex flex-col items-start text-left p-3 rounded-xl border transition-all active:scale-[0.98] " +
+              (isFetchingLive
+                ? "bg-slate-200 text-slate-500 border-slate-300 cursor-not-allowed"
+                : "bg-slate-900 hover:bg-slate-800 text-white border-slate-900 shadow-sm")
+            }
+          >
+            <span className="text-sm font-bold">🌐 Marktwerte holen</span>
+            <span className={"text-[11px] mt-0.5 " + (isFetchingLive ? "text-slate-500" : "text-slate-300")}>
+              {isFetchingLive ? "Lade…" : "VIX, VVIX, SPX, WTI, Gas, Distribution Days"}
+            </span>
+          </button>
+          <button
+            type="button"
+            onClick={onOpenRestoreBackup}
+            disabled={!onOpenRestoreBackup}
+            className="flex flex-col items-start text-left p-3 rounded-xl border bg-white hover:bg-slate-50 text-slate-900 border-slate-300 transition-all active:scale-[0.98] shadow-sm"
+          >
+            <span className="text-sm font-bold">🔑 Aktien-Liste laden</span>
+            <span className="text-[11px] text-slate-500 mt-0.5">
+              Portfolio &amp; Watchlist aus Backup-Datei (mit PIN)
+            </span>
+          </button>
+        </div>
       </div>
 
       {/* Top Banner Status Grid */}

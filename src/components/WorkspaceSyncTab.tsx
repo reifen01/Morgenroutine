@@ -77,6 +77,8 @@ interface WorkspaceSyncTabProps {
   routineDate: string;
   csvExportString: string;
   onShowToast: (title: string, msg: string, type: "success" | "warning" | "error") => void;
+  onOpenBackupSetup?: () => void;
+  onOpenBackupRestore?: () => void;
 }
 
 interface BackupFile {
@@ -107,6 +109,8 @@ export default function WorkspaceSyncTab({
   routineDate,
   csvExportString,
   onShowToast,
+  onOpenBackupSetup,
+  onOpenBackupRestore,
 }: WorkspaceSyncTabProps) {
   // OAuth credentials & connection states
   const [clientId, setClientId] = useState<string>(() => {
@@ -1755,6 +1759,42 @@ ${csvExportString}
             <strong>Aktiver Status:</strong> {targetSpreadsheetId ? `Sammeltabelle verknüpft (ID: ...${targetSpreadsheetId.substring(Math.max(0, targetSpreadsheetId.length - 8))})` : "Tagesdatei-Modus"} 
             {clientId && ` | Google Client-ID geladen (ID: ...${clientId.substring(0, 10)}...)`}.
           </span>
+        </div>
+      </div>
+
+      {/* 🔒 PIN-Backup — verschlüsselte Datei für die Aktien-Liste */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 bg-slate-900 text-white rounded-xl flex items-center justify-center shrink-0">
+            🔒
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">
+              PIN-Backup deiner Aktien-Liste
+            </h3>
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Speichert Portfolio, Watchlist, Käufe und Verkäufe verschlüsselt in einer JSON-Datei. Lädt sich auf jedem Gerät mit dem gleichen PIN/Passwort wieder ein.
+              Die App selbst sieht deinen PIN nie — Verschlüsselung läuft komplett im Browser.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <button
+                type="button"
+                onClick={onOpenBackupSetup}
+                disabled={!onOpenBackupSetup}
+                className="flex items-center justify-center gap-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors active:scale-[0.98] disabled:bg-slate-300 disabled:cursor-not-allowed"
+              >
+                💾 Backup-Datei erstellen
+              </button>
+              <button
+                type="button"
+                onClick={onOpenBackupRestore}
+                disabled={!onOpenBackupRestore}
+                className="flex items-center justify-center gap-2 bg-white hover:bg-slate-50 text-slate-900 text-sm font-semibold px-4 py-2.5 rounded-xl border border-slate-300 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                🔑 Backup-Datei laden
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
