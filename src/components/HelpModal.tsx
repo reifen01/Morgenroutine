@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { X, BookOpen, ExternalLink, Menu, ChevronLeft } from "lucide-react";
+import { X, BookOpen, ExternalLink, Menu, ChevronLeft, Download } from "lucide-react";
 import handbookRaw from "../../HANDBUCH.md?raw";
+import InstallInstructions from "./InstallInstructions";
 
 interface HelpModalProps {
   isOpen: boolean;
@@ -56,6 +57,7 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
   const lines = useMemo(() => handbookRaw.split("\n"), []);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [showSidebar, setShowSidebar] = useState(false);
+  const [showInstall, setShowInstall] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -95,7 +97,7 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
       onClick={onClose}
     >
       <div
-        className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-5xl h-full sm:h-[88vh] flex flex-col overflow-hidden"
+        className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-5xl h-full sm:h-[88vh] flex flex-col overflow-hidden relative"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Top bar — prominent "Zurück zur App" on mobile, full toolbar on desktop */}
@@ -122,15 +124,14 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
               >
                 GitHub <ExternalLink className="w-3 h-3" />
               </a>
-              <a
-                href="/anleitung.html"
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                type="button"
+                onClick={() => setShowInstall(true)}
                 className="text-xs text-slate-800 hover:text-slate-900 flex items-center gap-1"
-                title="Installations-Anleitung öffnen"
+                title="Installations-Anleitung anzeigen"
               >
-                Installation <ExternalLink className="w-3 h-3" />
-              </a>
+                Installation <Download className="w-3 h-3" />
+              </button>
             </div>
           </div>
 
@@ -199,14 +200,16 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
                 >
                   GitHub <ExternalLink className="w-3 h-3" />
                 </a>
-                <a
-                  href="/anleitung.html"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs text-slate-700 hover:text-slate-900 flex items-center gap-1"
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowInstall(true);
+                    setShowSidebar(false);
+                  }}
+                  className="text-xs text-slate-700 hover:text-slate-900 flex items-center gap-1 text-left"
                 >
-                  Installations-Anleitung <ExternalLink className="w-3 h-3" />
-                </a>
+                  Installations-Anleitung <Download className="w-3 h-3" />
+                </button>
               </div>
             </nav>
           </aside>
@@ -266,6 +269,43 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
             </ReactMarkdown>
           </div>
         </div>
+
+        {/* Inline Installation-Anleitung — bleibt INNERHALB des Modals, damit der
+            User nicht aus der PWA navigiert wird (iOS würde sonst weg-springen). */}
+        {showInstall && (
+          <div
+            className="absolute inset-0 bg-white z-20 flex flex-col"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-slate-200 bg-slate-50">
+              <button
+                onClick={() => setShowInstall(false)}
+                className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 transition-colors"
+                aria-label="Zurück zum Handbuch"
+              >
+                <ChevronLeft className="w-4 h-4" />
+                Zurück
+              </button>
+              <div className="flex items-center gap-2">
+                <Download className="w-5 h-5 text-slate-800 shrink-0" />
+                <h2 className="font-bold text-slate-900">App installieren</h2>
+              </div>
+              <button
+                onClick={() => setShowInstall(false)}
+                className="p-1 hover:bg-slate-200 rounded-lg transition-colors"
+                aria-label="Schließen"
+              >
+                <X className="w-5 h-5 text-slate-600" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6">
+              <p className="text-sm text-slate-600 mb-4">
+                Installier die Morgenroutine als eigene App — schneller im Zugriff und ohne Browser-Leiste.
+              </p>
+              <InstallInstructions forceShowAll />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
