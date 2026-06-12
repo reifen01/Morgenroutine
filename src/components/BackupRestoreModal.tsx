@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
-import { X, KeyRound, Upload, AlertTriangle, Lock, FileText } from "lucide-react";
-import { parseBackupFile, decryptBackup, type BackupFile, type BackupPayload, type BackupSummary } from "../utils/backupFile";
+import { X, KeyRound, Upload, AlertTriangle, Lock, FileText, FileUp } from "lucide-react";
+import { parseAnyBackup, decryptBackup, type BackupPayload, type BackupSummary, type ParsedBackup } from "../utils/backupFile";
 
 interface Props {
   isOpen: boolean;
@@ -37,20 +37,31 @@ export default function BackupRestoreModal({
   currentLastModified,
   onRestore,
 }: Props) {
-  const [file, setFile] = useState<BackupFile | null>(null);
+  const [parsed, setParsed] = useState<ParsedBackup | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   const [secret, setSecret] = useState("");
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
 
+  const summary: BackupSummary | null = parsed
+    ? parsed.kind === "encrypted"
+      ? parsed.file.summary
+      : parsed.summary
+    : null;
+  const fileLastModified: string | null = parsed
+    ? parsed.kind === "encrypted"
+      ? parsed.file.lastModified
+      : parsed.lastModified
+    : null;
+
   const ageVerdict = useMemo(
-    () => (file ? compareDates(file.lastModified, currentLastModified) : null),
-    [file, currentLastModified]
+    () => (fileLastModified ? compareDates(fileLastModified, currentLastModified) : null),
+    [fileLastModified, currentLastModified]
   );
 
   const reset = () => {
-    setFile(null);
+    setParsed(null);
     setFileName(null);
     setSecret("");
     setErr(null);
@@ -63,22 +74,31 @@ export default function BackupRestoreModal({
     setErr(null);
     setSecret("");
     try {
-      const parsed = await parseBackupFile(f);
-      setFile(parsed);
+      const result = await parseAnyBackup(f);
+      setParsed(result);
       setFileName(f.name);
     } catch (e: any) {
-      setFile(null);
+      setParsed(null);
       setFileName(f.name);
       setErr(e?.message || "Datei konnte nicht gelesen werden.");
     }
   };
 
   const handleRestore = async () => {
-    if (!file || !secret) return;
+    if (!parsed) return;
     setBusy(true);
     setErr(null);
     try {
-      const payload = await decryptBackup(secret, file);
+      let payload: BackupPayload;
+      if (parsed.kind === "encrypted") {
+        if (!secret) {
+          setBusy(false);
+          return;
+        }
+        payload = await decryptBackup(secret, parsed.file);
+      } else {
+        payload = parsed.payload;
+      }
       onRestore(payload);
       reset();
       onClose();
@@ -137,11 +157,19 @@ export default function BackupRestoreModal({
           </div>
 
           {/* Comparison view */}
-          {file && (
+          {parsed && summary && fileLastModified && (
             <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs space-y-3">
-              <div className="font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
-                <FileText className="w-3.5 h-3.5" />
-                Vergleich
+              <div className="flex items-center justify-between">
+                <div className="font-bold text-slate-900 uppercase tracking-wide flex items-center gap-1.5">
+                  <FileText className="w-3.5 h-3.5" />
+                  Vergleich
+                </div>
+                {parsed.kind === "legacy" && (
+                  <span className="text-[10px] font-bold uppercase bg-amber-100 text-amber-800 border border-amber-300 px-1.5 py-0.5 rounded-full flex items-center gap-1">
+                    <FileUp className="w-3 h-3" />
+                    Altes Format ({parsed.sourceVersion})
+                  </span>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-2">
                 <div className="bg-white border border-slate-200 rounded-lg p-2 space-y-1">
@@ -158,12 +186,12 @@ export default function BackupRestoreModal({
                 </div>
                 <div className="bg-white border border-slate-200 rounded-lg p-2 space-y-1">
                   <div className="text-[10px] font-bold text-slate-500 uppercase">Aus Backup</div>
-                  <div className="text-[11px] text-slate-700 font-mono">{formatDe(file.lastModified)}</div>
+                  <div className="text-[11px] text-slate-700 font-mono">{formatDe(fileLastModified)}</div>
                   <ul className="text-[11px] text-slate-700 list-none space-y-0.5">
-                    <li>Portfolio: <strong>{file.summary.portfolioCount}</strong></li>
-                    <li>Watchlist: <strong>{file.summary.watchlistCount}</strong></li>
-                    <li>Käufe: <strong>{file.summary.purchaseCount}</strong></li>
-                    <li>Verkäufe: <strong>{file.summary.soldTradeCount}</strong></li>
+                    <li>Portfolio: <strong>{summary.portfolioCount}</strong></li>
+                    <li>Watchlist: <strong>{summary.watchlistCount}</strong></li>
+                    <li>Käufe: <strong>{summary.purchaseCount}</strong></li>
+                    <li>Verkäufe: <strong>{summary.soldTradeCount}</strong></li>
                   </ul>
                 </div>
               </div>
@@ -192,23 +220,33 @@ export default function BackupRestoreModal({
             </div>
           )}
 
-          {/* PIN/password input */}
-          {file && (
+          {/* PIN/password input — only encrypted backups need a key. */}
+          {parsed?.kind === "encrypted" && (
             <div className="space-y-2">
               <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center gap-1.5">
                 <Lock className="w-3.5 h-3.5" />
-                2. {file.mode === "pin" ? "PIN eingeben" : "Passwort eingeben"}
+                2. {parsed.file.mode === "pin" ? "PIN eingeben" : "Passwort eingeben"}
               </label>
               <input
-                type={file.mode === "pin" ? "tel" : "password"}
-                inputMode={file.mode === "pin" ? "numeric" : "text"}
+                type={parsed.file.mode === "pin" ? "tel" : "password"}
+                inputMode={parsed.file.mode === "pin" ? "numeric" : "text"}
                 autoComplete="current-password"
                 value={secret}
                 onChange={(e) => setSecret(e.target.value)}
-                placeholder={file.mode === "pin" ? "Ziffern" : "Passwort"}
+                placeholder={parsed.file.mode === "pin" ? "Ziffern" : "Passwort"}
                 className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
                 onKeyDown={(e) => e.key === "Enter" && handleRestore()}
               />
+            </div>
+          )}
+
+          {parsed?.kind === "legacy" && (
+            <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-xs text-emerald-800 flex gap-2">
+              <FileUp className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>
+                Altes <strong>Klartext</strong>-Backup erkannt — kein PIN nötig.
+                Klick „Laden" um deine Daten zu übernehmen. Danach im Workspace-Tab ein neues, verschlüsseltes Backup erstellen.
+              </span>
             </div>
           )}
 
@@ -228,16 +266,16 @@ export default function BackupRestoreModal({
           <button
             type="button"
             onClick={handleRestore}
-            disabled={!file || !secret || busy}
+            disabled={!parsed || (parsed?.kind === "encrypted" && !secret) || busy}
             className={
               "flex-1 px-3 py-2.5 text-sm font-bold rounded-xl flex items-center justify-center gap-1.5 transition-colors " +
-              (file && secret && !busy
+              (parsed && (parsed.kind === "legacy" || secret) && !busy
                 ? "bg-slate-900 hover:bg-slate-800 text-white"
                 : "bg-slate-200 text-slate-400 cursor-not-allowed")
             }
           >
             <KeyRound className="w-4 h-4" />
-            {busy ? "Entschlüssele…" : "Laden"}
+            {busy ? "Lade…" : "Laden"}
           </button>
         </div>
       </div>
