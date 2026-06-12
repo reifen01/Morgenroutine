@@ -237,7 +237,7 @@ export default function MorgenroutineTab({
   };
   
   // States for Screenshot parsing via Gemini vision
-  const [activeImportTab, setActiveImportTab] = useState<"text" | "screenshot" | "live">("text");
+  const [activeImportTab, setActiveImportTab] = useState<"text" | "screenshot" | "live">("live");
   const [isFetchingLive, setIsFetchingLive] = useState(false);
   const [lastLiveFetchAt, setLastLiveFetchAt] = useState<string | null>(() => localStorage.getItem("morgenroutine_last_live_fetch") || null);
 
@@ -1354,7 +1354,37 @@ export default function MorgenroutineTab({
 
   return (
     <div className="space-y-6">
-      
+
+      {/* 🌐 QUICK-ACTION: Live-Daten in einem Klick — der Daily-Driver. */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-md flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
+            🌐 Heute starten
+          </h3>
+          <p className="text-xs text-slate-500 mt-0.5 leading-snug">
+            Holt automatisch VIX, VXV, VVIX, SPX, WTI, Gas, deine Aktienkurse, ATR und Distribution Days von Yahoo Finance.
+            {lastLiveFetchAt && (
+              <span className="block mt-1 text-[11px] text-slate-400 font-mono">
+                Zuletzt: {new Date(lastLiveFetchAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+              </span>
+            )}
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleFetchLivePrices}
+          disabled={isFetchingLive}
+          className={
+            "shrink-0 inline-flex items-center justify-center gap-2 font-bold rounded-xl px-5 py-3 text-sm transition-all shadow-md active:scale-[0.98] " +
+            (isFetchingLive
+              ? "bg-slate-300 text-slate-500 cursor-not-allowed"
+              : "bg-slate-900 hover:bg-slate-800 text-white")
+          }
+        >
+          {isFetchingLive ? "Lade…" : "🌐 Jetzt abrufen"}
+        </button>
+      </div>
+
       {/* Top Banner Status Grid */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-lg shadow-slate-250/10 md:col-span-2">
@@ -1569,35 +1599,35 @@ export default function MorgenroutineTab({
             <button
               type="button"
               onClick={() => setActiveImportTab("text")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeImportTab === "text"
                   ? "bg-slate-800 text-white shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              📋 Text kopieren
+              📋 <span className="hidden sm:inline">Text kopieren</span><span className="sm:hidden">Text</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveImportTab("screenshot")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeImportTab === "screenshot"
                   ? "bg-slate-800 text-white shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              📸 Screenshot hochladen
+              📸 <span className="hidden sm:inline">Screenshot hochladen</span><span className="sm:hidden">Bild</span>
             </button>
             <button
               type="button"
               onClick={() => setActiveImportTab("live")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
                 activeImportTab === "live"
                   ? "bg-slate-800 text-white shadow-sm"
                   : "text-slate-400 hover:text-slate-200"
               }`}
             >
-              🌐 Live abrufen
+              🌐 <span className="hidden sm:inline">Live abrufen</span><span className="sm:hidden">Live</span>
             </button>
           </div>
         </div>

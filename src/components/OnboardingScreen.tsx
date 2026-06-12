@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { TrendingUp, BarChart2, Brain, CheckCircle2, ChevronRight, CloudSun, Download, Share } from "lucide-react";
+import { TrendingUp, BarChart2, Brain, CheckCircle2, ChevronRight, CloudSun, Download } from "lucide-react";
+import InstallInstructions from "./InstallInstructions";
 
 interface Props {
   onComplete: () => void;
@@ -102,21 +103,12 @@ export default function OnboardingScreen({ onComplete }: Props) {
 
         {/* Text */}
         {isInstallStep ? (
-          <div className="space-y-3">
+          <div className="space-y-3 w-full">
             <h2 className="text-2xl font-bold text-slate-900">App installieren?</h2>
             <p className="text-slate-500 text-base leading-relaxed">
               Installier die Morgenroutine als eigene App auf deinem Gerät — sie startet schneller und ist nur einen Tipp entfernt.
             </p>
-            {isIos && !deferredPrompt && (
-              <div className="bg-slate-50 border border-slate-200 rounded-2xl p-4 text-left text-sm text-slate-600 space-y-1">
-                <p className="font-semibold text-slate-900">So gehts auf iPhone:</p>
-                <p className="flex items-center gap-2">
-                  1. Tippe auf <Share className="h-4 w-4 inline" /> (Teilen)
-                </p>
-                <p>2. Wähle „Zum Home-Bildschirm" aus</p>
-                <p>3. Bestätige mit „Hinzufügen"</p>
-              </div>
-            )}
+            <InstallInstructions isIos={isIos} hasInstallPrompt={!!deferredPrompt} />
           </div>
         ) : (
           <div className="space-y-3">
