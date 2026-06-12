@@ -29,6 +29,11 @@ import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OnboardingScreen from "./components/OnboardingScreen";
 import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
+import BackupSetupModal from "./components/BackupSetupModal";
+import BackupRestoreModal from "./components/BackupRestoreModal";
+import type { BackupPayload } from "./utils/backupFile";
+
+const LAST_MODIFIED_KEY = "morgenroutine_data_last_modified";
 
 const getTodayDateStr = () => {
   const d = new Date();
@@ -45,6 +50,11 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
   const [helpOpen, setHelpOpen] = useState(false);
   const pwaUpdate = usePWAUpdate();
+  const [backupSetupOpen, setBackupSetupOpen] = useState(false);
+  const [backupRestoreOpen, setBackupRestoreOpen] = useState(false);
+  const [dataLastModified, setDataLastModified] = useState<string | null>(
+    () => localStorage.getItem(LAST_MODIFIED_KEY)
+  );
 
   // Map each tab to a fitting Handbuch section slug (substring match works,
   // see HelpModal's parseSections + startsWith logic).
@@ -519,6 +529,45 @@ export default function App() {
     localStorage.setItem("morgenroutine_purchases", JSON.stringify(portfolioPurchases));
   }, [portfolioPurchases]);
 
+  // Track whenever any private data changes so the backup compare view can
+  // honestly say "your local data is newer than this backup".
+  useEffect(() => {
+    const ts = new Date().toISOString();
+    localStorage.setItem(LAST_MODIFIED_KEY, ts);
+    setDataLastModified(ts);
+  }, [portfolioData, watchlist, livePrices, portfolioPurchases, soldTrades, checklistData, customDepots, customBesitzer, depotStartingCash]);
+
+  const collectBackupPayload = (): BackupPayload => ({
+    portfolio: portfolioData,
+    watchlist,
+    livePrices,
+    purchases: portfolioPurchases,
+    soldTrades,
+    checklist: checklistData,
+    customDepots,
+    customBesitzer,
+    depotStartingCash,
+  });
+
+  const applyRestoredPayload = (payload: BackupPayload) => {
+    setPortfolioData(payload.portfolio);
+    setWatchlist(payload.watchlist);
+    setLivePrices(payload.livePrices);
+    setPortfolioPurchases(payload.purchases);
+    setSoldTrades(payload.soldTrades);
+    setChecklistData(payload.checklist);
+    setCustomDepots(payload.customDepots);
+    setCustomBesitzer(payload.customBesitzer);
+    if (typeof payload.depotStartingCash === "object" && payload.depotStartingCash !== null) {
+      setDepotStartingCash(payload.depotStartingCash as Record<string, number>);
+    }
+    showToast(
+      "Aktien-Liste geladen",
+      `🔓 ${payload.portfolio.length} Position(en), ${payload.watchlist.length} Watchlist-Einträge wiederhergestellt.`,
+      "success"
+    );
+  };
+
   useEffect(() => {
     localStorage.setItem("morgenroutine_market_state", JSON.stringify(marketState));
   }, [marketState]);
@@ -685,6 +734,26 @@ export default function App() {
         initialSection={helpSectionForTab[activeTab]}
       />
 
+      <BackupSetupModal
+        isOpen={backupSetupOpen}
+        onClose={() => setBackupSetupOpen(false)}
+        collectPayload={collectBackupPayload}
+        onSuccess={() => showToast("Backup gespeichert", "💾 Verschlüsselte Datei wurde heruntergeladen.", "success")}
+      />
+
+      <BackupRestoreModal
+        isOpen={backupRestoreOpen}
+        onClose={() => setBackupRestoreOpen(false)}
+        currentSummary={{
+          portfolioCount: portfolioData.length,
+          watchlistCount: watchlist.length,
+          purchaseCount: portfolioPurchases.length,
+          soldTradeCount: soldTrades.length,
+        }}
+        currentLastModified={dataLastModified}
+        onRestore={applyRestoredPayload}
+      />
+
       {/* COMPACT NAVIGATION BAR */}
       <nav className="shrink-0 bg-white border-b border-slate-200 z-30 shadow-sm shadow-slate-100">
         <div className="h-16 flex items-center justify-around px-2 max-w-4xl mx-auto">
@@ -768,6 +837,7 @@ export default function App() {
               onCopyExcelLine={handleCopyExcelLine}
               csvExportString={getCSVLine()}
               onShowToast={showToast}
+              onOpenRestoreBackup={() => setBackupRestoreOpen(true)}
             />
           )}
 
@@ -832,6 +902,8 @@ export default function App() {
               routineDate={routineDate}
               csvExportString={getCSVLine()}
               onShowToast={showToast}
+              onOpenBackupSetup={() => setBackupSetupOpen(true)}
+              onOpenBackupRestore={() => setBackupRestoreOpen(true)}
             />
           )}
         </div>
