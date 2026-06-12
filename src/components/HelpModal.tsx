@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
-import { X, BookOpen, ExternalLink } from "lucide-react";
+import { X, BookOpen, ExternalLink, Menu, ChevronLeft } from "lucide-react";
 import handbookRaw from "../../HANDBUCH.md?raw";
 
 interface HelpModalProps {
@@ -55,6 +55,7 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
   const sections = useMemo(() => parseSections(handbookRaw), []);
   const lines = useMemo(() => handbookRaw.split("\n"), []);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
+  const [showSidebar, setShowSidebar] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -82,59 +83,103 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
 
   if (!isOpen) return null;
 
+  const selectSection = (slug: string) => {
+    setActiveSlug(slug);
+    setShowSidebar(false);
+    contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
+  };
+
   return (
     <div
-      className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center p-4"
+      className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center sm:p-4"
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[88vh] flex flex-col overflow-hidden"
+        className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-5xl h-full sm:h-[88vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 bg-slate-50">
-          <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-slate-800" />
-            <h2 className="font-bold text-slate-900">Handbuch</h2>
-            <a
-              href="https://github.com/reifen01/Morgenroutine/blob/main/HANDBUCH.md"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-slate-800 hover:text-slate-900 flex items-center gap-1 ml-2"
-              title="Auf GitHub öffnen"
-            >
-              GitHub <ExternalLink className="w-3 h-3" />
-            </a>
-            <a
-              href="/anleitung.html"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-slate-800 hover:text-slate-900 flex items-center gap-1"
-              title="Installations-Anleitung öffnen"
-            >
-              Installation <ExternalLink className="w-3 h-3" />
-            </a>
-          </div>
+        {/* Top bar — prominent "Zurück zur App" on mobile, full toolbar on desktop */}
+        <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-slate-200 bg-slate-50 gap-2">
           <button
             onClick={onClose}
-            className="p-1 hover:bg-slate-200 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 transition-colors shrink-0"
+            aria-label="Zurück zur App"
+          >
+            <ChevronLeft className="w-4 h-4" />
+            <span className="hidden xs:inline sm:inline">Zurück</span>
+          </button>
+
+          <div className="flex items-center gap-2 min-w-0 flex-1 justify-center sm:justify-start">
+            <BookOpen className="w-5 h-5 text-slate-800 shrink-0" />
+            <h2 className="font-bold text-slate-900 truncate">Handbuch</h2>
+            <div className="hidden sm:flex items-center gap-2 ml-2">
+              <a
+                href="https://github.com/reifen01/Morgenroutine/blob/main/HANDBUCH.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-slate-800 hover:text-slate-900 flex items-center gap-1"
+                title="Auf GitHub öffnen"
+              >
+                GitHub <ExternalLink className="w-3 h-3" />
+              </a>
+              <a
+                href="/anleitung.html"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs text-slate-800 hover:text-slate-900 flex items-center gap-1"
+                title="Installations-Anleitung öffnen"
+              >
+                Installation <ExternalLink className="w-3 h-3" />
+              </a>
+            </div>
+          </div>
+
+          {/* Mobile: toggle sidebar */}
+          <button
+            onClick={() => setShowSidebar(true)}
+            className="sm:hidden flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 transition-colors shrink-0"
+            aria-label="Inhaltsverzeichnis öffnen"
+          >
+            <Menu className="w-4 h-4" />
+          </button>
+
+          {/* Desktop: separate close button */}
+          <button
+            onClick={onClose}
+            className="hidden sm:flex p-1 hover:bg-slate-200 rounded-lg transition-colors"
             aria-label="Schließen"
           >
             <X className="w-5 h-5 text-slate-600" />
           </button>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          <aside className="w-56 shrink-0 border-r border-slate-200 overflow-y-auto bg-slate-50 py-2">
+        <div className="flex flex-1 overflow-hidden relative">
+          {/* Sidebar — always visible on sm+, slide-in drawer on mobile */}
+          <aside
+            className={
+              "border-r border-slate-200 overflow-y-auto bg-slate-50 py-2 " +
+              "sm:w-56 sm:shrink-0 sm:static sm:translate-x-0 " +
+              "absolute inset-y-0 left-0 z-10 w-72 max-w-[85%] transition-transform shadow-xl sm:shadow-none " +
+              (showSidebar ? "translate-x-0" : "-translate-x-full sm:translate-x-0")
+            }
+          >
+            <div className="sm:hidden flex items-center justify-between px-3 py-2 border-b border-slate-200 mb-2">
+              <span className="font-bold text-slate-900 text-sm">Inhalt</span>
+              <button
+                onClick={() => setShowSidebar(false)}
+                className="p-1 hover:bg-slate-200 rounded-lg"
+                aria-label="Inhaltsverzeichnis schließen"
+              >
+                <X className="w-4 h-4 text-slate-600" />
+              </button>
+            </div>
             <nav className="text-sm">
               {sections.map((s) => (
                 <button
                   key={s.slug}
-                  onClick={() => {
-                    setActiveSlug(s.slug);
-                    contentRef.current?.scrollTo({ top: 0, behavior: "auto" });
-                  }}
+                  onClick={() => selectSection(s.slug)}
                   className={
-                    "w-full text-left px-3 py-1.5 transition-colors " +
+                    "w-full text-left px-3 py-2 transition-colors " +
                     (s.level === 3 ? "pl-6 text-xs " : "font-semibold ") +
                     (activeSlug === s.slug
                       ? "bg-slate-100 text-slate-900"
@@ -145,12 +190,38 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
                   {s.title}
                 </button>
               ))}
+              <div className="sm:hidden mt-4 px-3 pt-3 border-t border-slate-200 flex flex-col gap-2">
+                <a
+                  href="https://github.com/reifen01/Morgenroutine/blob/main/HANDBUCH.md"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-slate-700 hover:text-slate-900 flex items-center gap-1"
+                >
+                  GitHub <ExternalLink className="w-3 h-3" />
+                </a>
+                <a
+                  href="/anleitung.html"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs text-slate-700 hover:text-slate-900 flex items-center gap-1"
+                >
+                  Installations-Anleitung <ExternalLink className="w-3 h-3" />
+                </a>
+              </div>
             </nav>
           </aside>
 
+          {/* Mobile sidebar backdrop */}
+          {showSidebar && (
+            <div
+              className="sm:hidden absolute inset-0 bg-slate-900/40 z-[5]"
+              onClick={() => setShowSidebar(false)}
+            />
+          )}
+
           <div
             ref={contentRef}
-            className="flex-1 overflow-y-auto px-6 py-4 text-slate-800 text-sm leading-relaxed"
+            className="flex-1 overflow-y-auto px-4 sm:px-6 py-4 text-slate-800 text-[15px] sm:text-sm leading-relaxed"
           >
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
