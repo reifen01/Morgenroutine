@@ -118,14 +118,16 @@ export default function App() {
       }
     }
     return {
-      tsla: { price: null, date: initialDate, atr: 15.50 },
-      now: { price: null, date: initialDate, atr: 3.20 },
-      baba: { price: null, date: initialDate, atr: 4.10 },
+      tsla: { price: null, date: initialDate, atr: 0 },
+      now: { price: null, date: initialDate, atr: 0 },
+      baba: { price: null, date: initialDate, atr: 0 },
       btc: { price: null, date: initialDate, atr: 0 }
     };
   });
 
-  // Portfolio items utilizing corrected hard anchors
+  // Portfolio items — empty by default. Demo positions only show up once
+  // the user loads a backup or creates positions manually. This way someone
+  // who just gets the public URL never sees another trader's portfolio.
   const [portfolioData, setPortfolioData] = useState<PortfolioItem[]>(() => {
     const saved = localStorage.getItem("morgenroutine_portfolio");
     if (saved) {
@@ -150,7 +152,7 @@ export default function App() {
           } else if (updated.name === "BTC Sparplan index") {
             updated.name = "Bitcoin Tracker Index";
           }
-          
+
           if (updated.key === "tsla") {
             updated.ticker = "TSLA";
             updated.isin = "US88160R1014";
@@ -170,81 +172,10 @@ export default function App() {
         console.error("Error reading portfolio from local storage:", e);
       }
     }
-    return [
-      {
-        id: "p1",
-        name: "Tesla, Inc.",
-        harterAnker: 185.19,
-        limitPreis: 320.00,
-        limitLabel: "Limit € 320,00",
-        tranchenGroesse: 30000,
-        status: "red",
-        stopKurs: 0,
-        key: "tsla",
-        ticker: "TSLA",
-        isin: "US88160R1014",
-        beschreibung: "Kerninvestition. Harter Anker bei € 185,19."
-      },
-      {
-        id: "p2",
-        name: "Tesla, Inc.",
-        harterAnker: 200.00,
-        limitPreis: 320.00,
-        limitLabel: "Limit € 320,00",
-        tranchenGroesse: 40000,
-        status: "red",
-        stopKurs: 0,
-        key: "tsla",
-        ticker: "TSLA",
-        isin: "US88160R1014",
-        beschreibung: "Zusätzliche Position (Absicherung). Harter Anker bei € 200,00."
-      },
-      {
-        id: "p3",
-        name: "ServiceNow, Inc.",
-        harterAnker: 80.00,
-        limitPreis: 80.00,
-        limitLabel: "Anker € 80,00",
-        tranchenGroesse: 25000,
-        status: "yellow",
-        stopKurs: 0,
-        key: "now",
-        ticker: "NOW",
-        isin: "US81762P1021",
-        beschreibung: "Harter Anker bei € 80,00 beachten."
-      },
-      {
-        id: "p4",
-        name: "Alibaba Group Holding Ltd.",
-        harterAnker: 89.00,
-        limitPreis: 70.00,
-        limitLabel: "Anker € 70,00",
-        tranchenGroesse: 15000,
-        status: "yellow",
-        stopKurs: 0,
-        key: "baba",
-        ticker: "BABA",
-        isin: "US01609W1027",
-        beschreibung: "Harter Anker bei € 89,00 (Korrektur nach Handbuch)."
-      },
-      {
-        id: "p5",
-        name: "Bitcoin Tracker Index",
-        harterAnker: 0.00,
-        limitPreis: 50000.00,
-        limitLabel: "Sparplan active",
-        tranchenGroesse: 1000,
-        status: "green",
-        stopKurs: 0.00,
-        key: "btc",
-        ticker: "BTC",
-        isin: "DE000A27Z304",
-        beschreibung: "Langfristiger BTC Sparplan (K1 + K2)."
-      }
-    ];
+    return [];
   });
 
-  // Checklist items
+  // Checklist items — empty by default; user adds their own tasks or restores from backup.
   const [checklistData, setChecklistData] = useState<ChecklistItem[]>(() => {
     const saved = localStorage.getItem("morgenroutine_checklist");
     if (saved) {
@@ -254,11 +185,7 @@ export default function App() {
         console.error("Error reading checklist from local storage:", e);
       }
     }
-    return [
-      { id: "c1", title: "TSLA: Kauflimit bei € 320 in DADAT aktivieren", tranchenGroesse: 50000, status: "yellow", kategorie: "TSLA" },
-      { id: "c2", title: "NOW: Entscheidung abschließen (Gewinnmitnahme oder Stop)", tranchenGroesse: 20000, status: "green", kategorie: "NOW" },
-      { id: "c3", title: "BABA: Harten Anker im System festschreiben", tranchenGroesse: 20000, status: "red", kategorie: "BABA" }
-    ];
+    return [];
   });
 
   // Realisierte Verkäufe / Trade-Historie
@@ -284,23 +211,7 @@ export default function App() {
         console.error("Error reading sold trades from local storage:", e);
       }
     }
-    return [
-      {
-        id: "s1",
-        name: "ServiceNow (NOW)",
-        key: "now",
-        verkaufsDatum: "2026-06-03",
-        kaufKurs: 680.00,
-        verkaufsKurs: 742.50,
-        anzahlAktien: 33.67,
-        gewinnVerlust: 2104.38,
-        kestBetrag: 578.70, // 27,5% KESt in Österreich
-        nettoGewinn: 1525.68,
-        notiz: "Unbestechlicher Ausstieg per Stop-Loss (Gewinn vollständig abgesichert).",
-        depot: "Flatex",
-        besitzerName: "Andres"
-      }
-    ];
+    return [];
   });
 
   // Portfolio Purchases - tracking of individual buy transactions
@@ -332,52 +243,12 @@ export default function App() {
         console.error("Error reading portfolio purchases from local storage:", e);
       }
     }
-    return [
-      {
-        id: "buy_1",
-        name: "ServiceNow, Inc.",
-        key: "now",
-        kaufDatum: "2026-06-01",
-        kaufKurs: 80.00,
-        anzahlAktien: 1528,
-        tatsaechlicheKosten: 122240,
-        verbleibendeAnzahlAktien: 1528,
-        notiz: "Erster Kauf laut DADAT-Schnittstelle",
-        depot: "DADAT",
-        besitzerName: "Andres"
-      },
-      {
-        id: "buy_2",
-        name: "Tesla, Inc.",
-        key: "tsla",
-        kaufDatum: "2026-05-15",
-        kaufKurs: 185.19,
-        anzahlAktien: 162.00,
-        tatsaechlicheKosten: 30000.78,
-        verbleibendeAnzahlAktien: 162.00,
-        notiz: "Tranche 1 am harten Anker",
-        depot: "Flatex",
-        besitzerName: "Andres"
-      },
-      {
-        id: "buy_3",
-        name: "Alibaba Group Holding Ltd.",
-        key: "baba",
-        kaufDatum: "2026-05-20",
-        kaufKurs: 89.00,
-        anzahlAktien: 168.00,
-        tatsaechlicheKosten: 14952.00,
-        verbleibendeAnzahlAktien: 168.00,
-        notiz: "Asien-Anteil laut Regelwerk",
-        depot: "Flatex",
-        besitzerName: "Andres"
-      }
-    ];
+    return [];
   });
 
   // Custom managed list of Depots & Owners shifted up for global persistence and sync support
   const [customDepots, setCustomDepots] = useState<string[]>(() => {
-    let baseList = ["Flatex", "Trade Republic", "DADAT", "DAB BNP Paribas", "Bitpanda"];
+    let baseList: string[] = [];
     const saved = localStorage.getItem("morgenroutine_custom_depots");
     if (saved) {
       try {
@@ -419,7 +290,7 @@ export default function App() {
   });
 
   const [customBesitzer, setCustomBesitzer] = useState<string[]>(() => {
-    let baseList = ["Andres", "Familie", "Firmen-Depot", "Standard Besitzer"];
+    let baseList: string[] = [];
     const saved = localStorage.getItem("morgenroutine_custom_besitzer");
     if (saved) {
       try {
@@ -469,13 +340,7 @@ export default function App() {
         console.error("Error loading starting cash from local storage:", e);
       }
     }
-    return {
-      "Flatex": 50000,
-      "Trade Republic": 30000,
-      "DADAT": 80500,
-      "DAB BNP Paribas": 30000,
-      "Bitpanda": 10000
-    };
+    return {};
   });
 
   // Watchlist (used by RechnerTab and MorgenroutineTab live-fetch)
@@ -489,11 +354,7 @@ export default function App() {
         console.error("Error loading watchlist:", e);
       }
     }
-    return [
-      { symbol: "AAPL", name: "Apple Inc.", atr: "5.50", price: "220.00" },
-      { symbol: "NVDA", name: "NVIDIA Corp.", atr: "4.80", price: "125.00" },
-      { symbol: "MSFT", name: "Microsoft Corp.", atr: "8.20", price: "425.00" }
-    ];
+    return [];
   });
 
   // Save changes to localStorage

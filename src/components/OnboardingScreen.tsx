@@ -20,7 +20,7 @@ const steps = [
   {
     icon: <BarChart2 className="h-12 w-12 text-slate-400" />,
     title: "Dein Portfolio – nur für dich",
-    text: "Trage einmal deine Positionen ein (TSLA, NOW, BABA, BTC). Ab dann zeigt dir die App täglich den aktuellen Stand, Gewinne & Verluste.",
+    text: "Trage einmal deine eigenen Positionen ein oder lade ein bestehendes Backup. Ab dann zeigt dir die App täglich den aktuellen Stand, Gewinne & Verluste.",
   },
   {
     icon: <TrendingUp className="h-12 w-12 text-emerald-400" />,
