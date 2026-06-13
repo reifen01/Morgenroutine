@@ -172,7 +172,38 @@ export default function App() {
         console.error("Error reading portfolio from local storage:", e);
       }
     }
-    return [];
+    return [
+      // Demo-Portfolio für neue User: 2 generische Positionen, kein echtes Depot.
+      // Sobald der User eigene Werte einträgt oder ein Backup lädt, wird das ersetzt.
+      {
+        id: "demo_tsla",
+        name: "Tesla, Inc. (Demo)",
+        harterAnker: 200.00,
+        limitPreis: 300.00,
+        limitLabel: "Limit € 300,00",
+        tranchenGroesse: 10000,
+        status: "green",
+        stopKurs: 0,
+        key: "tsla",
+        ticker: "TSLA",
+        isin: "US88160R1014",
+        beschreibung: "Demo-Position — ersetze mit deinen eigenen Werten oder lade ein Backup."
+      },
+      {
+        id: "demo_btc",
+        name: "Bitcoin Tracker Index (Demo)",
+        harterAnker: 30000.00,
+        limitPreis: 50000.00,
+        limitLabel: "Demo-Sparplan",
+        tranchenGroesse: 1000,
+        status: "green",
+        stopKurs: 0,
+        key: "btc",
+        ticker: "BTC",
+        isin: "DE000A27Z304",
+        beschreibung: "Demo-Position — ersetze mit deinen eigenen Werten oder lade ein Backup."
+      }
+    ];
   });
 
   // Checklist items — empty by default; user adds their own tasks or restores from backup.
@@ -354,7 +385,10 @@ export default function App() {
         console.error("Error loading watchlist:", e);
       }
     }
-    return [];
+    return [
+      { symbol: "AAPL", name: "Apple Inc. (Demo)", atr: "0", price: "0" },
+      { symbol: "NVDA", name: "NVIDIA Corp. (Demo)", atr: "0", price: "0" }
+    ];
   });
 
   // Save changes to localStorage
