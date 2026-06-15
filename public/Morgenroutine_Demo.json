@@ -1,0 +1,99 @@
+{
+  "meta": {
+    "appVersion": "V8",
+    "compiledAt": "2026-06-15",
+    "createdTime": "2026-06-15T00:00:00.000Z",
+    "kommentar": "Demo-Portfolio für Schulungen und Funktionscheck — alle Positionen klar als (Demo) markiert."
+  },
+  "marketState": {
+    "vix": null,
+    "vxv": null,
+    "vvix": null,
+    "spx": null,
+    "wti": null,
+    "gas": null,
+    "distSpx": 0,
+    "distNdx": 0
+  },
+  "livePrices": {
+    "tsla": { "price": null, "date": "2026-06-15", "atr": 0 },
+    "now":  { "price": null, "date": "2026-06-15", "atr": 0 },
+    "baba": { "price": null, "date": "2026-06-15", "atr": 0 },
+    "btc":  { "price": null, "date": "2026-06-15", "atr": 0 }
+  },
+  "portfolioData": [
+    {
+      "id": "demo_tsla",
+      "name": "Tesla, Inc. (Demo)",
+      "harterAnker": 200,
+      "limitPreis": 300,
+      "limitLabel": "Limit € 300",
+      "tranchenGroesse": 10000,
+      "status": "green",
+      "stopKurs": 0,
+      "key": "tsla",
+      "ticker": "TSLA",
+      "isin": "US88160R1014",
+      "beschreibung": "Demo-Position für die Tour — ersetze mit deinen Werten oder lade ein Backup."
+    },
+    {
+      "id": "demo_btc",
+      "name": "Bitcoin Tracker (Demo)",
+      "harterAnker": 30000,
+      "limitPreis": 50000,
+      "limitLabel": "Demo-Sparplan",
+      "tranchenGroesse": 1000,
+      "status": "green",
+      "stopKurs": 0,
+      "key": "btc",
+      "ticker": "BTC",
+      "isin": "DE000A27Z304",
+      "beschreibung": "Demo-Sparplan zum Ausprobieren der Trend-Logik."
+    }
+  ],
+  "watchlist": [
+    { "symbol": "AAPL", "name": "Apple Inc. (Demo)", "atr": "0", "price": "0" },
+    { "symbol": "NVDA", "name": "NVIDIA Corp. (Demo)", "atr": "0", "price": "0" }
+  ],
+  "portfolioPurchases": [
+    {
+      "id": "demo_buy_tsla",
+      "key": "tsla",
+      "name": "Tesla, Inc. (Demo)",
+      "kaufDatum": "2026-06-15",
+      "kaufKurs": 250,
+      "anzahlAktien": 10,
+      "tatsaechlicheKosten": 2500,
+      "verbleibendeAnzahlAktien": 10,
+      "notiz": "Demo-Kauf zur Veranschaulichung des Journals.",
+      "depot": "Demo-Depot",
+      "besitzerName": "Demo-Besitzer"
+    },
+    {
+      "id": "demo_buy_btc",
+      "key": "btc",
+      "name": "Bitcoin Tracker (Demo)",
+      "kaufDatum": "2026-06-15",
+      "kaufKurs": 35000,
+      "anzahlAktien": 0.05,
+      "tatsaechlicheKosten": 1750,
+      "verbleibendeAnzahlAktien": 0.05,
+      "notiz": "Demo-Sparplan-Tranche zum Üben.",
+      "depot": "Demo-Depot",
+      "besitzerName": "Demo-Besitzer"
+    }
+  ],
+  "soldTrades": [],
+  "checklistData": [
+    {
+      "id": "demo_chk_1",
+      "title": "TSLA Demo: Limit-Order in deinem Broker prüfen",
+      "tranchenGroesse": 10000,
+      "status": "yellow",
+      "kategorie": "TSLA"
+    }
+  ],
+  "customDepots": ["Demo-Depot"],
+  "customBesitzer": ["Demo-Besitzer"],
+  "depotStartingCash": { "Demo-Depot": 100000 }
+}
