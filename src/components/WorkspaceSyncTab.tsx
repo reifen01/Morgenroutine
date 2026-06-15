@@ -869,7 +869,7 @@ export default function WorkspaceSyncTab({
       const vxvVal = marketState.vxv !== null && marketState.vxv !== undefined ? marketState.vxv.toFixed(2) : "0.00";
       const ratioVal = marketState.vix && marketState.vxv ? (marketState.vix / marketState.vxv).toFixed(2) : "0.00";
       const vvixVal = marketState.vvix !== null && marketState.vvix !== undefined ? marketState.vvix.toFixed(2) : "0.00";
-      const spxVal = "7519.10"; // Custom stable tracking benchmark
+      const spxVal = marketState.spx !== null && marketState.spx !== undefined ? marketState.spx.toFixed(2) : "0.00";
       const wtiVal = marketState.wti !== null && marketState.wti !== undefined ? marketState.wti.toFixed(2) : "0.00";
       const gasVal = marketState.gas !== null && marketState.gas !== undefined ? marketState.gas.toFixed(2) : "0.00";
       const tslaLive = livePrices.tsla.price !== null && livePrices.tsla.price !== undefined ? livePrices.tsla.price.toFixed(2) : "0.00";

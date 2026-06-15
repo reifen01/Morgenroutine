@@ -666,6 +666,7 @@ export default function App() {
           {activeTab === "journal" && (
             <PortfolioTab
               routineDate={routineDate}
+              marketState={marketState}
               livePrices={livePrices}
               portfolioData={portfolioData}
               onPortfolioDataChange={setPortfolioData}
