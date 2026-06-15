@@ -1285,13 +1285,31 @@ export default function MorgenroutineTab({
     return portfolioData.some(item => item.key === key && item.status !== "sold");
   };
 
-  // Generate warning/info variables for Limit check tables
-  const coreAssets = [
-    { key: 'tsla' as keyof LivePrices, name: 'Tesla, Inc.', ticker: 'TSLA', isin: 'US88160R1014', limit: 320.00, desc: 'Kauf-Limit @ € 320,00' },
-    { key: 'now' as keyof LivePrices, name: 'ServiceNow, Inc.', ticker: 'NOW', isin: 'US81762P1021', limit: 80.00, desc: 'Harter Anker @ € 80,00' },
-    { key: 'baba' as keyof LivePrices, name: 'Alibaba Group Holding Ltd.', ticker: 'BABA', isin: 'US01609W1027', limit: 70.00, desc: 'Hartes Limit @ € 70,00' },
-    { key: 'btc' as keyof LivePrices, name: 'Bitcoin Tracker Index', ticker: 'BTC', isin: 'DE000A27Z304', limit: 50000.00, desc: 'Sparplan-Kauf @ € 50.000,00' }
-  ].filter(asset => isAssetActiveInDepot(asset.key));
+  // Derive the limit thresholds from the user's own portfolio entries
+  // instead of carrying any default numbers. If the user has no Tesla
+  // position the TSLA row disappears, etc.
+  const coreAssetMeta: Record<keyof LivePrices, { name: string; ticker: string; isin: string }> = {
+    tsla: { name: "Tesla, Inc.", ticker: "TSLA", isin: "US88160R1014" },
+    now: { name: "ServiceNow, Inc.", ticker: "NOW", isin: "US81762P1021" },
+    baba: { name: "Alibaba Group Holding Ltd.", ticker: "BABA", isin: "US01609W1027" },
+    btc: { name: "Bitcoin Tracker Index", ticker: "BTC", isin: "DE000A27Z304" },
+  };
+  const coreAssets = (Object.keys(coreAssetMeta) as Array<keyof LivePrices>)
+    .filter((k) => isAssetActiveInDepot(k))
+    .map((k) => {
+      const item = portfolioData.find((p) => p.key === k);
+      const limit = item?.limitPreis ?? 0;
+      return {
+        key: k,
+        name: item?.name || coreAssetMeta[k].name,
+        ticker: item?.ticker || coreAssetMeta[k].ticker,
+        isin: item?.isin || coreAssetMeta[k].isin,
+        limit,
+        desc: limit > 0 ? `Limit @ € ${limit.toLocaleString("de-DE")}` : "Kein Limit gesetzt",
+      };
+    });
+  const limitFor = (key: keyof LivePrices): number =>
+    coreAssets.find((a) => a.key === key)?.limit ?? 0;
 
   // Mathematically complete check of all 9 system requirements (skipped if asset is sold/inactive in portfolio)
   const missingForToday: string[] = [];
@@ -2661,7 +2679,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                       <div className="flex items-center gap-1">
                         {!livePrices.tsla.price ? (
                           <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt Kurs</span>
-                        ) : Number(livePrices.tsla.price) <= 320 ? (
+                        ) : limitFor('tsla') > 0 && Number(livePrices.tsla.price) <= limitFor('tsla') ? (
                           <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">✓ Kauf (≤320€)</span>
                         ) : (
                           <span className="text-[9px] shrink-0 font-bold text-slate-500 bg-slate-50 px-1 border border-slate-200/80 rounded">Aktiv (&gt;320€)</span>
@@ -2808,7 +2826,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                       <div className="flex items-center gap-1">
                         {!livePrices.btc.price ? (
                           <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt Kurs</span>
-                        ) : Number(livePrices.btc.price) <= 50000 ? (
+                        ) : limitFor('btc') > 0 && Number(livePrices.btc.price) <= limitFor('btc') ? (
                           <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">✓ Sparpl. (≤50K)</span>
                         ) : (
                           <span className="text-[9px] shrink-0 font-bold text-slate-500 bg-slate-50 px-1 border border-slate-200/80 rounded">Aktiv (&gt;50K)</span>

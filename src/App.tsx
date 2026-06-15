@@ -125,85 +125,19 @@ export default function App() {
     };
   });
 
-  // Portfolio items — empty by default. Demo positions only show up once
-  // the user loads a backup or creates positions manually. This way someone
-  // who just gets the public URL never sees another trader's portfolio.
+  // Portfolio items — completely empty by default. The user either
+  // loads a backup or adds positions through the UI. Demo data lives in
+  // a separate seeder (Phase 2) that the user can trigger explicitly.
   const [portfolioData, setPortfolioData] = useState<PortfolioItem[]>(() => {
     const saved = localStorage.getItem("morgenroutine_portfolio");
     if (saved) {
       try {
-        const parsed = JSON.parse(saved) as PortfolioItem[];
-        return parsed.map((item: PortfolioItem) => {
-          const updated = { ...item };
-          if (updated.name.includes("Tesla") || updated.name.includes("Reinhard") || updated.name.includes("Mutter") || updated.name.includes("Absicherung")) {
-            updated.name = "Tesla, Inc.";
-            if (updated.id === "p1") {
-              updated.beschreibung = "Kerninvestition. Harter Anker bei € 185,19.";
-            } else {
-              updated.beschreibung = "Zusätzliche Position (Absicherung). Harter Anker bei € 200,00.";
-            }
-          } else if (updated.name.includes("Kit Anh") || updated.name.includes("Ehemann")) {
-            updated.name = "Tesla, Inc.";
-            updated.beschreibung = "Zusätzliche Position (Absicherung). Harter Anker bei € 200,00.";
-          } else if (updated.name === "ServiceNow (now)" || updated.name === "ServiceNow") {
-            updated.name = "ServiceNow, Inc.";
-          } else if (updated.name === "Alibaba (BABA)" || updated.name === "Alibaba") {
-            updated.name = "Alibaba Group Holding Ltd.";
-          } else if (updated.name === "BTC Sparplan index") {
-            updated.name = "Bitcoin Tracker Index";
-          }
-
-          if (updated.key === "tsla") {
-            updated.ticker = "TSLA";
-            updated.isin = "US88160R1014";
-          } else if (updated.key === "now") {
-            updated.ticker = "NOW";
-            updated.isin = "US81762P1021";
-          } else if (updated.key === "baba") {
-            updated.ticker = "BABA";
-            updated.isin = "US01609W1027";
-          } else if (updated.key === "btc") {
-            updated.ticker = "BTC";
-            updated.isin = "DE000A27Z304";
-          }
-          return updated;
-        });
+        return JSON.parse(saved) as PortfolioItem[];
       } catch (e) {
         console.error("Error reading portfolio from local storage:", e);
       }
     }
-    return [
-      // Demo-Portfolio für neue User: 2 generische Positionen, kein echtes Depot.
-      // Sobald der User eigene Werte einträgt oder ein Backup lädt, wird das ersetzt.
-      {
-        id: "demo_tsla",
-        name: "Tesla, Inc. (Demo)",
-        harterAnker: 200.00,
-        limitPreis: 300.00,
-        limitLabel: "Limit € 300,00",
-        tranchenGroesse: 10000,
-        status: "green",
-        stopKurs: 0,
-        key: "tsla",
-        ticker: "TSLA",
-        isin: "US88160R1014",
-        beschreibung: "Demo-Position — ersetze mit deinen eigenen Werten oder lade ein Backup."
-      },
-      {
-        id: "demo_btc",
-        name: "Bitcoin Tracker Index (Demo)",
-        harterAnker: 30000.00,
-        limitPreis: 50000.00,
-        limitLabel: "Demo-Sparplan",
-        tranchenGroesse: 1000,
-        status: "green",
-        stopKurs: 0,
-        key: "btc",
-        ticker: "BTC",
-        isin: "DE000A27Z304",
-        beschreibung: "Demo-Position — ersetze mit deinen eigenen Werten oder lade ein Backup."
-      }
-    ];
+    return [];
   });
 
   // Checklist items — empty by default; user adds their own tasks or restores from backup.
@@ -226,16 +160,7 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          return parsed.map((s) => {
-            const updated = { ...s };
-            if (!updated.depot || updated.depot === "Standard Depot") {
-              updated.depot = "Flatex";
-            }
-            if (!updated.besitzerName) {
-              updated.besitzerName = "Standard Besitzer";
-            }
-            return updated;
-          });
+          return parsed.map((s) => ({ ...s, depot: s.depot || "", besitzerName: s.besitzerName || "" }));
         }
         return parsed;
       } catch (e) {
@@ -252,19 +177,13 @@ export default function App() {
       try {
         const parsed = JSON.parse(saved);
         if (Array.isArray(parsed)) {
-          // If BABA specifically has 168.54 from the old default, clean/migrate it to 168!
           return parsed.map((p) => {
             const updated = { ...p };
-            if (p.key === "baba" && p.anzahlAktien === 168.54) {
-              updated.anzahlAktien = 168.00;
-              updated.verbleibendeAnzahlAktien = 168.00;
-              updated.tatsaechlicheKosten = 14952.00;
-            }
             if (!updated.depot || updated.depot === "Standard Depot") {
-              updated.depot = updated.key === "now" ? "DADAT" : "Flatex";
+              updated.depot = "";
             }
             if (!updated.besitzerName) {
-              updated.besitzerName = "Standard Besitzer";
+              updated.besitzerName = "";
             }
             return updated;
           });
@@ -385,10 +304,7 @@ export default function App() {
         console.error("Error loading watchlist:", e);
       }
     }
-    return [
-      { symbol: "AAPL", name: "Apple Inc. (Demo)", atr: "0", price: "0" },
-      { symbol: "NVDA", name: "NVIDIA Corp. (Demo)", atr: "0", price: "0" }
-    ];
+    return [];
   });
 
   // Save changes to localStorage
@@ -799,6 +715,16 @@ export default function App() {
               onShowToast={showToast}
               onOpenBackupSetup={() => setBackupSetupOpen(true)}
               onOpenBackupRestore={() => setBackupRestoreOpen(true)}
+              onLoadDemoData={() => {
+                if (portfolioData.length > 0 || watchlist.length > 0) {
+                  if (!window.confirm("Demo-Daten überschreiben deine aktuellen Werte. Hast du vorher ein Backup erstellt?")) {
+                    return;
+                  }
+                }
+                import("./utils/demoData").then(({ DEMO_PAYLOAD }) => {
+                  applyRestoredPayload(DEMO_PAYLOAD);
+                });
+              }}
             />
           )}
         </div>

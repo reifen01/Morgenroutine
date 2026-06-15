@@ -33,16 +33,16 @@ interface RechnerTabProps {
 }
 
 export default function RechnerTab({ routineDate, livePrices, portfolioData, watchlist, onWatchlistChange, onShowToast }: RechnerTabProps) {
-  // Input states
-  const [depotCapital, setDepotCapital] = useState("200000"); // €
+  // Input states — start blank so the user fills in their own numbers.
+  const [depotCapital, setDepotCapital] = useState("");
   const [calcMode, setCalcMode] = useState<"shares" | "stop">("shares");
-  const [ticker, setTicker] = useState("TSLA");
-  const [fxRate, setFxRate] = useState("1.080"); // EUR/USD
-  const [riskPct, setRiskPct] = useState("1.0"); // 1%
-  const [entryPrice, setEntryPrice] = useState("431.20"); // USD or HKD
-  const [stopPrice, setStopPrice] = useState("395.00"); // USD or HKD for Mode 1
-  const [targetPrice, setTargetPrice] = useState("480.00"); // USD or HKD
-  const [trancheSize, setTrancheSize] = useState("30000"); // € for Mode 2
+  const [ticker, setTicker] = useState("");
+  const [fxRate, setFxRate] = useState("1.10"); // EUR/USD rough default, user adjusts
+  const [riskPct, setRiskPct] = useState("1.0"); // 1% rule from the handbook
+  const [entryPrice, setEntryPrice] = useState("");
+  const [stopPrice, setStopPrice] = useState("");
+  const [targetPrice, setTargetPrice] = useState("");
+  const [trancheSize, setTrancheSize] = useState("");
 
   // Psychology checklists
   const [selectedBias, setSelectedBias] = useState("");
@@ -138,10 +138,10 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
   const [lastAutofilledAsset, setLastAutofilledAsset] = useState<string>("");
   const [lastAutofilledAtr, setLastAutofilledAtr] = useState<number | null>(null);
   const [lastAutofilledPrice, setLastAutofilledPrice] = useState<number | null>(null);
-  const [atrCalcEntry, setAtrCalcEntry] = useState<string>("431.20");
-  const [atrCalcLow, setAtrCalcLow] = useState<string>("425.00");
-  const [atrCalcHigh, setAtrCalcHigh] = useState<string>("435.00");
-  const [atrCalcValue, setAtrCalcValue] = useState<string>("15.50");
+  const [atrCalcEntry, setAtrCalcEntry] = useState<string>("");
+  const [atrCalcLow, setAtrCalcLow] = useState<string>("");
+  const [atrCalcHigh, setAtrCalcHigh] = useState<string>("");
+  const [atrCalcValue, setAtrCalcValue] = useState<string>("");
   const [atrCalcMult, setAtrCalcMult] = useState<number>(1.5);
   const [atrCalcDirection, setAtrCalcDirection] = useState<"long" | "short">("long");
 
@@ -350,15 +350,15 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
   };
 
   const handleResetForm = () => {
-    setDepotCapital("200000");
+    setDepotCapital("");
     setCalcMode("shares");
-    setTicker("TSLA");
-    setFxRate("1.080");
+    setTicker("");
+    setFxRate("1.10");
     setRiskPct("1.0");
-    setEntryPrice("431.20");
-    setStopPrice("395.00");
-    setTargetPrice("480.00");
-    setTrancheSize("30000");
+    setEntryPrice("");
+    setStopPrice("");
+    setTargetPrice("");
+    setTrancheSize("");
     setSelectedBias("");
     setKiCheckText("");
     setBearCaseText("");

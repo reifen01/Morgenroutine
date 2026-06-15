@@ -112,10 +112,10 @@ export default function PortfolioTab({
     event.target.value = "";
   };
 
-  const START_CASH = 200000;
-  
-  // Eiserne reserve state
-  const [cashReserve, setCashReserve] = useState(50000); // default 50.000€
+  const START_CASH = 0;
+
+  // Eiserne reserve state — user sets their own number
+  const [cashReserve, setCashReserve] = useState(0);
   const [showWatchlistHelp, setShowWatchlistHelp] = useState(false);
 
   // ATR parameter states matching the Pine Script ATR Stop Loss Finder parameters

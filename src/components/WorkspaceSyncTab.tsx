@@ -79,6 +79,7 @@ interface WorkspaceSyncTabProps {
   onShowToast: (title: string, msg: string, type: "success" | "warning" | "error") => void;
   onOpenBackupSetup?: () => void;
   onOpenBackupRestore?: () => void;
+  onLoadDemoData?: () => void;
 }
 
 interface BackupFile {
@@ -111,6 +112,7 @@ export default function WorkspaceSyncTab({
   onShowToast,
   onOpenBackupSetup,
   onOpenBackupRestore,
+  onLoadDemoData,
 }: WorkspaceSyncTabProps) {
   // OAuth credentials & connection states
   const [clientId, setClientId] = useState<string>(() => {
@@ -1262,11 +1264,11 @@ Generiert am: ${routineDate} - fenzl@fenzlakustik.at
 ---------------------------------------------------------
 Stop-Loss wird unbestechlich abgebildet: Calculated Stop = MAX(Harter Anker, Kurs - (2 * ATR))
 
-• TSLA Kern (Anker 1): Harter Anker € 185,19 (Limit € 320,00)
-• TSLA Absicherung (Anker 2): Harter Anker € 200,00 (Limit € 320,00)
-• ServiceNow: Harter Anker € 80,00 (Limit € 80,00)
-• Alibaba BABA: Harter Anker € 89,00 (Limit € 70,00)
-• Bitcoin (K1 + K2 Sparplan): Keine Stop-Loss Absicherung (Kein Stopp für HODL-Bestände)
+Pro Position trägt der User in der App ein:
+• Hartes Anker-Niveau (€ — niemals nach unten verschoben)
+• Kauflimit (€ — ab welchem Kurs eine neue Tranche aktiv wird)
+• Tranchengröße (€ — wie viel Risiko bei diesem Stop)
+Spar-Pläne (z. B. Crypto-Indizes) können ohne Stop-Loss laufen, wenn sie als HODL-Bestand markiert sind.
 
 ---------------------------------------------------------
 4. ÖSTERREICHISCHE STEUERBESTIMMUNGEN (GELDWERTER SCHUTZ)
@@ -1794,6 +1796,33 @@ ${csvExportString}
                 🔑 Backup-Datei laden
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      {/* 🎯 Demo-Daten — kleines Beispiel-Portfolio für neue User */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 bg-amber-50 text-amber-700 border border-amber-200 rounded-xl flex items-center justify-center shrink-0">
+            🎯
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">
+              Demo-Daten laden
+            </h3>
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Befüllt die App mit einem klar markierten Mini-Portfolio (TSLA + BTC, je 1 Demo-Kauf,
+              AAPL/NVDA in der Watchlist, ein Demo-Depot). Damit kannst du jede Funktion ausprobieren,
+              ohne eigene Werte eintragen zu müssen. Bestehende Daten werden nach Rückfrage überschrieben.
+            </p>
+            <button
+              type="button"
+              onClick={onLoadDemoData}
+              disabled={!onLoadDemoData}
+              className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors active:scale-[0.98] disabled:bg-slate-300 disabled:cursor-not-allowed"
+            >
+              🎯 Demo-Portfolio aktivieren
+            </button>
           </div>
         </div>
       </div>

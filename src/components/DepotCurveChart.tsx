@@ -31,9 +31,9 @@ export default function DepotCurveChart({
   const startingCapital = useMemo(() => {
     let sum = 0;
     customDepots.forEach(dep => {
-      sum += depotStartingCash[dep] ?? 40000;
+      sum += depotStartingCash[dep] ?? 0;
     });
-    return sum || 100000; // Fallback to 100k if 0
+    return sum;
   }, [customDepots, depotStartingCash]);
 
   // Compute chronologically sorted data for Recharts
