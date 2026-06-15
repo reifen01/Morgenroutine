@@ -726,6 +726,47 @@ export default function App() {
                   applyRestoredPayload(DEMO_PAYLOAD);
                 });
               }}
+              onResetAllData={() => {
+                if (!window.confirm(
+                  "ALLE Daten löschen?\n\nPortfolio, Watchlist, Käufe, Verkäufe, Checkliste, Depot-Stammdaten — alles wird zurückgesetzt.\n\nHast du vorher ein Backup erstellt?"
+                )) {
+                  return;
+                }
+                if (!window.confirm("Wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.")) {
+                  return;
+                }
+                // Alle morgenroutine_*-Keys aus localStorage löschen
+                const keys: string[] = [];
+                for (let i = 0; i < localStorage.length; i++) {
+                  const k = localStorage.key(i);
+                  if (k && k.startsWith("morgenroutine_")) keys.push(k);
+                }
+                keys.forEach((k) => localStorage.removeItem(k));
+                // States explizit auf leer setzen (sofortiger UI-Refresh)
+                setPortfolioData([]);
+                setWatchlist([]);
+                setPortfolioPurchases([]);
+                setSoldTrades([]);
+                setChecklistData([]);
+                setCustomDepots([]);
+                setCustomBesitzer([]);
+                setDepotStartingCash({});
+                setLivePrices({
+                  tsla: { price: null, date: initialDate, atr: 0 },
+                  now: { price: null, date: initialDate, atr: 0 },
+                  baba: { price: null, date: initialDate, atr: 0 },
+                  btc: { price: null, date: initialDate, atr: 0 },
+                });
+                setMarketState({
+                  vix: null, vxv: null, vvix: null, spx: null,
+                  wti: null, gas: null, distSpx: 0, distNdx: 0,
+                });
+                showToast(
+                  "Alles zurückgesetzt",
+                  "🧹 Alle Daten wurden gelöscht. Lade ein Backup oder aktiviere das Demo-Portfolio.",
+                  "success"
+                );
+              }}
             />
           )}
         </div>

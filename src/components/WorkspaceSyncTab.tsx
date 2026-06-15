@@ -80,6 +80,7 @@ interface WorkspaceSyncTabProps {
   onOpenBackupSetup?: () => void;
   onOpenBackupRestore?: () => void;
   onLoadDemoData?: () => void;
+  onResetAllData?: () => void;
 }
 
 interface BackupFile {
@@ -113,6 +114,7 @@ export default function WorkspaceSyncTab({
   onOpenBackupSetup,
   onOpenBackupRestore,
   onLoadDemoData,
+  onResetAllData,
 }: WorkspaceSyncTabProps) {
   // OAuth credentials & connection states
   const [clientId, setClientId] = useState<string>(() => {
@@ -1822,6 +1824,34 @@ ${csvExportString}
               className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors active:scale-[0.98] disabled:bg-slate-300 disabled:cursor-not-allowed"
             >
               🎯 Demo-Portfolio aktivieren
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 🧹 Alle Daten zurücksetzen — destructive, daher rote Karte mit Confirm-Dialog */}
+      <div className="bg-white border border-rose-200 rounded-3xl p-6 shadow-sm mb-6">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl flex items-center justify-center shrink-0">
+            🧹
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">
+              Alle Daten zurücksetzen
+            </h3>
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Löscht das gesamte lokale localStorage: Portfolio, Watchlist, Käufe, Verkäufe,
+              Checkliste, Depot-Stammdaten, Live-Preise, Markt-Werte. Danach steht die App so da
+              wie bei einem frisch installierten Browser. <strong>Sichere vorher ein Backup</strong>,
+              falls du die Daten später wiederherstellen willst — diese Aktion ist endgültig.
+            </p>
+            <button
+              type="button"
+              onClick={onResetAllData}
+              disabled={!onResetAllData}
+              className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors active:scale-[0.98] disabled:bg-slate-300 disabled:cursor-not-allowed"
+            >
+              🧹 Alles löschen
             </button>
           </div>
         </div>
