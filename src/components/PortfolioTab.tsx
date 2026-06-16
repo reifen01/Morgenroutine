@@ -1467,7 +1467,7 @@ export default function PortfolioTab({
                 💵 Cash-Cockpit (Eiserne Sachwert-Absicherung)
               </h3>
               <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Schutzschild gegen Gier • DADAT Depotkapital: {formatAccounting(START_CASH)} €
+                Schutzschild gegen Gier • Depotkapital: {formatAccounting(START_CASH)} €
               </p>
             </div>
           </div>
@@ -2744,7 +2744,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 📈 Realisierte Verkäufe &amp; Trade-Historie (Österreich KESt-konform)
               </h3>
               <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Steuerrechtliche DADAT-Dokumentation | Automatische 27,5% KESt-Rücklage
+                Steuerrechtliche Dokumentation | Automatische 27,5% KESt-Rücklage
               </p>
             </div>
           </div>
@@ -3072,7 +3072,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 type="submit"
                 className="h-10 px-5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold uppercase text-[10px] tracking-wider transition-all flex items-center gap-1 cursor-pointer"
               >
-                {editingTradeId ? "💾 Änderungen Speichern" : "💸 Trade im DADAT-Journal verbuchen"}
+                {editingTradeId ? "💾 Änderungen Speichern" : "💸 Trade im Journal verbuchen"}
               </button>
             </div>
           </form>
@@ -3279,7 +3279,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-slate-50 pb-2">
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                ⚡ Budget-Checkliste (Dadat)
+                ⚡ Budget-Checkliste
               </h4>
               <button
                 type="button"

@@ -1276,7 +1276,7 @@ Spar-Pläne (z. B. Crypto-Indizes) können ohne Stop-Loss laufen, wenn sie als H
 4. ÖSTERREICHISCHE STEUERBESTIMMUNGEN (GELDWERTER SCHUTZ)
 ---------------------------------------------------------
 • In Österreich unterliegen Gewinne und Dividenden einer festen KESt von 27,5%.
-• Da DADAT ein inländischer, in Österreich steuereinfacher Broker ist, wird die Abgabe vollautomatisch abgeführt.
+• Bei einem inländischen, steuereinfachen Broker wird die Abgabe vollautomatisch abgeführt (bei Auslandsdepots Selbstdeklaration).
 • Ein automatischer Verlustausgleich innerhalb des Kalenderjahres erfolgt direkt im Hintergrund.
 
 ---------------------------------------------------------
