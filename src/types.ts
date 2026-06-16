@@ -84,6 +84,31 @@ export interface MarketState {
   distNdx: number;
 }
 
+/** One captured day of market-regime values, used for the weekly/monthly
+ *  Auswertung. Written automatically after a successful Live-Abruf. */
+export interface DailySnapshot {
+  date: string;          // YYYY-MM-DD
+  vix: number | null;
+  vxv: number | null;
+  vvix: number | null;
+  spx: number | null;
+  wti: number | null;
+  gas: number | null;
+  distSpx: number;
+  distNdx: number;
+  ratio: number | null;  // vix / vxv
+  status: "GREEN" | "RED"; // overall regime verdict for that day
+}
+
+/** User-editable Pareto learning note for one period (week or month). */
+export interface PeriodLearning {
+  /** Period key: ISO week "2026-W24" or month "2026-06". */
+  periodKey: string;
+  kind: "week" | "month";
+  text: string;
+  updatedAt: string;     // ISO timestamp
+}
+
 export interface ChatMessage {
   id: string;
   role: 'user' | 'model';

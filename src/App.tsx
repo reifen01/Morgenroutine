@@ -13,7 +13,8 @@ import {
   AlertTriangle,
   Info,
   CheckCircle2,
-  FolderSync
+  FolderSync,
+  TrendingUp
 } from "lucide-react";
 import CompactHeader from "./components/CompactHeader";
 import HelpModal from "./components/HelpModal";
@@ -21,13 +22,14 @@ import { usePWAUpdate } from "./usePWAUpdate";
 import MorgenroutineTab from "./components/MorgenroutineTab";
 import RechnerTab from "./components/RechnerTab";
 import PortfolioTab from "./components/PortfolioTab";
+import AuswertungTab from "./components/AuswertungTab";
 import AICoachTab from "./components/AICoachTab";
 import RegelwerkTab from "./components/RegelwerkTab";
 import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OnboardingScreen from "./components/OnboardingScreen";
-import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem } from "./types";
+import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem, DailySnapshot, PeriodLearning } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 import BackupSetupModal from "./components/BackupSetupModal";
 import BackupRestoreModal from "./components/BackupRestoreModal";
@@ -47,7 +49,7 @@ export default function App() {
   // Shared global state variables
   const initialDate = getTodayDateStr();
   const [routineDate, setRoutineDate] = useState(initialDate);
-  const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
+  const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
   const [helpOpen, setHelpOpen] = useState(false);
   const pwaUpdate = usePWAUpdate();
   const [backupSetupOpen, setBackupSetupOpen] = useState(false);
@@ -56,12 +58,54 @@ export default function App() {
     () => localStorage.getItem(LAST_MODIFIED_KEY)
   );
 
+  // Daily market snapshots for the weekly/monthly Auswertung.
+  const [dailyHistory, setDailyHistory] = useState<DailySnapshot[]>(() => {
+    const saved = localStorage.getItem("morgenroutine_daily_history");
+    if (saved) {
+      try { return JSON.parse(saved); } catch { /* ignore */ }
+    }
+    return [];
+  });
+
+  // User-editable Pareto learnings per period (AI draft + manual edits).
+  const [periodLearnings, setPeriodLearnings] = useState<PeriodLearning[]>(() => {
+    const saved = localStorage.getItem("morgenroutine_period_learnings");
+    if (saved) {
+      try { return JSON.parse(saved); } catch { /* ignore */ }
+    }
+    return [];
+  });
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_daily_history", JSON.stringify(dailyHistory));
+  }, [dailyHistory]);
+
+  useEffect(() => {
+    localStorage.setItem("morgenroutine_period_learnings", JSON.stringify(periodLearnings));
+  }, [periodLearnings]);
+
+  // Upsert today's snapshot (one row per date). Called after a Live-Abruf.
+  const recordDailySnapshot = (snap: DailySnapshot) => {
+    setDailyHistory((prev) => {
+      const without = prev.filter((s) => s.date !== snap.date);
+      return [...without, snap].sort((a, b) => a.date.localeCompare(b.date));
+    });
+  };
+
+  const saveLearning = (learning: PeriodLearning) => {
+    setPeriodLearnings((prev) => {
+      const without = prev.filter((l) => l.periodKey !== learning.periodKey);
+      return [...without, learning];
+    });
+  };
+
   // Map each tab to a fitting Handbuch section slug (substring match works,
   // see HelpModal's parseSections + startsWith logic).
   const helpSectionForTab: Record<typeof activeTab, string> = {
     morgenroutine: "live-abruf",
     rechner: "stop-loss-berechnung",
     journal: "steuern",
+    auswertung: "tagesablauf",
     regelwerk: "regel-handbuch",
     "ai-coach": "disziplin-quote",
     workspace: "was-die-app-heute-kann",
@@ -358,6 +402,8 @@ export default function App() {
     customDepots,
     customBesitzer,
     depotStartingCash,
+    dailyHistory,
+    periodLearnings,
   });
 
   const applyRestoredPayload = (payload: BackupPayload) => {
@@ -372,6 +418,8 @@ export default function App() {
     if (typeof payload.depotStartingCash === "object" && payload.depotStartingCash !== null) {
       setDepotStartingCash(payload.depotStartingCash as Record<string, number>);
     }
+    if (Array.isArray(payload.dailyHistory)) setDailyHistory(payload.dailyHistory);
+    if (Array.isArray(payload.periodLearnings)) setPeriodLearnings(payload.periodLearnings);
     showToast(
       "Aktien-Liste geladen",
       `🔓 ${payload.portfolio.length} Position(en), ${payload.watchlist.length} Watchlist-Einträge wiederhergestellt.`,
@@ -606,6 +654,18 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setActiveTab("auswertung")}
+            className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
+              activeTab === "auswertung"
+                ? "text-slate-800 font-bold border-b-2 border-slate-800"
+                : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
+            }`}
+          >
+            <TrendingUp className="h-5 w-5" />
+            <span className="text-[10px] sm:text-xs font-semibold mt-1">Auswertung</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab("regelwerk")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
               activeTab === "regelwerk"
@@ -649,6 +709,7 @@ export default function App() {
               csvExportString={getCSVLine()}
               onShowToast={showToast}
               onOpenRestoreBackup={() => setBackupRestoreOpen(true)}
+              onRecordDailySnapshot={recordDailySnapshot}
             />
           )}
 
@@ -683,6 +744,15 @@ export default function App() {
               depotStartingCash={depotStartingCash}
               onDepotStartingCashChange={setDepotStartingCash}
               onLoadToCalculator={handleLoadToCalculator}
+              onShowToast={showToast}
+            />
+          )}
+
+          {activeTab === "auswertung" && (
+            <AuswertungTab
+              dailyHistory={dailyHistory}
+              periodLearnings={periodLearnings}
+              onSaveLearning={saveLearning}
               onShowToast={showToast}
             />
           )}
@@ -751,6 +821,8 @@ export default function App() {
                 setCustomDepots([]);
                 setCustomBesitzer([]);
                 setDepotStartingCash({});
+                setDailyHistory([]);
+                setPeriodLearnings([]);
                 setLivePrices({
                   tsla: { price: null, date: initialDate, atr: 0 },
                   now: { price: null, date: initialDate, atr: 0 },

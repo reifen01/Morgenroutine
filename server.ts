@@ -131,6 +131,69 @@ app.post("/api/chat", async (req, res) => {
   }
 });
 
+// Generate a Pareto (80/20) learning summary for a week/month from the
+// captured daily market snapshots. Returns a draft the user then edits.
+app.post("/api/analyze-period", async (req, res) => {
+  const { label, kind, snapshots, stats } = req.body as {
+    label?: string;
+    kind?: string;
+    snapshots?: unknown[];
+    stats?: unknown;
+  };
+
+  if (!aiClient) {
+    return res.status(503).json({ error: "Gemini API-Schlüssel ist nicht konfiguriert." });
+  }
+  if (!Array.isArray(snapshots) || snapshots.length === 0) {
+    return res.status(400).json({ error: "Keine Tagesdaten für diesen Zeitraum vorhanden." });
+  }
+
+  const prompt = `Du bist Renes unbestechlicher Trading-Coach. Analysiere die Marktregime-Daten für den Zeitraum "${label}" (${kind === "month" ? "Monat" : "Woche"}).
+
+Aggregierte Kennzahlen:
+${JSON.stringify(stats, null, 2)}
+
+Tägliche Snapshots (VIX, VXV, VVIX, SPX, WTI, Gas, Distribution Days, Status GREEN/RED):
+${JSON.stringify(snapshots, null, 2)}
+
+Erstelle eine Zusammenfassung nach dem PARETO-PRINZIP (80/20): Finde die wenigen entscheidenden Marktereignisse/Trends (die ~20%), die den Großteil (~80%) der Regime-Veränderung erklären. Struktur:
+
+**📊 Was am Markt vorgefallen ist**
+(2-3 Sätze: VIX-Trend, Contango/Backwardation, Energie, Distribution-Day-Druck)
+
+**🎯 Die 20% die zählen (Pareto-Kern)**
+(2-4 Bulletpoints mit den wirklich wichtigen Bewegungen)
+
+**🧭 Learning & Disziplin**
+(1-2 Sätze: Was bedeutet das für die Kaufdisziplin nach dem unbestechlichen Handbuch — durfte gekauft werden oder galt Kaufverbot?)
+
+Schreibe auf Deutsch, sachlich, kompakt. Keine erfundenen Kurse — nur was die Daten hergeben.`;
+
+  try {
+    const models = ["gemini-2.5-flash", "gemini-2.0-flash", "gemini-1.5-flash"];
+    let text = "";
+    let lastErr: any = null;
+    for (const model of models) {
+      try {
+        const response = await aiClient.models.generateContent({
+          model,
+          contents: { parts: [{ text: prompt }] },
+          config: { temperature: 0.6 },
+        });
+        text = response.text || "";
+        if (text) break;
+      } catch (e) {
+        lastErr = e;
+      }
+    }
+    if (!text) throw lastErr || new Error("Kein Text generiert.");
+    res.json({ text });
+  } catch (error: any) {
+    console.error("Period analysis error:", error);
+    res.status(500).json({ error: error.message || "Fehler bei der Perioden-Analyse." });
+  }
+});
+
 // OAuth Popup Callback Endpoint to handle and transmit Google Workspace credentials
 app.get(["/auth/callback", "/auth/callback/"], (req, res) => {
   res.send(`

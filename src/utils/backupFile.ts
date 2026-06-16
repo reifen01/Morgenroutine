@@ -20,7 +20,7 @@
  */
 
 import { decryptJson, encryptJson } from "./encryption";
-import type { PortfolioItem, WatchlistItem, LivePrices, ChecklistItem, SoldTradeItem, PortfolioPurchase } from "../types";
+import type { PortfolioItem, WatchlistItem, LivePrices, ChecklistItem, SoldTradeItem, PortfolioPurchase, DailySnapshot, PeriodLearning } from "../types";
 
 export const BACKUP_MAGIC = "MR-BACKUP-1";
 export const BACKUP_VERSION = 1;
@@ -53,6 +53,11 @@ export interface BackupPayload {
   customDepots: string[];
   customBesitzer: string[];
   depotStartingCash: Record<string, number> | number;
+  /** Daily market snapshots for the weekly/monthly Auswertung (optional —
+   *  older backups won't have it). */
+  dailyHistory?: DailySnapshot[];
+  /** User Pareto learnings per period (optional). */
+  periodLearnings?: PeriodLearning[];
 }
 
 function summarize(payload: BackupPayload): BackupSummary {
