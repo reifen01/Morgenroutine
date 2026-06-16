@@ -1281,7 +1281,9 @@ export default function MorgenroutineTab({
   }
 
   const isAssetActiveInDepot = (key: string): boolean => {
-    if (!portfolioData || portfolioData.length === 0) return true;
+    // Bei leerem Portfolio ist keine Aktie aktiv — nur die Regel-/Marktwerte
+    // gelten als Pflicht-Indikatoren.
+    if (!portfolioData || portfolioData.length === 0) return false;
     return portfolioData.some(item => item.key === key && item.status !== "sold");
   };
 
