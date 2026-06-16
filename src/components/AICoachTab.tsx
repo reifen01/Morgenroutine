@@ -119,7 +119,7 @@ export default function AICoachTab({ routineDate }: AICoachTabProps) {
     },
     {
       label: "🇦🇹 Österreich-KESt erklären",
-      prompt: "Welche steuerlichen Besonderheiten gelten für mich als österreichischen Anleger bei einem steuereinfachen Broker wie DADAT?"
+      prompt: "Welche steuerlichen Besonderheiten gelten für mich als österreichischen Anleger bei einem steuereinfachen Broker?"
     },
     {
       label: "📉 Invertieren bei grünem Markt",

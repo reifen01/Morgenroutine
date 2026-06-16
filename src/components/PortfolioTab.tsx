@@ -20,13 +20,14 @@ import {
   Edit,
   RotateCcw
 } from "lucide-react";
-import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase } from "../types";
+import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, MarketState } from "../types";
 import { formatAccounting, formatToGermanDate, parseCleanDate } from "../utils/mathUtils";
 import { CombinedJournal } from "./CombinedJournal";
 import DepotCurveChart from "./DepotCurveChart";
 
 interface PortfolioTabProps {
   routineDate: string;
+  marketState: MarketState;
   livePrices: LivePrices;
   portfolioData: PortfolioItem[];
   onPortfolioDataChange: (data: PortfolioItem[]) => void;
@@ -54,6 +55,7 @@ interface PortfolioTabProps {
 
 export default function PortfolioTab({
   routineDate,
+  marketState,
   livePrices,
   portfolioData,
   onPortfolioDataChange,
@@ -1465,7 +1467,7 @@ export default function PortfolioTab({
                 💵 Cash-Cockpit (Eiserne Sachwert-Absicherung)
               </h3>
               <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Schutzschild gegen Gier • DADAT Depotkapital: {formatAccounting(START_CASH)} €
+                Schutzschild gegen Gier • Depotkapital: {formatAccounting(START_CASH)} €
               </p>
             </div>
           </div>
@@ -2742,7 +2744,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 📈 Realisierte Verkäufe &amp; Trade-Historie (Österreich KESt-konform)
               </h3>
               <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Steuerrechtliche DADAT-Dokumentation | Automatische 27,5% KESt-Rücklage
+                Steuerrechtliche Dokumentation | Automatische 27,5% KESt-Rücklage
               </p>
             </div>
           </div>
@@ -3070,7 +3072,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                 type="submit"
                 className="h-10 px-5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl font-bold uppercase text-[10px] tracking-wider transition-all flex items-center gap-1 cursor-pointer"
               >
-                {editingTradeId ? "💾 Änderungen Speichern" : "💸 Trade im DADAT-Journal verbuchen"}
+                {editingTradeId ? "💾 Änderungen Speichern" : "💸 Trade im Journal verbuchen"}
               </button>
             </div>
           </form>
@@ -3277,7 +3279,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
           <div className="space-y-4">
             <div className="flex items-center justify-between border-b border-slate-50 pb-2">
               <h4 className="text-xs font-bold text-slate-400 uppercase tracking-widest">
-                ⚡ Budget-Checkliste (Dadat)
+                ⚡ Budget-Checkliste
               </h4>
               <button
                 type="button"
@@ -3462,38 +3464,43 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
               {/* SPX */}
               <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex items-center justify-between">
                 <div>
-                  <span className="font-bold text-slate-800 block text-sm">SP&amp;P 500 (SPX)</span>
+                  <span className="font-bold text-slate-800 block text-sm">S&amp;P 500 (SPX)</span>
                   <span className="text-[10px] text-slate-400 block font-medium">Leitbörsen-Trendline (US)</span>
                 </div>
                 <div className="text-right font-mono">
-                  <span className="block font-bold text-slate-800 text-sm">7.519,10</span>
-                  <span className="text-slate-400 text-[10px] font-medium block">Distribution Days: 2</span>
+                  <span className="block font-bold text-slate-800 text-sm">
+                    {marketState.spx != null ? formatAccounting(marketState.spx) : "—"}
+                  </span>
+                  <span className="text-slate-400 text-[10px] font-medium block">
+                    Distribution Days: {marketState.distSpx ?? "—"}
+                  </span>
                 </div>
               </div>
-              
-              {/* NDX */}
+
+              {/* NDX — preisseitig wird (noch) nicht live geholt, daher zeigt es Distribution Days separat */}
               <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex items-center justify-between">
                 <div>
                   <span className="font-bold text-slate-800 block text-sm">NASDAQ 100 (NDX)</span>
                   <span className="text-[10px] text-slate-400 block font-medium">Tech-Sektor-Trendline (US)</span>
                 </div>
                 <div className="text-right font-mono">
-                  <span className="block font-bold text-slate-800 text-sm">22.410,50</span>
-                  <span className="text-slate-400 text-[10px] font-medium block">Distribution Days: 1</span>
+                  <span className="block font-bold text-slate-400 text-sm">—</span>
+                  <span className="text-slate-400 text-[10px] font-medium block">
+                    Distribution Days: {marketState.distNdx ?? "—"}
+                  </span>
                 </div>
               </div>
-              
+
               {/* BTC */}
               <div className="p-4 bg-slate-50/50 rounded-2xl border border-slate-100 flex items-center justify-between">
                 <div>
                   <span className="font-bold text-slate-800 block text-sm">Bitcoin (BTC/EUR)</span>
-                  <span className="text-[10px] text-slate-400 block font-medium">K1 + K2 Sparplan-Benchmark</span>
+                  <span className="text-[10px] text-slate-400 block font-medium">Sparplan-Benchmark</span>
                 </div>
                 <div className="text-right font-mono">
                   <span className="block font-bold text-slate-800 text-sm">
-                    {livePrices.btc.price ? `€ ${formatAccounting(livePrices.btc.price)}` : "165.155,28 €"}
+                    {livePrices.btc.price ? `€ ${formatAccounting(livePrices.btc.price)}` : "—"}
                   </span>
-                  <span className="text-emerald-500 text-[10px] font-bold block">+0.02%</span>
                 </div>
               </div>
             </div>

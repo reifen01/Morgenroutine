@@ -560,6 +560,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   inputMode="decimal"
                   value={depotCapital}
                   onChange={(e) => setDepotCapital(e.target.value)}
+                  placeholder="z. B. 200000"
                   className="w-full h-11 bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                 />
                 <span className="text-[10px] text-slate-800 font-bold mt-2 block">
@@ -614,6 +615,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   inputMode="decimal"
                   value={fxRate}
                   onChange={(e) => setFxRate(e.target.value)}
+                  placeholder="z. B. 1.10"
                   className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                 />
               </div>
@@ -643,6 +645,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   type="text"
                   inputMode="decimal"
                   value={entryPrice}
+                  placeholder="z. B. 250.00"
                   onChange={(e) => setEntryPrice(e.target.value)}
                   className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                 />
@@ -657,6 +660,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     type="text"
                     inputMode="decimal"
                     value={stopPrice}
+                    placeholder="z. B. 220.00"
                     onChange={(e) => setStopPrice(e.target.value)}
                     className="w-full h-11 bg-white border border-slate-200 focus:border-slate-600 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                   />
@@ -670,6 +674,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     type="text"
                     inputMode="decimal"
                     value={trancheSize}
+                    placeholder="z. B. 30000"
                     onChange={(e) => setTrancheSize(e.target.value)}
                     className="w-full h-11 bg-white border border-slate-200 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                   />
@@ -684,6 +689,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   type="text"
                   inputMode="decimal"
                   value={targetPrice}
+                  placeholder="z. B. 300.00"
                   onChange={(e) => setTargetPrice(e.target.value)}
                   className="w-full h-11 bg-white border border-slate-200 rounded-xl px-4 font-mono font-bold text-slate-900 focus:outline-none transition-colors"
                 />
@@ -855,9 +861,9 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   type="text"
                   inputMode="decimal"
                   value={atrCalcValue}
+                  placeholder="z. B. 15.50"
                   onChange={(e) => setAtrCalcValue(e.target.value)}
                   className="w-full h-10 bg-white font-mono font-bold border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:border-slate-600 text-xs text-center"
-                  placeholder="z.B. 15.5"
                 />
               </div>
 
@@ -870,6 +876,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                   type="text"
                   inputMode="decimal"
                   value={atrCalcEntry}
+                  placeholder="z. B. 250.00"
                   onChange={(e) => setAtrCalcEntry(e.target.value)}
                   className="w-full h-10 bg-white font-mono font-bold border border-slate-200 rounded-xl px-3 text-slate-900 focus:outline-none focus:border-slate-600 text-xs text-center"
                 />
@@ -885,6 +892,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     type="text"
                     inputMode="decimal"
                     value={atrCalcLow}
+                    placeholder="z. B. 245.00"
                     onChange={(e) => setAtrCalcLow(e.target.value)}
                     className="w-full h-10 bg-white font-mono font-semibold border border-slate-200 rounded-xl px-3 text-slate-800 focus:outline-none focus:border-slate-600 text-xs text-center"
                   />
@@ -898,6 +906,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                     type="text"
                     inputMode="decimal"
                     value={atrCalcHigh}
+                    placeholder="z. B. 255.00"
                     onChange={(e) => setAtrCalcHigh(e.target.value)}
                     className="w-full h-10 bg-white font-mono font-semibold border border-slate-200 rounded-xl px-3 text-slate-800 focus:outline-none focus:border-slate-600 text-xs text-center"
                   />

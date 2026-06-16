@@ -80,6 +80,7 @@ interface WorkspaceSyncTabProps {
   onOpenBackupSetup?: () => void;
   onOpenBackupRestore?: () => void;
   onLoadDemoData?: () => void;
+  onResetAllData?: () => void;
 }
 
 interface BackupFile {
@@ -113,6 +114,7 @@ export default function WorkspaceSyncTab({
   onOpenBackupSetup,
   onOpenBackupRestore,
   onLoadDemoData,
+  onResetAllData,
 }: WorkspaceSyncTabProps) {
   // OAuth credentials & connection states
   const [clientId, setClientId] = useState<string>(() => {
@@ -869,7 +871,7 @@ export default function WorkspaceSyncTab({
       const vxvVal = marketState.vxv !== null && marketState.vxv !== undefined ? marketState.vxv.toFixed(2) : "0.00";
       const ratioVal = marketState.vix && marketState.vxv ? (marketState.vix / marketState.vxv).toFixed(2) : "0.00";
       const vvixVal = marketState.vvix !== null && marketState.vvix !== undefined ? marketState.vvix.toFixed(2) : "0.00";
-      const spxVal = "7519.10"; // Custom stable tracking benchmark
+      const spxVal = marketState.spx !== null && marketState.spx !== undefined ? marketState.spx.toFixed(2) : "0.00";
       const wtiVal = marketState.wti !== null && marketState.wti !== undefined ? marketState.wti.toFixed(2) : "0.00";
       const gasVal = marketState.gas !== null && marketState.gas !== undefined ? marketState.gas.toFixed(2) : "0.00";
       const tslaLive = livePrices.tsla.price !== null && livePrices.tsla.price !== undefined ? livePrices.tsla.price.toFixed(2) : "0.00";
@@ -1274,7 +1276,7 @@ Spar-Pläne (z. B. Crypto-Indizes) können ohne Stop-Loss laufen, wenn sie als H
 4. ÖSTERREICHISCHE STEUERBESTIMMUNGEN (GELDWERTER SCHUTZ)
 ---------------------------------------------------------
 • In Österreich unterliegen Gewinne und Dividenden einer festen KESt von 27,5%.
-• Da DADAT ein inländischer, in Österreich steuereinfacher Broker ist, wird die Abgabe vollautomatisch abgeführt.
+• Bei einem inländischen, steuereinfachen Broker wird die Abgabe vollautomatisch abgeführt (bei Auslandsdepots Selbstdeklaration).
 • Ein automatischer Verlustausgleich innerhalb des Kalenderjahres erfolgt direkt im Hintergrund.
 
 ---------------------------------------------------------
@@ -1822,6 +1824,34 @@ ${csvExportString}
               className="inline-flex items-center justify-center gap-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors active:scale-[0.98] disabled:bg-slate-300 disabled:cursor-not-allowed"
             >
               🎯 Demo-Portfolio aktivieren
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 🧹 Alle Daten zurücksetzen — destructive, daher rote Karte mit Confirm-Dialog */}
+      <div className="bg-white border border-rose-200 rounded-3xl p-6 shadow-sm mb-6">
+        <div className="flex items-start gap-4">
+          <div className="h-12 w-12 bg-rose-50 text-rose-700 border border-rose-200 rounded-xl flex items-center justify-center shrink-0">
+            🧹
+          </div>
+          <div className="flex-1 min-w-0">
+            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">
+              Alle Daten zurücksetzen
+            </h3>
+            <p className="text-xs text-slate-500 mb-4 leading-relaxed">
+              Löscht das gesamte lokale localStorage: Portfolio, Watchlist, Käufe, Verkäufe,
+              Checkliste, Depot-Stammdaten, Live-Preise, Markt-Werte. Danach steht die App so da
+              wie bei einem frisch installierten Browser. <strong>Sichere vorher ein Backup</strong>,
+              falls du die Daten später wiederherstellen willst — diese Aktion ist endgültig.
+            </p>
+            <button
+              type="button"
+              onClick={onResetAllData}
+              disabled={!onResetAllData}
+              className="inline-flex items-center justify-center gap-2 bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl transition-colors active:scale-[0.98] disabled:bg-slate-300 disabled:cursor-not-allowed"
+            >
+              🧹 Alles löschen
             </button>
           </div>
         </div>

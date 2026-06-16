@@ -23,7 +23,7 @@ import {
   Check,
   Sparkles
 } from "lucide-react";
-import { MarketState, LivePrices, PortfolioItem, WatchlistItem } from "../types";
+import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot } from "../types";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
   parseCleanFloat, 
@@ -94,6 +94,7 @@ interface MorgenroutineTabProps {
   csvExportString: string;
   onShowToast?: (title: string, msg: string, type: "success" | "warning" | "error") => void;
   onOpenRestoreBackup?: () => void;
+  onRecordDailySnapshot?: (snap: DailySnapshot) => void;
 }
 
 export default function MorgenroutineTab({
@@ -109,6 +110,7 @@ export default function MorgenroutineTab({
   csvExportString,
   onShowToast,
   onOpenRestoreBackup,
+  onRecordDailySnapshot,
 }: MorgenroutineTabProps) {
    // Help tooltips visibility state
   const [helpId, setHelpId] = useState<string | null>(null);
@@ -319,6 +321,30 @@ export default function MorgenroutineTab({
         }
       }
       onMarketStateChange(newMarket);
+
+      // Record today's snapshot for the weekly/monthly Auswertung.
+      if (onRecordDailySnapshot) {
+        const ratio = newMarket.vix && newMarket.vxv ? newMarket.vix / newMarket.vxv : null;
+        const isGreen =
+          newMarket.vix != null && newMarket.vix < 25 &&
+          ratio != null && ratio < 1.0 &&
+          (newMarket.vvix == null || newMarket.vvix <= 130) &&
+          (newMarket.wti == null || newMarket.wti < 100) &&
+          (newMarket.gas == null || newMarket.gas < 4.5);
+        onRecordDailySnapshot({
+          date: routineDate,
+          vix: newMarket.vix,
+          vxv: newMarket.vxv,
+          vvix: newMarket.vvix,
+          spx: newMarket.spx,
+          wti: newMarket.wti,
+          gas: newMarket.gas,
+          distSpx: newMarket.distSpx,
+          distNdx: newMarket.distNdx,
+          ratio,
+          status: isGreen ? "GREEN" : "RED",
+        });
+      }
 
       // 2. Update livePrices for every portfolio item
       const newLive: LivePrices = {
@@ -1281,7 +1307,9 @@ export default function MorgenroutineTab({
   }
 
   const isAssetActiveInDepot = (key: string): boolean => {
-    if (!portfolioData || portfolioData.length === 0) return true;
+    // Bei leerem Portfolio ist keine Aktie aktiv — nur die Regel-/Marktwerte
+    // gelten als Pflicht-Indikatoren.
+    if (!portfolioData || portfolioData.length === 0) return false;
     return portfolioData.some(item => item.key === key && item.status !== "sold");
   };
 
