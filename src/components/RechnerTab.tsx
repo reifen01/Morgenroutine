@@ -134,7 +134,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
   }, [globalSearchQuery]);
 
   // ATR Stop-Loss Finder States (TradingView Pine Script Sync)
-  const [atrCalcAsset, setAtrCalcAsset] = useState<string>("TSLA");
+  const [atrCalcAsset, setAtrCalcAsset] = useState<string>("");
   const [lastAutofilledAsset, setLastAutofilledAsset] = useState<string>("");
   const [lastAutofilledAtr, setLastAutofilledAtr] = useState<number | null>(null);
   const [lastAutofilledPrice, setLastAutofilledPrice] = useState<number | null>(null);
@@ -429,27 +429,26 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
     setTargetPrice(suggestedTarget.toFixed(2));
   };
 
-  // Dynamic Dropdown Option Setup
-  const defaultAssets = [
-    { key: "tsla", ticker: "TSLA", label: "Tesla (TSLA)" },
-    { key: "now", ticker: "NOW", label: "ServiceNow (NOW)" },
-    { key: "baba", ticker: "BABA", label: "Alibaba (BABA)" },
-    { key: "btc", ticker: "BTC", label: "Bitcoin (BTC)" }
-  ];
+  // Quick-pick assets — derived from the user's own portfolio so a fresh
+  // install shows no rows until the user adds positions or loads a backup.
+  const activeAssetOptions = (portfolioData || [])
+    .filter((p) => p.status !== "sold")
+    .map((p) => ({
+      key: p.key,
+      ticker: p.ticker || p.key.toUpperCase(),
+      label: `${p.name} (${p.ticker || p.key.toUpperCase()})`,
+    }));
 
-  // Active portfolio assets (status !== "sold")
-  const activeAssetOptions = defaultAssets.filter(asset => {
-    if (!portfolioData) return true;
-    return portfolioData.some(p => p.key === asset.key && p.status !== "sold");
-  });
-
-  // Sold or inactive portfolio assets
-  const inactiveAssetOptions = defaultAssets.filter(asset => {
-    if (!portfolioData) return false;
-    const hasActive = portfolioData.some(p => p.key === asset.key && p.status !== "sold");
-    const hasSold = portfolioData.some(p => p.key === asset.key && p.status === "sold");
-    return !hasActive && hasSold;
-  });
+  // Sold positions only — appear as greyed-out picks so the user can still
+  // load the last known values into the calculator for reference.
+  const inactiveAssetOptions = (portfolioData || [])
+    .filter((p) => p.status === "sold")
+    .filter((p) => !activeAssetOptions.some((a) => a.key === p.key))
+    .map((p) => ({
+      key: p.key,
+      ticker: p.ticker || p.key.toUpperCase(),
+      label: `${p.name} (${p.ticker || p.key.toUpperCase()})`,
+    }));
 
   const isEurOnly = (parseCleanFloat(fxRate) || 1.0) === 1.0;
   const currencyLabel = isEurOnly ? "€" : "$";
@@ -813,12 +812,6 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
                     <optgroup label="Sonstige / Verkaufte Werte">
                       {inactiveAssetOptions.map(asset => (
-                        <option key={asset.ticker} value={asset.ticker}>{asset.label}</option>
-                      ))}
-                      {defaultAssets.filter(asset => 
-                        !activeAssetOptions.some(a => a.key === asset.key) && 
-                        !inactiveAssetOptions.some(i => i.key === asset.key)
-                      ).map(asset => (
                         <option key={asset.ticker} value={asset.ticker}>{asset.label}</option>
                       ))}
                       <option value="OTHER">Sonstiges (Manuell)</option>
