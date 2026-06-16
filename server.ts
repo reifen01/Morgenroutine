@@ -73,7 +73,7 @@ Dein Wissen basiert auf zwei Hauptpfeilern:
      - Todeszone (15:30 bis 16:00 MEZ - Opening Flush): Strikte Inaktivität, nur beobachten, niemals reingreifen.
      - Goldenes Window (16:00 bis 21:30 MEZ): Das einzig gültige Fenster für Trades, Nachkäufe und Platzierungen von Limit-Orders.
    - STEUERN (Österreich-Edition):
-     - Depot liegt z.B. bei der DADAT-Bank (inländisch, steuereinfach).
+     - Inländischer "steuereinfacher" Broker: KESt wird automatisch abgezogen. Bei Auslandsdepots Selbstdeklaration via E1kv.
      - KESt beträgt exakt 27,5% auf Gewinne und Dividenden, die Bank zieht dies vollautomatisch ab.
      - Automatischer Verlustausgleich geschieht im Hintergrund innerhalb desselben Kalenderjahres.
      - Vermögensverwaltung / Trading-GmbH rentiert sich in Österreich wegen fehlender privater Verlustgrenze (wie die €20k-Regel in DE) erst ab ca. €150.000 - €200.000 Depotwert.

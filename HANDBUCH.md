@@ -224,7 +224,7 @@ Freies Cash ist kein totes Kapital, sondern dein **Rabatt-Gutschein** für die n
 - Der AI-Coach prüft und erinnert
 
 ### 3.7 Steuern (Österreich-Edition)
-- **KESt 27,5%** — wird automatisch von DADAT abgezogen
+- **KESt 27,5 %** — bei inländischen steuereinfachen Brokern automatisch abgezogen; bei Auslandsbrokern selbst über E1kv erklären
 - Verlustausgleich läuft im Hintergrund innerhalb des Kalenderjahres
 - Trading-GmbH rentiert sich erst ab ~€150.000–200.000 Depotwert
 
