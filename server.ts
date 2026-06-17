@@ -546,6 +546,71 @@ function computeATRFromBars(
   return Number.isFinite(avg) ? Number(avg.toFixed(4)) : null;
 }
 
+/**
+ * Stooq fallback: free CSV API with no key. We use it when Yahoo refuses
+ * a symbol (most commonly BABA on Frankfurt — Yahoo sporadically drops
+ * the listing). Stooq covers Germany ("baba.de"), US NYSE ("baba.us") and
+ * a few global exchanges. We map our Yahoo-style tickers onto Stooq's
+ * lowercase naming and prefer the matching German listing so the
+ * EUR-vs-USD currency stays consistent.
+ */
+const STOOQ_MAP: Record<string, { sym: string; currency: string }> = {
+  "BABA.F":  { sym: "baba.de", currency: "EUR" },
+  "BABA.DE": { sym: "baba.de", currency: "EUR" },
+  "BABA.MU": { sym: "baba.de", currency: "EUR" },
+  "BABA.SG": { sym: "baba.de", currency: "EUR" },
+  "TL0.F":   { sym: "tl0.de",  currency: "EUR" },
+  "TL0.DE":  { sym: "tl0.de",  currency: "EUR" },
+  "4S0.F":   { sym: "4s0.de",  currency: "EUR" },
+  "4S0.DE":  { sym: "4s0.de",  currency: "EUR" },
+};
+
+async function fetchStooqDaily(symbol: string): Promise<{ price: number | null; atr: number | null; currency: string } | null> {
+  const mapped = STOOQ_MAP[symbol];
+  if (!mapped) return null;
+
+  const now = new Date();
+  const start = new Date(now.getTime() - 60 * 24 * 3600 * 1000);
+  const fmt = (d: Date) =>
+    `${d.getUTCFullYear()}${String(d.getUTCMonth() + 1).padStart(2, "0")}${String(d.getUTCDate()).padStart(2, "0")}`;
+  const url = `https://stooq.com/q/d/l/?s=${encodeURIComponent(mapped.sym)}&d1=${fmt(start)}&d2=${fmt(now)}&i=d`;
+
+  try {
+    const r = await fetch(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/120.0 Safari/537.36",
+        "Accept": "text/csv,*/*",
+      },
+    });
+    if (!r.ok) return null;
+    const text = await r.text();
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return null;
+    // Header line is "Date,Open,High,Low,Close,Volume" — we ignore it.
+    const bars: { high: number; low: number; close: number }[] = [];
+    let lastClose: number | null = null;
+    for (let i = 1; i < lines.length; i++) {
+      const parts = lines[i].split(",");
+      if (parts.length < 5) continue;
+      const high = parseFloat(parts[2]);
+      const low = parseFloat(parts[3]);
+      const close = parseFloat(parts[4]);
+      if (!isNaN(high) && !isNaN(low) && !isNaN(close)) {
+        bars.push({ high, low, close });
+        lastClose = close;
+      }
+    }
+    if (lastClose == null) return null;
+    return {
+      price: lastClose,
+      atr: computeATRFromBars(bars),
+      currency: mapped.currency,
+    };
+  } catch {
+    return null;
+  }
+}
+
 app.post("/api/fetch-live-prices", async (req, res) => {
   try {
     const { symbols } = req.body as { symbols?: string[] };
@@ -570,7 +635,7 @@ app.post("/api/fetch-live-prices", async (req, res) => {
     );
 
     const market: Record<string, number> = {};
-    const prices: Record<string, { price: number | null; atr: number | null; currency?: string; name?: string }> = {};
+    const prices: Record<string, { price: number | null; atr: number | null; currency?: string; name?: string; source?: string }> = {};
 
     for (let i = 0; i < cleanSymbols.length; i++) {
       const sym = cleanSymbols[i];
@@ -615,6 +680,28 @@ app.post("/api/fetch-live-prices", async (req, res) => {
         market[YAHOO_MARKET_MAP[sym]] = price;
       } else {
         prices[sym] = { price, atr, currency, name };
+      }
+    }
+
+    // Second-anlauf: for any stock symbol where Yahoo returned no price,
+    // retry via Stooq (BABA-Frankfurt drops out of Yahoo from time to time).
+    const stooqRetries = await Promise.all(
+      cleanSymbols
+        .filter((sym) => STOOQ_MAP[sym] && prices[sym] && prices[sym].price == null)
+        .map(async (sym) => {
+          const result = await fetchStooqDaily(sym);
+          return { sym, result };
+        })
+    );
+    for (const { sym, result } of stooqRetries) {
+      if (result && result.price != null) {
+        prices[sym] = {
+          price: result.price,
+          atr: result.atr ?? prices[sym].atr,
+          currency: result.currency,
+          name: prices[sym].name,
+          source: "stooq",
+        };
       }
     }
 
