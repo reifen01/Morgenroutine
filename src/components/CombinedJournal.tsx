@@ -11,7 +11,7 @@ import {
   Brain,
   Sparkles
 } from "lucide-react";
-import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase } from "../types";
+import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem } from "../types";
 import { formatAccounting, formatToGermanDate } from "../utils/mathUtils";
 import AICoachTab from "./AICoachTab";
 
@@ -20,6 +20,7 @@ interface CombinedJournalProps {
   portfolioPurchases: PortfolioPurchase[];
   soldTrades: SoldTradeItem[];
   portfolioData: PortfolioItem[];
+  watchlist: WatchlistItem[];
   onPortfolioPurchasesChange: (updated: PortfolioPurchase[]) => void;
   onSoldTradesChange: (updated: SoldTradeItem[]) => void;
   customDepots: string[];
@@ -116,6 +117,7 @@ export function CombinedJournal({
   portfolioPurchases,
   soldTrades,
   portfolioData,
+  watchlist,
   onPortfolioPurchasesChange,
   onSoldTradesChange,
   customDepots,
@@ -719,20 +721,41 @@ export function CombinedJournal({
                   onChange={(e) => handlePurchaseAssetChange(e.target.value)}
                   className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:outline-none cursor-pointer"
                 >
-                  <option value="tsla">Tesla (TSLA)</option>
-                  <option value="now">ServiceNow (NOW)</option>
-                  <option value="baba">Alibaba (BABA)</option>
-                  <option value="btc">Bitcoin (BTC)</option>
-                  {portfolioData.map((item) => {
-                    const keyLower = String(item.key).toLowerCase();
-                    if (["tsla", "now", "baba", "btc"].includes(keyLower)) return null;
-                    return (
-                      <option key={`purchase-opt-${item.key}`} value={item.key}>
-                        {item.name} ({String(item.key).toUpperCase()})
-                      </option>
-                    );
-                  })}
-                  <option value="other">Sonstiges Wertpapier / Asset</option>
+                  <optgroup label="Depot / Kern-Assets">
+                    <option value="tsla">Tesla (TSLA)</option>
+                    <option value="now">ServiceNow (NOW)</option>
+                    <option value="baba">Alibaba (BABA)</option>
+                    <option value="btc">Bitcoin (BTC)</option>
+                    {portfolioData.map((item) => {
+                      const keyLower = String(item.key).toLowerCase();
+                      if (["tsla", "now", "baba", "btc"].includes(keyLower)) return null;
+                      return (
+                        <option key={`purchase-opt-${item.key}`} value={item.key}>
+                          {item.name} ({String(item.key).toUpperCase()})
+                        </option>
+                      );
+                    })}
+                  </optgroup>
+
+                  {watchlist.length > 0 && (
+                    <optgroup label="⭐ Deine Watchlist">
+                      {watchlist.map((item) => {
+                        const symLower = item.symbol.toLowerCase();
+                        // Duplikate zu Depot-/Kern-Assets ausblenden
+                        if (["tsla", "now", "baba", "btc"].includes(symLower)) return null;
+                        if (portfolioData.some(p => String(p.key).toLowerCase() === symLower)) return null;
+                        return (
+                          <option key={`purchase-wl-${item.symbol}`} value={symLower}>
+                            {item.name || item.symbol.toUpperCase()} ({item.symbol.toUpperCase()})
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  )}
+
+                  <optgroup label="Manuell">
+                    <option value="other">Sonstiges / manuell eingeben</option>
+                  </optgroup>
                 </select>
               </div>
 

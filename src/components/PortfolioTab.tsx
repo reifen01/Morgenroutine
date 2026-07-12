@@ -20,7 +20,7 @@ import {
   Edit,
   RotateCcw
 } from "lucide-react";
-import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, MarketState } from "../types";
+import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, MarketState, WatchlistItem } from "../types";
 import { formatAccounting, formatToGermanDate, parseCleanDate } from "../utils/mathUtils";
 import { CombinedJournal } from "./CombinedJournal";
 import DepotCurveChart from "./DepotCurveChart";
@@ -31,6 +31,7 @@ interface PortfolioTabProps {
   livePrices: LivePrices;
   portfolioData: PortfolioItem[];
   onPortfolioDataChange: (data: PortfolioItem[]) => void;
+  watchlist: WatchlistItem[];
   checklistData: ChecklistItem[];
   onChecklistDataChange: (data: ChecklistItem[]) => void;
   soldTrades: SoldTradeItem[];
@@ -59,6 +60,7 @@ export default function PortfolioTab({
   livePrices,
   portfolioData,
   onPortfolioDataChange,
+  watchlist,
   checklistData,
   onChecklistDataChange,
   soldTrades,
@@ -809,16 +811,29 @@ export default function PortfolioTab({
     } else {
       setPurchaseCustomKeyEnabled(false);
       setPurchaseAssetKey(key);
+
+      // 1. Depot-Positionen (portfolioData) haben Vorrang
       const matchedItem = portfolioData.find(item => item.key === key);
       if (matchedItem) {
         setPurchaseAssetName(matchedItem.name);
-      } else {
-        if (key === 'tsla') setPurchaseAssetName("Tesla, Inc.");
-        else if (key === 'now') setPurchaseAssetName("ServiceNow, Inc.");
-        else if (key === 'baba') setPurchaseAssetName("Alibaba Group Holding Ltd.");
-        else if (key === 'btc') setPurchaseAssetName("Bitcoin Tracker Index");
-        else setPurchaseAssetName(key);
+        return;
       }
+
+      // 2. Favoriten-Watchlist (Rechner-Tab, localStorage)
+      const matchedWatchlist = watchlist.find(
+        item => item.symbol.toLowerCase() === key.toLowerCase()
+      );
+      if (matchedWatchlist) {
+        setPurchaseAssetName(matchedWatchlist.name || matchedWatchlist.symbol.toUpperCase());
+        return;
+      }
+
+      // 3. Kern-Assets als Fallback
+      if (key === 'tsla') setPurchaseAssetName("Tesla, Inc.");
+      else if (key === 'now') setPurchaseAssetName("ServiceNow, Inc.");
+      else if (key === 'baba') setPurchaseAssetName("Alibaba Group Holding Ltd.");
+      else if (key === 'btc') setPurchaseAssetName("Bitcoin Tracker Index");
+      else setPurchaseAssetName(key);
     }
   };
 
@@ -934,8 +949,12 @@ export default function PortfolioTab({
     setEditingPurchaseId(p.id);
     
     // Determine if the key is known and standard in dropdown options
-    const knownKeys = ["tsla", "now", "baba", "btc", ...portfolioData.map(item => String(item.key))];
-    const isKnown = knownKeys.includes(String(p.key));
+    const knownKeys = [
+      "tsla", "now", "baba", "btc",
+      ...portfolioData.map(item => String(item.key).toLowerCase()),
+      ...watchlist.map(item => item.symbol.toLowerCase()),
+    ];
+    const isKnown = knownKeys.includes(String(p.key).toLowerCase());
     
     if (isKnown) {
       setPurchaseAssetKey(String(p.key));
@@ -2307,6 +2326,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
         livePrices={livePrices}
 
         // Form states and toggles
+        watchlist={watchlist}
         showAddPurchaseForm={showAddPurchaseForm}
         setShowAddPurchaseForm={setShowAddPurchaseForm}
         showAddSaleForm={showAddSaleForm}
@@ -2435,20 +2455,40 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                   onChange={(e) => handlePurchaseAssetChange(e.target.value)}
                   className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:outline-none cursor-pointer"
                 >
-                  <option value="tsla">Tesla (TSLA)</option>
-                  <option value="now">ServiceNow (NOW)</option>
-                  <option value="baba">Alibaba (BABA)</option>
-                  <option value="btc">Bitcoin (BTC)</option>
-                  {portfolioData.map((item) => {
-                    const keyLower = String(item.key).toLowerCase();
-                    if (["tsla", "now", "baba", "btc"].includes(keyLower)) return null;
-                    return (
-                      <option key={`purchase-opt-${item.key}`} value={item.key}>
-                        {item.name} ({String(item.key).toUpperCase()})
-                      </option>
-                    );
-                  })}
-                  <option value="other">Sonstiges Wertpapier / Asset</option>
+                  <optgroup label="Depot / Kern-Assets">
+                    <option value="tsla">Tesla (TSLA)</option>
+                    <option value="now">ServiceNow (NOW)</option>
+                    <option value="baba">Alibaba (BABA)</option>
+                    <option value="btc">Bitcoin (BTC)</option>
+                    {portfolioData.map((item) => {
+                      const keyLower = String(item.key).toLowerCase();
+                      if (["tsla", "now", "baba", "btc"].includes(keyLower)) return null;
+                      return (
+                        <option key={`purchase-opt-${item.key}`} value={item.key}>
+                          {item.name} ({String(item.key).toUpperCase()})
+                        </option>
+                      );
+                    })}
+                  </optgroup>
+
+                  {watchlist.length > 0 && (
+                    <optgroup label="⭐ Deine Watchlist">
+                      {watchlist.map((item) => {
+                        const symLower = item.symbol.toLowerCase();
+                        if (["tsla", "now", "baba", "btc"].includes(symLower)) return null;
+                        if (portfolioData.some(p => String(p.key).toLowerCase() === symLower)) return null;
+                        return (
+                          <option key={`purchase-wl2-${item.symbol}`} value={symLower}>
+                            {item.name || item.symbol.toUpperCase()} ({item.symbol.toUpperCase()})
+                          </option>
+                        );
+                      })}
+                    </optgroup>
+                  )}
+
+                  <optgroup label="Manuell">
+                    <option value="other">Sonstiges / manuell eingeben</option>
+                  </optgroup>
                 </select>
               </div>
 
