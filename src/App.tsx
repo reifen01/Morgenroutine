@@ -731,6 +731,7 @@ export default function App() {
               livePrices={livePrices}
               portfolioData={portfolioData}
               onPortfolioDataChange={setPortfolioData}
+              watchlist={watchlist}
               checklistData={checklistData}
               onChecklistDataChange={setChecklistData}
               soldTrades={soldTrades}
