@@ -95,6 +95,10 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
     <div
       className="fixed inset-0 z-[100] bg-slate-900/70 backdrop-blur-sm flex items-center justify-center sm:p-4"
       onClick={onClose}
+      style={{
+        paddingTop: "env(safe-area-inset-top)",
+        paddingBottom: "env(safe-area-inset-bottom)",
+      }}
     >
       <div
         className="bg-white sm:rounded-2xl shadow-2xl w-full max-w-5xl h-full sm:h-[88vh] flex flex-col overflow-hidden relative"
@@ -104,11 +108,11 @@ export default function HelpModal({ isOpen, onClose, initialSection }: HelpModal
         <div className="flex items-center justify-between px-3 sm:px-5 py-2.5 sm:py-3 border-b border-slate-200 bg-slate-50 gap-2">
           <button
             onClick={onClose}
-            className="flex items-center gap-1.5 px-2.5 py-1.5 bg-white hover:bg-slate-100 border border-slate-200 rounded-lg text-sm font-semibold text-slate-800 transition-colors shrink-0"
+            className="flex items-center gap-1.5 px-3 py-2 bg-slate-800 hover:bg-slate-900 text-white border border-slate-800 rounded-lg text-sm font-bold transition-colors shrink-0"
             aria-label="Zurück zur App"
           >
             <ChevronLeft className="w-4 h-4" />
-            <span className="hidden xs:inline sm:inline">Zurück</span>
+            <span>Zurück</span>
           </button>
 
           <div className="flex items-center gap-2 min-w-0 flex-1 justify-center sm:justify-start">
