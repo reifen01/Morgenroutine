@@ -6,14 +6,12 @@
 import { useState, useEffect } from "react";
 import { 
   CloudSun, 
-  Calculator, 
   Wallet, 
   MessageSquare, 
   GraduationCap, 
   AlertTriangle,
   Info,
   CheckCircle2,
-  FolderSync,
   TrendingUp
 } from "lucide-react";
 import CompactHeader from "./components/CompactHeader";
@@ -626,19 +624,7 @@ export default function App() {
             }`}
           >
             <CloudSun className="h-5 w-5" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">Morgenroutine</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("rechner")}
-            className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "rechner"
-                ? "text-slate-800 font-bold border-b-2 border-slate-800"
-                : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
-            }`}
-          >
-            <Calculator className="h-5 w-5" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">Rechner &amp; Checks</span>
+            <span className="text-[10px] sm:text-xs font-semibold mt-1">Morgen</span>
           </button>
 
           <button
@@ -650,43 +636,31 @@ export default function App() {
             }`}
           >
             <Wallet className="h-5 w-5" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">Portfolio &amp; Cash</span>
+            <span className="text-[10px] sm:text-xs font-semibold mt-1">Depot</span>
           </button>
 
           <button
-            onClick={() => setActiveTab("auswertung")}
+            onClick={() => setActiveTab("rechner")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "auswertung"
+              activeTab === "rechner" || activeTab === "auswertung"
                 ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
           >
             <TrendingUp className="h-5 w-5" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">Auswertung</span>
+            <span className="text-[10px] sm:text-xs font-semibold mt-1">Analyse</span>
           </button>
 
           <button
             onClick={() => setActiveTab("regelwerk")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "regelwerk"
+              activeTab === "regelwerk" || activeTab === "workspace"
                 ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
           >
             <GraduationCap className="h-5 w-5" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">Regeln &amp; Coach</span>
-          </button>
-
-          <button
-            onClick={() => setActiveTab("workspace")}
-            className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "workspace"
-                ? "text-slate-800 font-bold border-b-2 border-slate-800"
-                : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
-            }`}
-          >
-            <FolderSync className="h-5 w-5" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">Workspace</span>
+            <span className="text-[10px] sm:text-xs font-semibold mt-1">System</span>
           </button>
 
         </div>
@@ -711,6 +685,31 @@ export default function App() {
               onOpenRestoreBackup={() => setBackupRestoreOpen(true)}
               onRecordDailySnapshot={recordDailySnapshot}
             />
+          )}
+
+          {(activeTab === "rechner" || activeTab === "auswertung") && (
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setActiveTab("rechner")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "rechner"
+                    ? "bg-slate-800 text-white shadow"
+                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
+                }`}
+              >
+                🧮 Rechner &amp; Checks
+              </button>
+              <button
+                onClick={() => setActiveTab("auswertung")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "auswertung"
+                    ? "bg-slate-800 text-white shadow"
+                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
+                }`}
+              >
+                📊 Auswertung
+              </button>
+            </div>
           )}
 
           {activeTab === "rechner" && (
@@ -756,6 +755,31 @@ export default function App() {
               onSaveLearning={saveLearning}
               onShowToast={showToast}
             />
+          )}
+
+          {(activeTab === "regelwerk" || activeTab === "workspace") && (
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setActiveTab("regelwerk")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "regelwerk"
+                    ? "bg-slate-800 text-white shadow"
+                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
+                }`}
+              >
+                🎓 Regeln &amp; Coach
+              </button>
+              <button
+                onClick={() => setActiveTab("workspace")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "workspace"
+                    ? "bg-slate-800 text-white shadow"
+                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
+                }`}
+              >
+                🗂️ Workspace &amp; Backup
+              </button>
+            </div>
           )}
 
           {activeTab === "regelwerk" && (
