@@ -90,8 +90,6 @@ interface MorgenroutineTabProps {
   watchlist: WatchlistItem[];
   onWatchlistChange: (next: WatchlistItem[]) => void;
   routineDate: string;
-  onCopyExcelLine: () => void;
-  csvExportString: string;
   onShowToast?: (title: string, msg: string, type: "success" | "warning" | "error") => void;
   onOpenRestoreBackup?: () => void;
   onRecordDailySnapshot?: (snap: DailySnapshot) => void;
@@ -106,8 +104,6 @@ export default function MorgenroutineTab({
   watchlist,
   onWatchlistChange,
   routineDate,
-  onCopyExcelLine,
-  csvExportString,
   onShowToast,
   onOpenRestoreBackup,
   onRecordDailySnapshot,
@@ -2747,26 +2743,7 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                 )}
               </div>
 
-              {/* CSV Export Button container */}
-              <div className="pt-4 border-t border-slate-100 space-y-3">
-                <label className="block text-[10px] font-bold text-slate-450 uppercase tracking-widest">
-                  📂 Excel CSV-Exportzeile
-                </label>
-                <textarea
-                  value={csvExportString}
-                  readOnly
-                  rows={2}
-                  onClick={(e) => (e.target as HTMLTextAreaElement).select()}
-                  className="w-full p-3 bg-slate-55 border border-slate-200 rounded-xl font-mono text-[10px] text-slate-600 focus:outline-none select-all"
-                />
-                <button
-                  type="button"
-                  onClick={onCopyExcelLine}
-                  className="w-full h-11 bg-slate-800 hover:bg-slate-900 text-white rounded-xl text-xs font-bold tracking-tight flex items-center justify-center gap-2 transition-colors shadow-sm active:scale-98 cursor-pointer"
-                >
-                  <Clipboard className="h-4.5 w-4.5" /> Exportzeile kopieren
-                </button>
-              </div>
+
 
             </div>
           </div>

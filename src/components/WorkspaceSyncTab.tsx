@@ -6,7 +6,7 @@
  * läuft über das verschlüsselte PIN-Backup (AES-256, komplett im
  * Browser) und den CSV-Export; der Quellcode lebt auf GitHub.
  */
-import { FileSpreadsheet, Smartphone, QrCode, Copy } from "lucide-react";
+import { Smartphone, QrCode, Copy } from "lucide-react";
 import {
   MarketState, LivePrices, PortfolioItem, ChecklistItem,
   SoldTradeItem, PortfolioPurchase,
@@ -32,7 +32,6 @@ interface WorkspaceSyncTabProps {
   depotStartingCash: Record<string, number>;
   onDepotStartingCashChange: (cash: Record<string, number>) => void;
   routineDate: string;
-  csvExportString: string;
   onShowToast: (title: string, msg: string, type: "success" | "warning" | "error") => void;
   onOpenBackupSetup?: () => void;
   onOpenBackupRestore?: () => void;
@@ -41,7 +40,6 @@ interface WorkspaceSyncTabProps {
 }
 
 export default function WorkspaceSyncTab({
-  csvExportString,
   onShowToast,
   onOpenBackupSetup,
   onOpenBackupRestore,
@@ -49,21 +47,6 @@ export default function WorkspaceSyncTab({
   onResetAllData,
 }: WorkspaceSyncTabProps) {
 
-  const handleCopyCSVLine = () => {
-    navigator.clipboard.writeText(csvExportString).then(() => {
-      onShowToast(
-        "Excel-Zeile kopiert",
-        "📋 CSV-Zeile wurde in die Zwischenablage kopiert. Mit Strg+V in dein Excel-Journal einfügen.",
-        "success"
-      );
-    }).catch(() => {
-      onShowToast(
-        "Kopier-Fehler",
-        "Kopieren in die Zwischenablage fehlgeschlagen. Wähle den Text im Feld manuell aus.",
-        "error"
-      );
-    });
-  };
 
   const handleCopyAppLink = () => {
     navigator.clipboard.writeText(window.location.origin).then(() => {
@@ -117,38 +100,6 @@ export default function WorkspaceSyncTab({
                 🔑 Backup-Datei laden
               </button>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* 📊 CSV-Export */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm mb-6">
-        <div className="flex items-start gap-4">
-          <div className="h-12 w-12 bg-slate-100 border border-slate-200 rounded-xl flex items-center justify-center text-slate-700 shrink-0">
-            <FileSpreadsheet className="h-6 w-6" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide mb-1">
-              Excel-Zeile (CSV) für heute
-            </h3>
-            <p className="text-xs text-slate-500 mb-3">
-              Eine fertige CSV-Zeile mit allen Tageswerten. Per Klick in die Zwischenablage und mit Strg+V in dein Tages-Journal in Excel einfügen.
-            </p>
-            <textarea
-              value={csvExportString}
-              readOnly
-              rows={2}
-              className="w-full text-[11px] font-mono bg-slate-50 border border-slate-200 rounded-lg p-2 text-slate-700 select-all focus:outline-none focus:ring-2 focus:ring-slate-300 mb-3"
-              onClick={(e) => (e.currentTarget as HTMLTextAreaElement).select()}
-            />
-            <button
-              type="button"
-              onClick={handleCopyCSVLine}
-              className="inline-flex items-center gap-2 bg-slate-800 hover:bg-slate-900 text-white text-sm font-semibold px-4 py-2 rounded-lg transition-colors active:scale-95"
-            >
-              <FileSpreadsheet className="h-4 w-4" />
-              CSV-Zeile in die Zwischenablage kopieren
-            </button>
           </div>
         </div>
       </div>
