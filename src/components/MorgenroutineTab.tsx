@@ -1347,37 +1347,15 @@ export default function MorgenroutineTab({
   if (wti === null || wti === undefined) missingForToday.push("WTI Rohölpreis fehlt");
   if (gas === null || gas === undefined) missingForToday.push("Henry Hub Erdgaspreis fehlt");
 
-  if (isAssetActiveInDepot('tsla')) {
-    if (!livePrices.tsla.price) {
-      missingForToday.push("TSLA Preis fehlt");
-    } else if (livePrices.tsla.date !== routineDate) {
-      missingForToday.push("TSLA Kurs ist veraltet (Datum Alt)");
+  // Pflichtprüfung pro aktivem Asset — generisch statt 4× kopiert
+  coreAssets.forEach((asset) => {
+    const lp = livePrices[asset.key];
+    if (!lp.price) {
+      missingForToday.push(`${asset.ticker} Preis fehlt`);
+    } else if (lp.date !== routineDate) {
+      missingForToday.push(`${asset.ticker} Kurs ist veraltet (Datum Alt)`);
     }
-  }
-
-  if (isAssetActiveInDepot('now')) {
-    if (!livePrices.now.price) {
-      missingForToday.push("NOW Preis fehlt");
-    } else if (livePrices.now.date !== routineDate) {
-      missingForToday.push("NOW Kurs ist veraltet (Datum Alt)");
-    }
-  }
-
-  if (isAssetActiveInDepot('baba')) {
-    if (!livePrices.baba.price) {
-      missingForToday.push("BABA Preis fehlt");
-    } else if (livePrices.baba.date !== routineDate) {
-      missingForToday.push("BABA Kurs ist veraltet (Datum Alt)");
-    }
-  }
-
-  if (isAssetActiveInDepot('btc')) {
-    if (!livePrices.btc.price) {
-      missingForToday.push("BTC Preis fehlt");
-    } else if (livePrices.btc.date !== routineDate) {
-      missingForToday.push("BTC Kurs ist veraltet (Datum Alt)");
-    }
-  }
+  });
 
   const isTodayCompleteAndSecure = missingForToday.length === 0;
 
@@ -2700,200 +2678,67 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                 )}
 
                  {/* TSLA Inputs Row */}
-                {isAssetActiveInDepot('tsla') && (
-                  <div className="space-y-1 border-b border-slate-100 pb-3">
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">TSLA (Tesla Inc.)</span>
-                      <div className="flex items-center gap-1">
-                        {!livePrices.tsla.price ? (
-                          <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt Kurs</span>
-                        ) : limitFor('tsla') > 0 && Number(livePrices.tsla.price) <= limitFor('tsla') ? (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">✓ Kauf (≤320€)</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-slate-500 bg-slate-50 px-1 border border-slate-200/80 rounded">Aktiv (&gt;320€)</span>
-                        )}
-                        {!livePrices.tsla.atr ? (
-                          <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt ATR</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">ATR ✓</span>
-                        )}
-                        {livePrices.tsla.date === routineDate ? (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-55 px-1 border border-emerald-100/80 rounded">Datum ✓</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-rose-600 bg-rose-50 px-1 border border-rose-100/80 rounded" title={`Sollte ${formatToGermanDate(routineDate)} sein`}>Datum Alt</span>
-                        )}
+                {/* GENERISCHE KURS-EINGABE — eine Schleife statt 4 kopierter Blöcke.
+                    Limits kommen dynamisch aus dem Depot (limitFor), nie mehr hartcodiert. */}
+                {coreAssets.map((asset) => {
+                  const lp = livePrices[asset.key];
+                  const kaufLabel = asset.key === "btc" ? "Sparpl." : "Kauf";
+                  return (
+                    <div key={`price-input-${asset.key}`} className="space-y-1 border-b border-slate-100 pb-3">
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">
+                          {asset.ticker} ({asset.name})
+                        </span>
+                        <div className="flex items-center gap-1">
+                          {!lp.price ? (
+                            <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt Kurs</span>
+                          ) : asset.limit > 0 && Number(lp.price) <= asset.limit ? (
+                            <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">
+                              ✓ {kaufLabel} (≤{asset.limit.toLocaleString("de-DE")}€)
+                            </span>
+                          ) : asset.limit > 0 ? (
+                            <span className="text-[9px] shrink-0 font-bold text-slate-500 bg-slate-50 px-1 border border-slate-200/80 rounded">
+                              Aktiv (&gt;{asset.limit.toLocaleString("de-DE")}€)
+                            </span>
+                          ) : (
+                            <span className="text-[9px] shrink-0 font-bold text-slate-500 bg-slate-50 px-1 border border-slate-200/80 rounded">Aktiv</span>
+                          )}
+                          {!lp.atr ? (
+                            <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt ATR</span>
+                          ) : (
+                            <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">ATR ✓</span>
+                          )}
+                          {lp.date === routineDate ? (
+                            <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">Datum ✓</span>
+                          ) : (
+                            <span className="text-[9px] shrink-0 font-bold text-rose-600 bg-rose-50 px-1 border border-rose-100/80 rounded" title={`Sollte ${formatToGermanDate(routineDate)} sein`}>Datum Alt</span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2">
+                        <DecimalInput
+                          value={lp.price}
+                          onChange={(val) => handleLivePriceFieldChangeNum(asset.key, "price", val)}
+                          placeholder="Preis (€)"
+                          className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
+                        />
+                        <DecimalInput
+                          value={lp.atr}
+                          onChange={(val) => handleLivePriceFieldChangeNum(asset.key, "atr", val)}
+                          placeholder="ATR"
+                          className="h-10 w-full bg-amber-50/50 border border-amber-100 rounded-xl text-xs px-2 focus:border-amber-450 focus:outline-none text-center font-bold text-amber-900"
+                        />
+                        <input
+                          type="text"
+                          value={formatToGermanDate(lp.date)}
+                          onChange={(e) => handleLivePriceFieldChange(asset.key, "date", parseCleanDate(e.target.value))}
+                          placeholder="Datum"
+                          className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
+                        />
                       </div>
                     </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <DecimalInput
-                        value={livePrices.tsla.price}
-                        onChange={(val) => handleLivePriceFieldChangeNum("tsla", "price", val)}
-                        placeholder="Preis (€)"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
-                      />
-                      <DecimalInput
-                        value={livePrices.tsla.atr}
-                        onChange={(val) => handleLivePriceFieldChangeNum("tsla", "atr", val)}
-                        placeholder="ATR"
-                        className="h-10 w-full bg-amber-50/50 border border-amber-100 rounded-xl text-xs px-2 focus:border-amber-450 focus:outline-none text-center font-bold text-amber-900"
-                      />
-                      <input
-                        type="text"
-                        value={formatToGermanDate(livePrices.tsla.date)}
-                        onChange={(e) => handleLivePriceFieldChange("tsla", "date", parseCleanDate(e.target.value))}
-                        placeholder="Datum"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                 {/* NOW Inputs Row */}
-                {isAssetActiveInDepot('now') && (
-                  <div className="space-y-1 border-b border-slate-100 pb-3">
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">NOW (ServiceNow)</span>
-                      <div className="flex items-center gap-1">
-                        {!livePrices.now.price ? (
-                          <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt Kurs</span>
-                        ) : Number(livePrices.now.price) <= 80 ? (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">✓ Kauf (≤80€)</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-slate-500 bg-slate-50 px-1 border border-slate-200/80 rounded">Aktiv (&gt;80€)</span>
-                        )}
-                        {!livePrices.now.atr ? (
-                          <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt ATR</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">ATR ✓</span>
-                        )}
-                        {livePrices.now.date === routineDate ? (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">Datum ✓</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-rose-600 bg-rose-50 px-1 border border-rose-100/80 rounded" title={`Sollte ${formatToGermanDate(routineDate)} sein`}>Datum Alt</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <DecimalInput
-                        value={livePrices.now.price}
-                        onChange={(val) => handleLivePriceFieldChangeNum("now", "price", val)}
-                        placeholder="Preis (€)"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
-                      />
-                      <DecimalInput
-                        value={livePrices.now.atr}
-                        onChange={(val) => handleLivePriceFieldChangeNum("now", "atr", val)}
-                        placeholder="ATR"
-                        className="h-10 w-full bg-amber-55/50 border border-amber-100 rounded-xl text-xs px-2 focus:border-amber-450 focus:outline-none text-center font-bold text-amber-900"
-                      />
-                      <input
-                        type="text"
-                        value={formatToGermanDate(livePrices.now.date)}
-                        onChange={(e) => handleLivePriceFieldChange("now", "date", parseCleanDate(e.target.value))}
-                        placeholder="Datum"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* BABA Inputs Row */}
-                {isAssetActiveInDepot('baba') && (
-                  <div className="space-y-1 border-b border-slate-100 pb-3">
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">BABA (Alibaba)</span>
-                      <div className="flex items-center gap-1">
-                        {!livePrices.baba.price ? (
-                          <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt Kurs</span>
-                        ) : Number(livePrices.baba.price) <= 70 ? (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">✓ Kauf (≤70€)</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-slate-500 bg-slate-50 px-1 border border-slate-200/80 rounded">Aktiv (&gt;70€)</span>
-                        )}
-                        {!livePrices.baba.atr ? (
-                          <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt ATR</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">ATR ✓</span>
-                        )}
-                        {livePrices.baba.date === routineDate ? (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">Datum ✓</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-rose-600 bg-rose-50 px-1 border border-rose-100/80 rounded" title={`Sollte ${formatToGermanDate(routineDate)} sein`}>Datum Alt</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <DecimalInput
-                        value={livePrices.baba.price}
-                        onChange={(val) => handleLivePriceFieldChangeNum("baba", "price", val)}
-                        placeholder="Preis (€)"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
-                      />
-                      <DecimalInput
-                        value={livePrices.baba.atr}
-                        onChange={(val) => handleLivePriceFieldChangeNum("baba", "atr", val)}
-                        placeholder="ATR"
-                        className="h-10 w-full bg-amber-55/50 border border-amber-100 rounded-xl text-xs px-2 focus:border-amber-455 focus:outline-none text-center font-bold text-amber-900"
-                      />
-                      <input
-                        type="text"
-                        value={formatToGermanDate(livePrices.baba.date)}
-                        onChange={(e) => handleLivePriceFieldChange("baba", "date", parseCleanDate(e.target.value))}
-                        placeholder="Datum"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {/* BTC Inputs Row */}
-                {isAssetActiveInDepot('btc') && (
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between gap-1 mb-1">
-                      <span className="text-[10px] font-extrabold text-slate-500 uppercase tracking-wider">BTC (Bitcoin)</span>
-                      <div className="flex items-center gap-1">
-                        {!livePrices.btc.price ? (
-                          <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt Kurs</span>
-                        ) : limitFor('btc') > 0 && Number(livePrices.btc.price) <= limitFor('btc') ? (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">✓ Sparpl. (≤50K)</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-slate-500 bg-slate-50 px-1 border border-slate-200/80 rounded">Aktiv (&gt;50K)</span>
-                        )}
-                        {!livePrices.btc.atr ? (
-                          <span className="text-[9px] shrink-0 font-bold text-amber-600 bg-amber-50 px-1 border border-amber-200/60 rounded">Fehlt ATR</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">ATR ✓</span>
-                        )}
-                        {livePrices.btc.date === routineDate ? (
-                          <span className="text-[9px] shrink-0 font-bold text-emerald-600 bg-emerald-50 px-1 border border-emerald-100/80 rounded">Datum ✓</span>
-                        ) : (
-                          <span className="text-[9px] shrink-0 font-bold text-rose-600 bg-rose-50 px-1 border border-rose-100/80 rounded" title={`Sollte ${formatToGermanDate(routineDate)} sein`}>Datum Alt</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-3 gap-2">
-                      <DecimalInput
-                        value={livePrices.btc.price}
-                        onChange={(val) => handleLivePriceFieldChangeNum("btc", "price", val)}
-                        placeholder="Preis (€)"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 focus:border-slate-600 rounded-xl text-xs px-2 focus:outline-none text-center font-bold"
-                      />
-                      <DecimalInput
-                        value={livePrices.btc.atr}
-                        onChange={(val) => handleLivePriceFieldChangeNum("btc", "atr", val)}
-                        placeholder="ATR"
-                        className="h-10 w-full bg-amber-55/50 border border-amber-100 rounded-xl text-xs px-2 focus:border-amber-455 focus:outline-none text-center font-bold text-amber-900"
-                      />
-                      <input
-                        type="text"
-                        value={formatToGermanDate(livePrices.btc.date)}
-                        onChange={(e) => handleLivePriceFieldChange("btc", "date", parseCleanDate(e.target.value))}
-                        placeholder="Datum"
-                        className="h-10 w-full bg-slate-50 border border-slate-200 rounded-xl text-[10px] px-1 text-center font-bold focus:border-slate-600 focus:outline-none"
-                      />
-                    </div>
-                  </div>
-                )}
+                  );
+                })}
 
                 {coreAssets.length === 0 && (
                   <div className="text-center py-6 px-4 bg-slate-50/50 border border-dashed border-slate-200 rounded-2xl text-slate-500 text-xs font-semibold">
