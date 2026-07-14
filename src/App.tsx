@@ -461,48 +461,7 @@ export default function App() {
   }, [routineDate]);
 
   // Excel CSV single line compiler
-  const getCSVLine = () => {
-    const formattedDate = routineDate.replace(/-/g, "");
-    const vix = marketState.vix || 0;
-    const vxv = marketState.vxv || 0;
-    const ratio = vix && vxv ? vix / vxv : 0;
-    const wti = marketState.wti || 0;
-    const gas = marketState.gas || 0;
 
-    const tsla = livePrices.tsla.price || 0;
-    const now = livePrices.now.price || 0;
-    const baba = livePrices.baba.price || 0;
-    const btc = livePrices.btc.price || 0;
-
-    const isSystemGreen = (wti < 100 && gas < 4.5 && ratio < 1.0 && vix < 25 && vix > 0 && vxv > 0);
-    const statusLabel = isSystemGreen ? "GREEN" : "RED/RESTRIKTIV";
-
-    let textComment = `VIX bei ${vix.toFixed(2)} im Contango (${ratio.toFixed(2)}). `;
-    if (wti >= 100 || gas >= 4.5) {
-      textComment += `Sperre aktiv wegen Energiesektor.`;
-    } else {
-      textComment += `WTI Öl (${wti.toFixed(2)} $) und Erdgas (${gas.toFixed(2)} $) stabil unter den mathematischen Schutzlimits.`;
-    }
-
-    const vvixVal = marketState.vvix || 0;
-    const spxVal = marketState.spx || 0;
-
-    return `${formattedDate};${vix.toFixed(2)};${vxv.toFixed(2)};${ratio.toFixed(2)};${vvixVal.toFixed(2)};${spxVal.toFixed(2)};${wti.toFixed(2)};${gas.toFixed(2)};${tsla.toFixed(2)};${baba.toFixed(2)};${now.toFixed(2)};${btc.toFixed(2)};${statusLabel};${textComment}`;
-  };
-
-  const handleCopyExcelLine = () => {
-    const csvLine = getCSVLine();
-    navigator.clipboard.writeText(csvLine).then(() => {
-      showToast(
-        "Excel Export", 
-        "📋 CSV-Zeile erfolgreich kopiert! Du kannst sie jetzt mit Strg+V in dein Tages_Journal in Excel einfügen.", 
-        "success"
-      );
-    }).catch(() => {
-      // Fallback
-      showToast("Excel Export", "Kopieren gescheitert. Bitte wähle den Text im Textbereich direkt aus.", "error");
-    });
-  };
 
   // Callback to bridge clicking on Portfolio "🎯 Rechnen" and feeding inputs to Rechner tab
   const handleLoadToCalculator = (
@@ -679,8 +638,6 @@ export default function App() {
               watchlist={watchlist}
               onWatchlistChange={setWatchlist}
               routineDate={routineDate}
-              onCopyExcelLine={handleCopyExcelLine}
-              csvExportString={getCSVLine()}
               onShowToast={showToast}
               onOpenRestoreBackup={() => setBackupRestoreOpen(true)}
               onRecordDailySnapshot={recordDailySnapshot}
@@ -807,7 +764,6 @@ export default function App() {
               depotStartingCash={depotStartingCash}
               onDepotStartingCashChange={setDepotStartingCash}
               routineDate={routineDate}
-              csvExportString={getCSVLine()}
               onShowToast={showToast}
               onOpenBackupSetup={() => setBackupSetupOpen(true)}
               onOpenBackupRestore={() => setBackupRestoreOpen(true)}
