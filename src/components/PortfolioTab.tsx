@@ -23,6 +23,8 @@ import {
 import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, MarketState, WatchlistItem } from "../types";
 import { formatAccounting, formatToGermanDate, parseCleanDate } from "../utils/mathUtils";
 import { CombinedJournal } from "./CombinedJournal";
+import DepotTable from "./DepotTable";
+import { buildAssetRegistry } from "../utils/assetRegistry";
 import DepotCurveChart from "./DepotCurveChart";
 
 interface PortfolioTabProps {
@@ -784,6 +786,12 @@ export default function PortfolioTab({
 
     return results;
   }, [portfolioPurchases]);
+
+  // Zentrales Asset-Register: Depot-Limits + Watchlist + Kern-Assets
+  const assetRegistry = useMemo(
+    () => buildAssetRegistry(portfolioData, watchlist),
+    [portfolioData, watchlist]
+  );
 
   const handleSortPurchases = (field: string) => {
     if (purchaseSortField === field) {
@@ -2206,111 +2214,27 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
           </div>
         </div>
 
-        {/* PORTFOLIO TABELLE */}
-        <div className="overflow-x-auto rounded-xl border border-slate-100">
-          <table className="w-full border-collapse text-left text-xs sm:text-sm">
-            <thead>
-              <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-sans select-none">
-                <th className="py-3 px-4">Wertpapier (Asset)</th>
-                <th className="py-3 px-4">Depot</th>
-                <th className="py-3 px-4">Besitzer</th>
-                <th className="py-3 px-4 text-right">Menge</th>
-                <th className="py-3 px-4 text-right">Ø Kaufkurs</th>
-                <th className="py-3 px-4 text-right">Aktueller Kurs</th>
-                <th className="py-3 px-4 text-right">Anschaffungswert</th>
-                <th className="py-3 px-4 text-right">Marktwert</th>
-                <th className="py-3 px-4 text-right text-slate-900">Unrealisierter P/L-Gras</th>
-                <th className="py-3 px-4 text-center">Aktion</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50 text-slate-700 text-xs font-semibold">
-              {derivedActivePortfolio.length === 0 ? (
-                <tr>
-                  <td colSpan={10} className="py-10 text-center text-slate-400 font-semibold font-sans">
-                    Keine aktiven Bestände im Journal vorhanden. Buche einen Kauf im Transaktions-Journal unten ein, um den Live-Bestand einzusehen!
-                  </td>
-                </tr>
-              ) : (
-                derivedActivePortfolio.map((holding, idx) => {
-                  const livePr = livePrices[holding.key as keyof typeof livePrices]?.price || holding.averageKaufkurs;
-                  const mktVal = holding.totalShares * livePr;
-                  const pl = mktVal - holding.totalCost;
-                  const plPercent = holding.totalCost > 0 ? (pl / holding.totalCost) * 100 : 0;
-                  const isProfit = pl >= 0;
 
-                  return (
-                    <tr key={`${holding.key}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <div className="font-bold text-slate-900 text-sm">{holding.name}</div>
-                        <span className="inline-block px-1.5 py-0.5 rounded font-mono text-[9px] font-bold text-slate-800 bg-slate-50 uppercase mt-0.5">
-                          {String(holding.key).toUpperCase()}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">
-                          {holding.depot}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 whitespace-nowrap">
-                        <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200">
-                          {holding.besitzerName}
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono font-bold text-slate-800 whitespace-nowrap">
-                        {holding.totalShares.toFixed(2)} Stk.
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono text-slate-500 whitespace-nowrap">
-                        € {formatAccounting(holding.averageKaufkurs)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono text-slate-700 whitespace-nowrap">
-                        € {formatAccounting(livePr)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono text-slate-900 whitespace-nowrap">
-                        € {formatAccounting(holding.totalCost)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono text-slate-900 whitespace-nowrap">
-                        € {formatAccounting(mktVal)}
-                      </td>
-                      <td className="py-3.5 px-4 text-right font-mono whitespace-nowrap">
-                        <span className={`block font-bold ${isProfit ? 'text-emerald-600' : 'text-rose-600'}`}>
-                          {isProfit ? "+" : ""}{formatAccounting(pl)} €
-                        </span>
-                        <span className={`text-[9px] font-extrabold ${isProfit ? 'text-emerald-500/90' : 'text-rose-500/90'}`}>
-                          ({isProfit ? "+" : ""}{plPercent.toFixed(1)}%)
-                        </span>
-                      </td>
-                      <td className="py-3.5 px-4 text-center whitespace-nowrap">
-                        <button
-                          onClick={() => {
-                            setSaleAssetName(holding.name);
-                            setSaleAssetKey(holding.key);
-                            setSaleKaufKurs(holding.averageKaufkurs.toFixed(2));
-                            setSaleVerkaufsKurs(livePr.toFixed(2));
-                            setSaleAnzahlAktien(holding.totalShares.toFixed(2));
-                            setSaleDepot(holding.depot);
-                            setSaleBesitzer(holding.besitzerName);
-                            setSaleNotiz("Teilverkauf / Abwicklung");
-                            setShowAddSaleForm(true);
-                            setShowAddPurchaseForm(false);
-                            
-                            const element = document.getElementById("transaction-journal-section");
-                            if (element) {
-                              element.scrollIntoView({ behavior: 'smooth' });
-                            }
-                          }}
-                          className="px-2.5 py-1 text-[10px] font-bold bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white rounded-lg border border-rose-200 transition-all cursor-pointer active:scale-95"
-                          title="Einen stückweisen Ausstieg/Verkauf für diese Position einbuchen"
-                        >
-                          💸 Exit buchen
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
-        </div>
+        {/* NEUE SORTIERBARE DEPOT-TABELLE (liest Limits aus dem Asset-Register) */}
+        <DepotTable
+          holdings={derivedActivePortfolio}
+          livePrices={livePrices}
+          registry={assetRegistry}
+          onExit={(holding, livePr) => {
+            setSaleAssetName(holding.name);
+            setSaleAssetKey(holding.key);
+            setSaleKaufKurs(holding.averageKaufkurs.toFixed(2));
+            setSaleVerkaufsKurs(livePr.toFixed(2));
+            setSaleAnzahlAktien(holding.totalShares.toFixed(2));
+            setSaleDepot(holding.depot);
+            setSaleBesitzer(holding.besitzerName);
+            setSaleNotiz("Teilverkauf / Abwicklung");
+            setShowAddSaleForm(true);
+            setShowAddPurchaseForm(false);
+            const element = document.getElementById("transaction-journal-section");
+            if (element) element.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
       </div>
 
       <CombinedJournal
