@@ -10,6 +10,7 @@ import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import { LivePrices } from "../types";
 import { formatAccounting } from "../utils/mathUtils";
 import { RegisteredAsset, limitFor } from "../utils/assetRegistry";
+import { MarketHealth } from "../utils/marketHealth";
 
 export interface DepotHolding {
   key: string;
@@ -29,10 +30,11 @@ interface DepotTableProps {
   holdings: DepotHolding[];
   livePrices: LivePrices;
   registry: Map<string, RegisteredAsset>;
+  marketHealth: MarketHealth;
   onExit: (h: DepotHolding, livePrice: number) => void;
 }
 
-export default function DepotTable({ holdings, livePrices, registry, onExit }: DepotTableProps) {
+export default function DepotTable({ holdings, livePrices, registry, marketHealth, onExit }: DepotTableProps) {
   const [sortField, setSortField] = useState<SortField>("value");
   const [sortAsc, setSortAsc] = useState(false);
 
@@ -149,8 +151,10 @@ export default function DepotTable({ holdings, livePrices, registry, onExit }: D
                       <span className="text-[9px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 border border-slate-200/60 rounded">— kein Limit</span>
                     ) : !hasLivePrice ? (
                       <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 border border-amber-200/60 rounded">Kurs fehlt</span>
+                    ) : r.livePrice <= r.limit && marketHealth.blocked ? (
+                      <span className="text-[9px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 border border-rose-200 rounded" title={marketHealth.reason}>🔴 Marktsperre</span>
                     ) : r.livePrice <= r.limit ? (
-                      <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 border border-emerald-100/80 rounded">✓ Kauf ≤ {formatAccounting(r.limit)} €</span>
+                      <span className="text-[9px] font-bold text-white bg-emerald-600 px-1.5 py-0.5 border border-emerald-600 rounded animate-pulse">✓ Kaufsignal ≤ {formatAccounting(r.limit)} €</span>
                     ) : (
                       <span className="text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 border border-slate-200/80 rounded">Aktiv &gt; {formatAccounting(r.limit)} €</span>
                     )}

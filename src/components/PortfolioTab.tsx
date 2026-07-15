@@ -25,6 +25,7 @@ import { formatAccounting, formatToGermanDate, parseCleanDate } from "../utils/m
 import { CombinedJournal } from "./CombinedJournal";
 import DepotTable from "./DepotTable";
 import { buildAssetRegistry } from "../utils/assetRegistry";
+import { evaluateMarketHealth } from "../utils/marketHealth";
 import DepotCurveChart from "./DepotCurveChart";
 
 interface PortfolioTabProps {
@@ -2220,6 +2221,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
           holdings={derivedActivePortfolio}
           livePrices={livePrices}
           registry={assetRegistry}
+          marketHealth={evaluateMarketHealth(marketState)}
           onExit={(holding, livePr) => {
             setSaleAssetName(holding.name);
             setSaleAssetKey(holding.key);

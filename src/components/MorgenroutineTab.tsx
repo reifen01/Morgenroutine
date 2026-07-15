@@ -1084,12 +1084,9 @@ export default function MorgenroutineTab({
         </div>
       )}
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Links: Indicators tables */}
-        <div className="lg:col-span-2 space-y-6">
-          
-          {/* Volatilitäts-Trio & Energie-Indikatoren Table */}
+      <div className="space-y-6">
+
+        {/* Volatilitäts-Trio & Energie-Indikatoren Table */}
           <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
@@ -1319,115 +1316,21 @@ export default function MorgenroutineTab({
             </div>
           </div>
 
-          {/* Limit- & Nachkaufüberwachung Table */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2 pb-2.5 border-b border-slate-50">
-              <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
-              🚦 Limit- &amp; Nachkauf-Wächter (Live-Positionen)
-            </h3>
-            
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs sm:text-sm">
-                <thead>
-                  <tr className="border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
-                    <th className="pb-3">Bestand / Aktie</th>
-                    <th className="pb-3 text-center">Kauf-Limit (€)</th>
-                    <th className="pb-3 text-center">Aktueller Kurs (€)</th>
-                    <th className="pb-3 text-right">Systemsignal</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-50">
-                  {coreAssets.map((asset) => {
-                    const priceData = livePrices[asset.key];
-                    const liveVal = priceData ? priceData.price : null;
-                    const liveDate = priceData ? priceData.date : "";
-                    
-                    const isDateMatching = liveDate === routineDate;
-                    
-                    let signalBadge = (
-                      <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-450 border border-slate-200 text-[10px] font-semibold">
-                        Kein Kurs
-                      </span>
-                    );
-
-                    let statusClass = "text-slate-800";
-
-                    if (liveVal !== null) {
-                      const diff = liveVal - asset.limit;
-                      if (diff <= 0) {
-                        // Under visual threshold LIMIT
-                        if (!isMacroHealthy) {
-                          signalBadge = (
-                            <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-100 text-[10px] font-bold">
-                              Marktsperre
-                            </span>
-                          );
-                        } else if (isDateMatching) {
-                          signalBadge = (
-                            <span className="inline-block px-3 py-1 rounded-full bg-emerald-600 text-white text-[10px] font-bold animate-pulse">
-                              Käufsignal!
-                            </span>
-                          );
-                          statusClass = "text-emerald-650 font-bold";
-                        } else {
-                          signalBadge = (
-                            <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold">
-                              Datum Alt
-                            </span>
-                          );
-                        }
-                      } else {
-                        // Premium above threshold
-                        signalBadge = (
-                          <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-800 border border-slate-100 text-[10px] font-bold">
-                            +{formatAccounting(diff)} €
-                          </span>
-                        );
-                      }
-                    }
-
-                    return (
-                      <tr key={asset.key} className="hover:bg-slate-50 transition-colors">
-                        <td className="py-4 text-slate-900">
-                          <div className="font-bold text-slate-900 leading-tight">{asset.name}</div>
-                          <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[10px] text-slate-800 font-extrabold">
-                            <span>Kürzel: {asset.ticker}</span>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-slate-500 font-semibold font-mono font-sans text-[10px]">ISIN: {asset.isin}</span>
-                          </div>
-                          <span className="block text-[10px] font-semibold text-slate-400 mt-1.5">{asset.desc}</span>
-                        </td>
-                        <td className="py-4 text-center font-mono font-bold tabular-nums text-slate-500">
-                          {formatAccounting(asset.limit)} €
-                        </td>
-                        <td className="py-4 text-center font-mono">
-                          <span className={`block text-xs sm:text-sm ${statusClass} font-bold tabular-nums`}>
-                            {liveVal !== null ? `${formatAccounting(liveVal)} €` : "UNGEPRÜFT"}
-                          </span>
-                          {liveVal !== null && (
-                            <span className={`block text-[9px] mt-1 font-semibold ${isDateMatching ? 'text-emerald-600' : 'text-rose-500 font-extrabold animate-pulse'}`}>
-                              {isDateMatching ? `Aktiv (${formatToGermanDate(liveDate)})` : `Alt: ${formatToGermanDate(liveDate)} ⚠️`}
-                            </span>
-                          )}
-                        </td>
-                        <td className="py-4 text-right">
-                          {signalBadge}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-        </div>
-
-        {/* Right: Inputs updater and excel csv lines */}
-        <div className="space-y-6">
-          
-          {/* Data Updater card */}
-          <div id="daily-inputs-card" className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
+        {/* 🛟 NOTFALL: Manuelle Tages-Eingaben (nur bei Bedarf aufklappen) */}
+        <details className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/20 group">
+          <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-center justify-between gap-2 select-none">
+            <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
+              <span className="w-1.5 h-4 rounded bg-slate-400 block"></span>
+              🛟 Manuelle Tages-Eingaben (Notfall)
+            </span>
+            <span className="text-[10px] font-bold text-slate-400 group-open:hidden">Aufklappen ▾</span>
+            <span className="text-[10px] font-bold text-slate-400 hidden group-open:inline">Zuklappen ▴</span>
+          </summary>
+          <div className="px-6 sm:px-8 pb-6 sm:pb-8 pt-0">
+            <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
+              Normalerweise nicht nötig — die Werte kommen automatisch über „Marktwerte holen". Nutze diese Felder nur, falls ein Wert beim Live-Abruf einmal fehlt.
+            </p>
+            <div id="daily-inputs-card" className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest pb-3 border-b border-slate-50 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
               Tages-Eingaben
@@ -1862,8 +1765,8 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
 
             </div>
           </div>
-
-        </div>
+          </div>
+        </details>
 
       </div>
 
