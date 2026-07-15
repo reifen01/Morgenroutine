@@ -536,7 +536,6 @@ export default function App() {
       {/* COMPACT TOP HEADER */}
       <CompactHeader
         routineDate={routineDate}
-        onDateChange={setRoutineDate}
         onOpenHelp={() => setHelpOpen(true)}
         onCheckForUpdate={handleCheckForUpdate}
         updateAvailable={pwaUpdate.needRefresh}
