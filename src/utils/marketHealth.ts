@@ -12,6 +12,7 @@ export interface MarketHealth {
   healthy: boolean;      // true = Käufe grundsätzlich erlaubt
   blocked: boolean;      // Gegenteil, zur Bequemlichkeit
   reason: string;        // Klartext, warum gesperrt (leer wenn gesund)
+  distWarnUnverified: boolean; // viele Distribution Days, aber Quelle unsicher → Warnhinweis statt Sperre
 }
 
 export function evaluateMarketHealth(m: MarketState): MarketHealth {
@@ -31,6 +32,14 @@ export function evaluateMarketHealth(m: MarketState): MarketHealth {
   // Contango = VIX < VXV (Terminstruktur normal). Backwardation sperrt.
   const isContango = vix !== null && vxv !== null && vix < vxv;
 
+  // Distribution Days: ab 5 gilt laut Regelwerk Kaufstopp — ABER nur, wenn die
+  // Zahl aus verlässlicher Quelle stammt (echte Yahoo-Berechnung oder manuell).
+  // Schätzwerte ("estimate") oder KI ("ai") lösen KEINE harte Sperre aus, um
+  // nicht bei einem Datenausfall fälschlich zu sperren oder freizugeben.
+  const distReliable = m.distSource === "yahoo" || m.distSource === "manual";
+  const distMax = Math.max(m.distSpx ?? 0, m.distNdx ?? 0);
+  const distBlocks = distReliable && distMax >= 5;
+
   let reason = "";
   if (!livesFilled) {
     reason = "Keine vollständigen Marktdaten";
@@ -44,8 +53,13 @@ export function evaluateMarketHealth(m: MarketState): MarketHealth {
     reason = "Panik: VIX ≥ 25";
   } else if (!isContango) {
     reason = "Backwardation (VIX/VXV ≥ 1)";
+  } else if (distBlocks) {
+    reason = `${distMax} Distribution Days (≥ 5)`;
   }
 
+  // Warnhinweis (keine Sperre): auffällig viele DD, aber Quelle unsicher
+  const distWarnUnverified = !distReliable && distMax >= 5;
+
   const healthy = livesFilled && reason === "";
-  return { healthy, blocked: !healthy, reason };
+  return { healthy, blocked: !healthy, reason, distWarnUnverified };
 }
