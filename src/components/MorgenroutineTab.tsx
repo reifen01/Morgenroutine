@@ -307,6 +307,10 @@ export default function MorgenroutineTab({
             newMarket.distNdx = distData.distNdx;
             updatedCount++;
           }
+          // Herkunft merken — entscheidet später, ob die Kaufsperre greift
+          if (distData.source === "yahoo" || distData.source === "ai" || distData.source === "estimate") {
+            newMarket.distSource = distData.source;
+          }
         } catch {
           // ignore — DD remain at previous value
         }
@@ -476,6 +480,8 @@ export default function MorgenroutineTab({
     onMarketStateChange({
       ...marketState,
       [key]: num,
+      // Von Hand eingetragene Distribution Days gelten als verlässlich (lösen Sperre aus)
+      ...(key === "distSpx" || key === "distNdx" ? { distSource: "manual" as const } : {}),
     });
     updateLastUpdatedTimestamp();
   };
@@ -586,7 +592,8 @@ export default function MorgenroutineTab({
       onMarketStateChange({
         ...marketState,
         distSpx: typeof data.distSpx === "number" ? data.distSpx : marketState.distSpx,
-        distNdx: typeof data.distNdx === "number" ? data.distNdx : marketState.distNdx
+        distNdx: typeof data.distNdx === "number" ? data.distNdx : marketState.distNdx,
+        distSource: (data.source === "yahoo" || data.source === "ai" || data.source === "estimate") ? data.source : marketState.distSource
       });
       
       setDistDaysReasoning(data.reasoning || "Erfolgreich ermittelt.");
@@ -631,6 +638,12 @@ export default function MorgenroutineTab({
     marketState.vvix !== null && marketState.vvix < 130 &&
     isContango;
 
+  // Distribution Days ≥ 5 sperren — aber nur bei verlässlicher Quelle (Yahoo/manuell)
+  const distReliable = marketState.distSource === "yahoo" || marketState.distSource === "manual";
+  const distMax = Math.max(marketState.distSpx ?? 0, marketState.distNdx ?? 0);
+  const distBlocks = distReliable && distMax >= 5;
+  const distWarnUnverified = !distReliable && distMax >= 5;
+
   if (!livesFilled) {
     systemStatusText = "🔴 KAUFSPERRE (KEINE DATEN)";
   } else if (marketState.vvix !== null && marketState.vvix >= 130) {
@@ -643,6 +656,8 @@ export default function MorgenroutineTab({
     systemStatusText = "🔴 KAUFSPERRE: PANIK (VIX ≥ 25) 🚨";
   } else if (!isContango) {
     systemStatusText = "🔴 KAUFSPERRE: BACKWARDATION (VIX/VXV ≥ 1) 🚨";
+  } else if (distBlocks) {
+    systemStatusText = `🔴 KAUFSPERRE: ${distMax} DISTRIBUTION DAYS (≥ 5) 🚨`;
   } else {
     systemStatusText = "🟢 MARKT INTAKT (KÄUFE ERLAUBT)";
     statusColorClasses = "bg-emerald-50 border-emerald-500 text-emerald-950";
@@ -742,6 +757,12 @@ export default function MorgenroutineTab({
         <div className={"rounded-xl border px-4 py-2.5 text-sm font-bold " + statusColorClasses}>
           {systemStatusText}
         </div>
+
+        {distWarnUnverified && (
+          <div className="rounded-xl border border-amber-300 bg-amber-50 px-4 py-2 text-[11px] font-bold text-amber-800 leading-snug">
+            ⚠️ {distMax} Distribution Days gemeldet, aber die Quelle ist ungeprüft (Schätzung/KI). Das würde normalerweise eine Kaufsperre auslösen — bitte den Wert manuell in den Tages-Eingaben verifizieren.
+          </div>
+        )}
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
@@ -1262,8 +1283,12 @@ export default function MorgenroutineTab({
                     
                     <ul className="list-disc pl-4 space-y-1 font-bold">
                       <li><span className="text-emerald-800">0 bis 4 Tage:</span> Normaler Markt, Neukäufe sind unbedenklich.</li>
-                      <li><span className="text-rose-800">&gt;= 5 Tage (Ampel ROT):</span> Hohe Gefahr einer Marktumkehr. Risiko minimieren, Stops enger ziehen &amp; Neukäufe stoppen!</li>
+                      <li><span className="text-rose-800">&gt;= 5 Tage (Ampel ROT):</span> Hohe Gefahr einer Marktumkehr. Die Kaufampel schaltet automatisch auf Kaufsperre — Risiko minimieren, Stops enger ziehen &amp; Neukäufe stoppen!</li>
                     </ul>
+
+                    <div className="p-2.5 bg-white/70 rounded-xl border border-rose-100 text-[11px] font-semibold text-rose-900">
+                      <strong>Wichtig zur Quelle:</strong> Die automatische Kaufsperre greift nur, wenn die Zahl aus verlässlicher Quelle stammt — der echten Yahoo-Finance-Berechnung (SPY &amp; QQQ, letzte 25 Handelstage) oder deiner manuellen Eingabe. Konnte die App die Werte nur schätzen (KI-Fallback oder Notnagel bei API-Ausfall), wird <strong>keine</strong> harte Sperre ausgelöst, sondern ein gelber Warnhinweis eingeblendet — dann bitte den Wert selbst prüfen und in den Tages-Eingaben eintragen.
+                    </div>
 
                     <div className="pt-2 border-t border-rose-100 space-y-2">
                       <div className="flex items-center justify-between">
