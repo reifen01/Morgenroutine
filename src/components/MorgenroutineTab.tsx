@@ -731,15 +731,18 @@ export default function MorgenroutineTab({
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             🌐 Heute starten
           </h3>
-          <p className="text-xs text-slate-500 mt-0.5 leading-snug">
-            Zwei Schritte für deine Morgenroutine.
-            {lastLiveFetchAt && (
-              <span className="block mt-1 text-[11px] text-slate-400 font-mono">
-                Marktwerte zuletzt: {new Date(lastLiveFetchAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
-              </span>
-            )}
-          </p>
+          {lastLiveFetchAt && (
+            <p className="text-[11px] text-slate-400 font-mono mt-0.5">
+              Marktwerte zuletzt: {new Date(lastLiveFetchAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
+            </p>
+          )}
         </div>
+
+        {/* Kompakte Marktampel — ersetzt den großen Sicherheits-Block */}
+        <div className={"rounded-xl border px-4 py-2.5 text-sm font-bold " + statusColorClasses}>
+          {systemStatusText}
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <button
             type="button"
@@ -769,263 +772,22 @@ export default function MorgenroutineTab({
             </span>
           </button>
         </div>
-      </div>
 
-      {/* Top Banner Status Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-lg shadow-slate-250/10 md:col-span-2">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 font-display flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-slate-800"></span>
-              📋 MORGENROUTINE — {formatToGermanDate(routineDate)}
-            </h2>
-            <p className="text-xs sm:text-sm text-slate-500 mt-2 font-medium leading-relaxed">
-              System bereit • Alle Datenfelder freigeschaltet. Kopiere deine Werte direkt aus TradingView ("TW") oder trage sie manuell ein!
-            </p>
-          </div>
-        </div>
-        
-        <div className={`rounded-3xl p-6 text-center border transition-all duration-300 shadow-md shadow-slate-200/10 flex flex-col justify-center ${statusColorClasses}`}>
-          <span className={`block text-[10px] uppercase font-bold tracking-widest mb-1 ${systemTextLabelColor}`}>
-            UNBESTECHLICHER STATUS
-          </span>
-          <span className="text-sm sm:text-base font-bold tracking-tight leading-none uppercase">
-            {systemStatusText}
-          </span>
-          <p className="text-xs font-semibold mt-1.5 opacity-90">
-            VIX/VXV-Verhältnis:{" "}
-            <span className="font-bold font-mono">
-              {ratio ? ratio.toFixed(2) : "0,00"} 
-            </span>
-            {isContango ? " (Contango)" : " (Backwardation)"}
-          </p>
-        </div>
-      </div>
-
-      {/* 🛡️ SYSTEM-SICHERHEITSPRÜFUNG: TAGESPREISE-CHECK */}
-      <div className="animate-fadeIn space-y-4">
-        {securityLevel === "green" ? (
-          <div className="bg-emerald-50 border border-emerald-250 text-emerald-950 px-5 py-4 rounded-3xl flex items-start gap-3.5 text-left shadow-lg shadow-emerald-500/5">
-            <div className="p-1.5 bg-emerald-100 border border-emerald-200 text-emerald-700 rounded-xl shrink-0 mt-0.5">
-              <CheckCircle className="h-5 w-5 font-bold" />
-            </div>
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-[10px] font-extrabold text-emerald-800 bg-emerald-100 border border-emerald-200 px-2 py-0.5 rounded-md uppercase tracking-wider block w-fit">
-                  System geschützt &amp; unbestechlich
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowSicherheitsInfo(!showSicherheitsInfo)}
-                  className="text-emerald-850 hover:text-emerald-950 text-xs font-extrabold underline flex items-center gap-1 cursor-pointer"
-                >
-                  <HelpCircle className="h-3.5 w-3.5" /> Wie funktioniert das? {showSicherheitsInfo ? "▲" : "▼"}
-                </button>
-              </div>
-              <h4 className="text-sm font-bold text-emerald-950 mt-1.5 font-display">
-                Tageskurse sind aktuell!
-              </h4>
-              <p className="text-xs text-emerald-850 font-medium leading-relaxed mt-1">
-                Die Kurse und Marktindikatoren wurden heute aktualisiert (<strong>{pricesLastUpdated ? `${new Date(pricesLastUpdated).toLocaleDateString("de-DE")} um ${new Date(pricesLastUpdated).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" })} Uhr` : ""}</strong>).
-                Alle risiko- und mathematischen Schutzgrenzen sind vollkommen einsatzbereit und unbestechlich sicher für deine heutigen Trades.
-              </p>
-            </div>
-          </div>
-        ) : securityLevel === "yellow" ? (
-          <div className="bg-amber-50 border border-amber-250 text-amber-950 px-5 py-5 rounded-3xl flex items-start gap-3.5 text-left shadow-lg shadow-amber-500/5">
-            <div className="p-1.5 bg-amber-100 border border-amber-200 text-amber-600 rounded-xl shrink-0 mt-0.5 animate-pulse">
-              <AlertTriangle className="h-5 w-5 font-bold text-amber-700" />
-            </div>
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-[10px] font-extrabold text-amber-800 bg-amber-100 border border-amber-300 px-2 py-0.5 rounded-md uppercase tracking-wider block w-fit">
-                  Eingeschränkt geschützt ({missingForToday.length} Werte unvollständig)
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowSicherheitsInfo(!showSicherheitsInfo)}
-                  className="text-amber-850 hover:text-amber-950 text-xs font-extrabold underline flex items-center gap-1 cursor-pointer"
-                >
-                  <HelpCircle className="h-3.5 w-3.5" /> Wie funktioniert das? {showSicherheitsInfo ? "▲" : "▼"}
-                </button>
-              </div>
-              <h4 className="text-sm font-bold text-amber-950 mt-1.5 font-display flex items-center gap-1.5">
-                Warnung: Nicht alle Daten sind tagesaktuell!
-              </h4>
-              <p className="text-xs text-amber-850 font-medium leading-relaxed mt-1">
-                Die 4 wichtigsten Kern-Indikatoren (<span className="font-bold underline">VIX, VXV, VVIX, WTI Öl</span>) sind tagesaktuell vorhanden. Das System ist <strong>eingeschränkt geschützt</strong>, aber es fehlen noch optionale Werte (wie z.B. Erdgas oder aktuelle Einzelaktienkurse).
-              </p>
-
-              {/* List of exactly what components are missing/outdated */}
-              <div className="mt-3.5 space-y-2">
-                <span className="text-[10px] text-amber-800 font-extrabold uppercase tracking-wide block">Ausstehend/Veraltet für heute:</span>
-                <div className="flex flex-wrap gap-2">
-                  {missingForToday.map((err, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 bg-white border border-amber-200 text-amber-950 px-2 py-1 rounded-xl text-[10px] font-extrabold shadow-sm">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                      {err}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-xs text-amber-850 font-medium mt-3.5 leading-relaxed font-sans">
-                Trage die restlichen Werte unten bei den <strong>Tages-Eingaben</strong> ein oder klicke im Cache-Bereich auf "Letzten Cache laden", um den unbestechlichen Systemschutz vollständig grün zu schalten.
-              </p>
-            </div>
-          </div>
-        ) : (
-          <div className="bg-rose-50 border border-rose-250 text-rose-950 px-5 py-5 rounded-3xl flex items-start gap-3.5 text-left shadow-lg shadow-rose-500/5">
-            <div className="p-1.5 bg-rose-100 border border-rose-200 text-rose-700 rounded-xl shrink-0 mt-0.5 animate-pulse">
-              <AlertTriangle className="h-5 w-5 font-bold text-rose-600" />
-            </div>
-            <div className="flex-1">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <span className="text-[10px] font-extrabold text-rose-800 bg-rose-100 border border-rose-300 px-2 py-0.5 rounded-md uppercase tracking-wider block w-fit">
-                  Sicherheitsrisiko aktiv ({missingForToday.length} Werte unvollständig)
-                </span>
-                <button
-                  type="button"
-                  onClick={() => setShowSicherheitsInfo(!showSicherheitsInfo)}
-                  className="text-rose-850 hover:text-rose-950 text-xs font-extrabold underline flex items-center gap-1 cursor-pointer"
-                >
-                  <HelpCircle className="h-3.5 w-3.5" /> Wie funktioniert das? {showSicherheitsInfo ? "▲" : "▼"}
-                </button>
-              </div>
-              <h4 className="text-sm font-bold text-rose-950 mt-1.5 font-display flex items-center gap-1.5">
-                Achtung: Wichtige Kern-Indikatoren fehlen oder sind veraltet!
-              </h4>
-              <p className="text-xs text-rose-850 font-medium leading-relaxed mt-1">
-                Mindestens einer der 4 wichtigsten Kern-Indikatoren (<span className="font-bold">VIX, VXV, VVIX, WTI Öl</span>) ist unvollständig oder veraltet.
-                Unser System ist <strong>nicht unbestechlich sicher</strong> für deine heutigen Hebel, Risiko- und Limit-Prüfungen!
-              </p>
-
-              {/* List of exactly what components are missing/outdated */}
-              <div className="mt-3.5 space-y-2">
-                <span className="text-[10px] text-rose-800 font-extrabold uppercase tracking-wide block">Fehlende Kern-Indikatoren:</span>
-                <div className="flex flex-wrap gap-2">
-                  {missingForToday.map((err, idx) => (
-                    <span key={idx} className="inline-flex items-center gap-1 bg-white border border-rose-200 text-rose-950 px-2 py-1 rounded-xl text-[10px] font-extrabold shadow-sm">
-                      <span className="h-1.5 w-1.5 rounded-full bg-rose-600 animate-pulse"></span>
-                      {err}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-xs text-rose-850 font-medium mt-3.5 leading-relaxed font-sans">
-                Klicke oben auf "Marktwerte holen", um die tagesfrischen Kurse automatisch einzulesen — oder auf "Letzten Cache laden", falls du heute bereits abgerufen hast.
-              </p>
-            </div>
-          </div>
-        )}
-
-        {/* Expandable Explanation for Strangers */}
-        {showSicherheitsInfo && (
-          <div className="bg-slate-50 border border-slate-205 rounded-3xl p-5 text-left text-slate-800 space-y-4 animate-fadeIn">
-            <h4 className="text-sm font-bold text-slate-900 flex items-center gap-2 border-b border-slate-200 pb-2">
-              <span>🛡️</span> Das unbestechliche Sicherheits- &amp; Cache-System erklärt
-            </h4>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
-              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
-                <div className="flex items-center gap-2 text-slate-800 font-bold">
-                  <span className="p-1 bg-slate-50 border border-slate-100 rounded-lg text-xs">1</span>
-                  <span>Tages-Sicherheitsprüfung</span>
-                </div>
-                <p className="text-slate-600 leading-relaxed font-semibold">
-                  Das Regelwerk erzwingt unbestechliche Kurse &amp; Indikatoren. Sind die Zahlen älter als heute, warnt das System lautstark vor Hebel- und Risikofehlberechnungen!
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
-                <div className="flex items-center gap-2 text-emerald-600 font-bold">
-                  <span className="p-1 bg-emerald-50 border border-emerald-100 rounded-lg text-xs">2</span>
-                  <span>Unbestechlicher Cache</span>
-                </div>
-                <p className="text-slate-600 leading-relaxed font-semibold">
-                  Bei jedem Marktwerte-Abruf wird automatisch ein Cache im lokalen Speicher angelegt. So überstehen die Werte jeden Code-Reload!
-                </p>
-              </div>
-              <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
-                <div className="flex items-center gap-2 text-amber-600 font-bold">
-                  <span className="p-1 bg-amber-50 border border-amber-100 rounded-lg text-xs">3</span>
-                  <span>Einmalige Tages-Routine</span>
-                </div>
-                <p className="text-slate-600 leading-relaxed font-semibold">
-                  Erledige am Morgen einfach 1x den Import. Falls sich danach etwas im Code ändert oder die Webseite neu lädt, klicke einfach auf <strong>"Letzten Cache laden"</strong>.
-                </p>
-              </div>
-            </div>
-            <div className="text-[11px] text-slate-500 font-semibold bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/50 flex items-center gap-2">
-              <span>💡</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-
-      {/* 💾 TAGES-CACHE — an Live-Daten gekoppelt, sichert die Kauf-Ampel */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-md">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-          <div className="flex items-start gap-2.5">
-            <div className="p-1.5 bg-slate-100 border border-slate-200 rounded-lg shrink-0 mt-0.5">
-              <Clipboard className="h-4 w-4 text-slate-500" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-bold text-slate-900">💾 Letzter Tages-Cache:</span>
-                {importCache ? (
-                  isToday(importCache.timestamp) ? (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                      AKTUELL ({new Date(importCache.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })})
-                    </span>
-                  ) : (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 border border-amber-200 text-amber-700 flex items-center gap-1">
-                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                      VERALTET ({new Date(importCache.timestamp).toLocaleDateString('de-DE')})
-                    </span>
-                  )
-                ) : (
-                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-500">
-                    Kein Cache
-                  </span>
-                )}
-              </div>
-              <p className="text-[10px] text-slate-500 mt-1 leading-relaxed max-w-md">
-                {importCache ? (
-                  isToday(importCache.timestamp) ? (
-                    "🟢 Heutige Werte gesichert. Bei App-Neuladen gehen die Tageskurse nicht verloren."
-                  ) : (
-                    "⚠️ Cache ist von einem früheren Tag. Das Regelwerk verlangt tagesfrische Kurse — bitte oben neu abrufen."
-                  )
-                ) : (
-                  "Ruf oben die Marktwerte ab — sie werden automatisch hier gesichert."
-                )}
-              </p>
-            </div>
-          </div>
-          {importCache && (
-            <button
-              type="button"
-              onClick={handleApplyCache}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all self-start sm:self-center cursor-pointer shrink-0 inline-flex items-center gap-1.5 shadow-sm active:scale-95"
-            >
-              📥 Letzten Cache laden ({new Date(importCache.timestamp).toLocaleDateString('de-DE', {day: 'numeric', month: 'short'})})
-            </button>
-          )}
-        </div>
+        {/* Cache-Rückgriff: nur der Button, falls heute schon abgerufen wurde */}
         {importCache && (
-          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 mt-3 text-[10px] font-mono text-slate-500 grid grid-cols-2 sm:grid-cols-5 gap-2 text-left">
-            <div>VIX: <span className="text-slate-800 font-bold">{importCache.marketState.vix !== null ? importCache.marketState.vix.toFixed(2) : '—'}</span></div>
-            <div>VXV: <span className="text-slate-800 font-bold">{importCache.marketState.vxv !== null ? importCache.marketState.vxv.toFixed(2) : '—'}</span></div>
-            <div>VVIX: <span className="text-slate-800 font-bold">{importCache.marketState.vvix !== null ? importCache.marketState.vvix.toFixed(2) : '—'}</span></div>
-            <div>WTI Oil: <span className="text-slate-800 font-bold">{importCache.marketState.wti !== null ? importCache.marketState.wti.toFixed(2) + ' $' : '—'}</span></div>
-            <div>Gas: <span className="text-slate-800 font-bold">{importCache.marketState.gas !== null ? importCache.marketState.gas.toFixed(2) + ' $' : '—'}</span></div>
-            <div>TSLA: <span className="text-slate-800 font-bold">{importCache.livePrices.tsla !== null ? importCache.livePrices.tsla.toFixed(2) + ' €' : '—'}</span></div>
-            <div>NOW: <span className="text-slate-800 font-bold">{importCache.livePrices.now !== null ? importCache.livePrices.now.toFixed(2) + ' €' : '—'}</span></div>
-            <div>BABA: <span className="text-slate-800 font-bold">{importCache.livePrices.baba !== null ? importCache.livePrices.baba.toFixed(2) + ' €' : '—'}</span></div>
-            <div className="col-span-2">BTC Index: <span className="text-slate-800 font-bold">{importCache.livePrices.btc !== null ? importCache.livePrices.btc.toLocaleString('de-DE') + ' €' : '—'}</span></div>
-          </div>
+          <button
+            type="button"
+            onClick={handleApplyCache}
+            className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2 bg-slate-50 hover:bg-slate-100 border border-slate-200 text-slate-700 font-bold text-xs rounded-xl transition-all active:scale-[0.98]"
+            title={isToday(importCache.timestamp)
+              ? "Heutige Cache-Werte wieder einspielen"
+              : "Achtung: Cache ist von einem früheren Tag"}
+          >
+            📥 Letzten Cache laden
+            <span className={"font-mono " + (isToday(importCache.timestamp) ? "text-emerald-600" : "text-amber-600")}>
+              ({new Date(importCache.timestamp).toLocaleDateString('de-DE', {day: 'numeric', month: 'short'})})
+            </span>
+          </button>
         )}
       </div>
 

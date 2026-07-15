@@ -7,7 +7,6 @@ import { HelpCircle, ArrowUp } from "lucide-react";
 
 interface CompactHeaderProps {
   routineDate: string;
-  onDateChange: (val: string) => void;
   onOpenHelp: () => void;
   onCheckForUpdate: () => void;
   updateAvailable: boolean;
@@ -17,7 +16,6 @@ interface CompactHeaderProps {
 
 export default function CompactHeader({
   routineDate,
-  onDateChange,
   onOpenHelp,
   onCheckForUpdate,
   updateAvailable,
@@ -34,17 +32,6 @@ export default function CompactHeader({
     return isoDate;
   };
 
-  const handleInputValueChange = (val: string) => {
-    // Attempt parsing de format DD.MM.YYYY to ISO
-    const deMatch = val.match(/^(\d{2})\.(\d{2})\.(\d{4})$/);
-    if (deMatch) {
-      onDateChange(`${deMatch[3]}-${deMatch[2]}-${deMatch[1]}`);
-      return;
-    }
-
-    // Also accept generic input
-    onDateChange(val);
-  };
 
   return (
     <header className="bg-white border-b border-slate-200 shrink-0 z-40 px-3 sm:px-8 py-3 flex items-center justify-between gap-2 max-w-full overflow-hidden shadow-sm shadow-slate-100">
@@ -85,13 +72,9 @@ export default function CompactHeader({
       <div className="flex items-center gap-2 shrink-0">
         <div className="flex items-center gap-1.5 bg-slate-50 px-2 py-1 rounded-lg border border-slate-200">
           <span className="text-[9px] font-bold text-slate-400 font-mono tracking-widest hidden sm:inline">DATUM</span>
-          <input
-            type="text"
-            value={getDeDateString(routineDate)}
-            onChange={(e) => handleInputValueChange(e.target.value)}
-            placeholder="TT.MM.JJJJ"
-            className="w-[78px] text-[11px] font-bold font-mono bg-transparent text-slate-800 focus:outline-none focus:ring-0 placeholder-slate-400"
-          />
+          <span className="w-[78px] text-[11px] font-bold font-mono text-slate-800 select-none">
+            {getDeDateString(routineDate)}
+          </span>
         </div>
 
         <button
