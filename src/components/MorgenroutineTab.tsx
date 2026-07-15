@@ -869,28 +869,36 @@ export default function MorgenroutineTab({
 
       <div className="space-y-6">
 
-        {/* Volatilitäts-Trio & Energie-Indikatoren Table */}
+        {/* Marktstimmung & Kaufschranken (inkl. Distribution Days) */}
           <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
-              🚦 Volatilitäts-Trio &amp; Energie-Schranken
+              📊 Marktstimmung &amp; Kaufschranken
             </h3>
             
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-left border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-widest bg-slate-50/40">
-                    <th className="p-3 pl-4">Indikator</th>
+                    <th className="p-3 pl-4">Ampel-Status</th>
+                    <th className="p-3">Indikator</th>
                     <th className="p-3 text-right">Wert</th>
-                    <th className="p-3 text-center">Grenzwerte</th>
-                    <th className="p-3 text-right pr-4">Ampel-Status</th>
+                    <th className="p-3 text-center pr-4">Grenzwerte</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
                   
                   {/* VIX Row */}
                   <tr className="hover:bg-slate-50 transition-colors">
-                    <td className="p-3 pl-4">
+                    <td className="p-3 text-right pr-4">
+                      {vix === null ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
+                      ) : vix < 25 ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Gelassen</span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Panikverbot</span>
+                      )}
+                    </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>VIX (US-Angst)</span>
                         <button
@@ -902,20 +910,9 @@ export default function MorgenroutineTab({
                           <HelpCircle className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                    </td>
-                    <td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${vix && vix >= 25 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
+                    </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${vix && vix >= 25 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    </td>
-                    <td className="p-3 text-center text-slate-455 font-mono text-xs font-semibold">Max: 25.00</td>
-                    <td className="p-3 text-right pr-4">
-                      {vix === null ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                      ) : vix < 25 ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Gelassen</span>
-                      ) : (
-                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Panikverbot</span>
-                      )}
-                    </td>
+                    </td><td className="p-3 text-center text-slate-455 font-mono text-xs font-semibold">Max: 25.00</td>
                   </tr>
                   
                   {/* VIX Help Explainer */}
@@ -931,7 +928,15 @@ export default function MorgenroutineTab({
                   
                   {/* VXV Row */}
                   <tr className="hover:bg-slate-50 transition-colors">
-                    <td className="p-3 pl-4">
+                    <td className="p-3 text-right pr-4">
+                      {vxv === null || vix === null ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
+                      ) : isContango ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Contango</span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Backwardation</span>
+                      )}
+                    </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>VXV (3-Monats VIX)</span>
                         <button
@@ -943,20 +948,9 @@ export default function MorgenroutineTab({
                           <HelpCircle className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                    </td>
-                    <td className="p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base text-slate-800">
+                    </td><td className="p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base text-slate-800">
                       {vxv ? vxv.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    </td>
-                    <td className="p-3 text-center text-slate-450 font-mono text-xs font-semibold">Verhältnis: VIX &lt; VXV</td>
-                    <td className="p-3 text-right pr-4">
-                      {vxv === null || vix === null ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                      ) : isContango ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Contango</span>
-                      ) : (
-                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Backwardation</span>
-                      )}
-                    </td>
+                    </td><td className="p-3 text-center text-slate-450 font-mono text-xs font-semibold">Verhältnis: VIX &lt; VXV</td>
                   </tr>
                   
                   {/* VXV Explainer */}
@@ -972,7 +966,17 @@ export default function MorgenroutineTab({
                   
                   {/* VVIX Row */}
                   <tr className="hover:bg-slate-50 transition-colors">
-                    <td className="p-3 pl-4">
+                    <td className="p-3 text-right pr-4">
+                      {marketState.vvix === null ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
+                      ) : marketState.vvix < 100 ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Entspannt</span>
+                      ) : marketState.vvix < 130 ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold uppercase">Erhöht</span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
+                      )}
+                    </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>VVIX (Angst der Angst)</span>
                         <button
@@ -984,22 +988,9 @@ export default function MorgenroutineTab({
                           <HelpCircle className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                    </td>
-                    <td className="p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base text-slate-800">
+                    </td><td className="p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base text-slate-800">
                       {marketState.vvix !== null ? marketState.vvix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    </td>
-                    <td className="p-3 text-center text-slate-450 font-mono text-xs font-semibold">Max: 100 / 130</td>
-                    <td className="p-3 text-right pr-4">
-                      {marketState.vvix === null ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                      ) : marketState.vvix < 100 ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Entspannt</span>
-                      ) : marketState.vvix < 130 ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold uppercase">Erhöht</span>
-                      ) : (
-                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
-                      )}
-                    </td>
+                    </td><td className="p-3 text-center text-slate-450 font-mono text-xs font-semibold">Max: 100 / 130</td>
                   </tr>
 
                   {/* VVIX Explainer */}
@@ -1016,7 +1007,15 @@ export default function MorgenroutineTab({
                   
                   {/* WTI Row */}
                   <tr className="hover:bg-slate-50 transition-colors bg-slate-50/10">
-                    <td className="p-3 pl-4">
+                    <td className="p-3 text-right pr-4">
+                      {wti === null ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
+                      ) : wti < 100 ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">OK (100%)</span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Risiko -50%</span>
+                      )}
+                    </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>WTI Oil ($ pro Barrel)</span>
                         <button
@@ -1028,20 +1027,9 @@ export default function MorgenroutineTab({
                           <HelpCircle className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                    </td>
-                    <td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${wti && wti >= 100 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
+                    </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${wti && wti >= 100 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {wti ? `$ ${wti.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "FEHLT"}
-                    </td>
-                    <td className="p-3 text-center text-slate-455 font-mono text-xs font-semibold">Schutzgrenze: $ 100,00</td>
-                    <td className="p-3 text-right pr-4">
-                      {wti === null ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                      ) : wti < 100 ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">OK (100%)</span>
-                      ) : (
-                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Risiko -50%</span>
-                      )}
-                    </td>
+                    </td><td className="p-3 text-center text-slate-455 font-mono text-xs font-semibold">Schutzgrenze: $ 100,00</td>
                   </tr>
                   
                   {/* WTI Explainer */}
@@ -1056,7 +1044,15 @@ export default function MorgenroutineTab({
                   
                   {/* Henry Hub Gas Row */}
                   <tr className="hover:bg-slate-50 transition-colors bg-slate-50/10">
-                    <td className="p-3 pl-4">
+                    <td className="p-3 text-right pr-4">
+                      {gas === null ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
+                      ) : gas < 4.5 ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Stabil</span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
+                      )}
+                    </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-905 text-sm sm:text-base flex items-center gap-1.5">
                         <span>Henry Hub Gas ($)</span>
                         <button
@@ -1068,20 +1064,9 @@ export default function MorgenroutineTab({
                           <HelpCircle className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                    </td>
-                    <td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${gas && gas >= 4.5 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
+                    </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${gas && gas >= 4.5 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {gas ? `$ ${gas.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : "FEHLT"}
-                    </td>
-                    <td className="p-3 text-center text-slate-450 font-mono text-xs font-semibold">Sperrlimit: $ 4,50</td>
-                    <td className="p-3 text-right pr-4">
-                      {gas === null ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                      ) : gas < 4.5 ? (
-                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Stabil</span>
-                      ) : (
-                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
-                      )}
-                    </td>
+                    </td><td className="p-3 text-center text-slate-450 font-mono text-xs font-semibold">Sperrlimit: $ 4,50</td>
                   </tr>
 
                   {/* Erdgas Explainer */}
@@ -1093,6 +1078,69 @@ export default function MorgenroutineTab({
                       </td>
                     </tr>
                   )}
+
+                  {/* Distribution Days Row */}
+                  <tr className="hover:bg-slate-50 transition-colors">
+                    <td className="p-3 text-right pr-4">
+                      {distMax === 0 && marketState.distSource == null ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
+                      ) : distBlocks ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
+                      ) : distWarnUnverified ? (
+                        <span className="inline-block px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase">Ungeprüft</span>
+                      ) : (
+                        <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Ok</span>
+                      )}
+                    </td><td className="p-3 pl-4">
+                      <div className="font-bold text-slate-905 text-sm sm:text-base flex items-center gap-1.5">
+                        <span>Distribution Days</span>
+                        <button
+                          type="button"
+                          onClick={() => toggleHelp('distDays')}
+                          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-rose-600 hover:text-rose-800 hover:bg-rose-100/80 bg-rose-50 border border-rose-100/60 shadow-xs transition-all cursor-pointer shrink-0"
+                          title="Hilfe anzeigen"
+                        >
+                          <HelpCircle className="h-3.5 w-3.5" />
+                        </button>
+                      </div>
+                      <div className="mt-1 flex items-center gap-1.5">
+                        {marketState.distSource === "yahoo" || marketState.distSource === "manual" ? (
+                          <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">✓ {marketState.distSource === "manual" ? "manuell" : "Yahoo-berechnet"}</span>
+                        ) : marketState.distSource === "ai" ? (
+                          <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">≈ KI-Schätzung</span>
+                        ) : marketState.distSource === "estimate" ? (
+                          <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">≈ Notnagel-Schätzwert</span>
+                        ) : null}
+                      </div>
+                    </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${distBlocks ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
+                      <div>SPX {marketState.distSpx ?? "—"}</div>
+                      <div className="text-slate-500">NDX {marketState.distNdx ?? "—"}</div>
+                    </td><td className="p-3 text-center text-slate-450 font-mono text-xs font-semibold">Sperrlimit: ≥ 5</td>
+                  </tr>
+
+                  {/* Distribution Days Auto-Ermitteln */}
+                  <tr>
+                    <td colSpan={4} className="px-3 pb-2 pt-0">
+                      <div className="flex items-center justify-between gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={handleCalculateDistributionDays}
+                          disabled={calculatingDistDays}
+                          title="Distribution Days automatisch aus Yahoo-Finance-Daten (SPY & QQQ) berechnen; bei Ausfall KI-Fallback"
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white rounded-lg transition-all active:scale-95"
+                        >
+                          {calculatingDistDays ? (
+                            <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Berechne…</>
+                          ) : (
+                            <><Sparkles className="h-3.5 w-3.5" /> Auto-Ermitteln (Yahoo/KI)</>
+                          )}
+                        </button>
+                        {distDaysReasoning && (
+                          <span className="text-[10px] text-slate-400 font-medium">Details siehe Hilfe (?)</span>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
 
                 </tbody>
               </table>
@@ -1237,41 +1285,20 @@ export default function MorgenroutineTab({
                 </div>
               </div>
 
-              {/* Distribution Days */}
+              {/* Distribution Days — manuelle Verifikation (Notfall) */}
               <div className="pt-4 border-t border-slate-100 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider flex items-center gap-1.5">
-                    Distribution Days (Distributionstage)
+                    Distribution Days (manuell verifizieren)
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    <button
-                      type="button"
-                      onClick={handleCalculateDistributionDays}
-                      disabled={calculatingDistDays}
-                      className="inline-flex items-center gap-1 text-[9px] bg-rose-50 text-rose-700 hover:bg-rose-105 border border-rose-100 py-1 px-2 rounded-lg font-bold font-sans cursor-pointer whitespace-nowrap transition-colors disabled:opacity-50"
-                      title="Distribution Days automatisch mit Live-Daten und AI berechnen"
-                    >
-                      {calculatingDistDays ? (
-                        <>
-                          <Loader2 className="h-3 w-3 animate-spin text-rose-600" />
-                          <span>Ermittle...</span>
-                        </>
-                      ) : (
-                        <>
-                          <Sparkles className="h-3 w-3 text-rose-500 fill-rose-500" />
-                          <span>Auto-Ermitteln (AI)</span>
-                        </>
-                      )}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('distDays')}
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-rose-600 hover:text-rose-800 hover:bg-rose-100/80 bg-rose-50 border border-rose-100/60 shadow-xs transition-all cursor-pointer shrink-0"
-                      title="Anleitung & TradingView Code anzeigen"
-                    >
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => toggleHelp('distDays')}
+                    className="inline-flex items-center justify-center w-5 h-5 rounded-full text-rose-600 hover:text-rose-800 hover:bg-rose-100/80 bg-rose-50 border border-rose-100/60 shadow-xs transition-all cursor-pointer shrink-0"
+                    title="Anleitung & TradingView Code anzeigen"
+                  >
+                    <HelpCircle className="h-3.5 w-3.5" />
+                  </button>
                 </div>
 
                 {helpId === 'distDays' && (
