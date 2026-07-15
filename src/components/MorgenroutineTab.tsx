@@ -16,9 +16,7 @@ import {
   ChevronDown,
   ChevronUp,
   Camera,
-  Image as ImageIcon,
   Loader2,
-  UploadCloud,
   Copy,
   Check,
   Sparkles
@@ -113,7 +111,6 @@ export default function MorgenroutineTab({
   const [copiedPineScript, setCopiedPineScript] = useState(false);
   const [calculatingDistDays, setCalculatingDistDays] = useState(false);
   const [distDaysReasoning, setDistDaysReasoning] = useState<string | null>(null);
-  const [tvImportText, setTvImportText] = useState("");
   const [showSicherheitsInfo, setShowSicherheitsInfo] = useState(false);
   const [showLivePriceConverter, setShowLivePriceConverter] = useState(false);
   const [mrFxRate, setMrFxRate] = useState("1.080");
@@ -236,8 +233,6 @@ export default function MorgenroutineTab({
     );
   };
   
-  // States for Screenshot parsing via Gemini vision
-  const [activeImportTab, setActiveImportTab] = useState<"text" | "screenshot" | "live">("live");
   const [isFetchingLive, setIsFetchingLive] = useState(false);
   const [lastLiveFetchAt, setLastLiveFetchAt] = useState<string | null>(() => localStorage.getItem("morgenroutine_last_live_fetch") || null);
 
@@ -423,21 +418,7 @@ export default function MorgenroutineTab({
     }
   };
   const [isDragging, setIsDragging] = useState(false);
-  const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
-  const [screenshotPreviewUrl, setScreenshotPreviewUrl] = useState<string | null>(null);
-  const [isUploadingScreenshot, setIsUploadingScreenshot] = useState(false);
 
-  const handleScreenshotChange = (file: File) => {
-    if (!file) return;
-    if (!file.type.startsWith("image/")) {
-      triggerToast("Formatfehler", "⚠️ Bitte wähle eine Bilddatei (z.B. PNG, JPEG) aus.", "warning");
-      return;
-    }
-    setScreenshotFile(file);
-    const url = URL.createObjectURL(file);
-    setScreenshotPreviewUrl(url);
-    triggerToast("Screenshot geladen", `📎 ${file.name} erfolgreich ausgewählt. Starte jetzt die Analyse!`, "success");
-  };
 
   const resizeAndCompressImage = (file: File, maxWidth = 1200, maxHeight = 1200, quality = 0.82): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -476,132 +457,6 @@ export default function MorgenroutineTab({
     });
   };
 
-  const handleScreenshotUploadAndParse = async (fileToUpload?: File) => {
-    const file = fileToUpload || screenshotFile;
-    if (!file) {
-      triggerToast("Auslesefehler", "⚠️ Kein Screenshot ausgewählt.", "warning");
-      return;
-    }
-
-    setIsUploadingScreenshot(true);
-    triggerToast("Screenshot-Import", "⏳ KI analysiert das Bild auf unbestechliche Kennzahlen... Bitte warten.", "success");
-
-    try {
-      const base64Data = await resizeAndCompressImage(file);
-
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 Sek. Limit
-
-      let response;
-      try {
-        response = await fetch("/api/parse-screenshot", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ imageBase64: base64Data }),
-          signal: controller.signal,
-        });
-      } catch (fetchErr: any) {
-        if (fetchErr.name === "AbortError") {
-          throw new Error("Zeitüberschreitung (Timeout): Der Server oder das KI-Modell hat zu lange für die Antwort gebraucht. Bitte lade die Seite kurz neu oder nutze den Text-Import.");
-        }
-        throw fetchErr;
-      } finally {
-        clearTimeout(timeoutId);
-      }
-
-      if (!response.ok) {
-        let errorMsg = "Unerwarteter Fehler beim Server.";
-        const contentType = response.headers.get("content-type");
-        if (contentType && contentType.includes("application/json")) {
-          const errorData = await response.json();
-          errorMsg = errorData.error || errorMsg;
-        } else {
-          const textError = await response.text();
-          if (response.status === 413) {
-            errorMsg = "Die Screenshot-Datei ist zu groß. Bitte lade einen kompakteren oder herunterskalierten Screenshot hoch.";
-          } else {
-            errorMsg = textError.substring(0, 150) || errorMsg;
-          }
-        }
-        throw new Error(errorMsg);
-      }
-
-      const results = await response.json();
-      console.log("Screenshot API parsing results:", results);
-
-      // Merge the found elements into the current states
-      const updatedMarketState = { ...marketState };
-      const updatedLivePrices = { ...livePrices };
-      let updatedCount = 0;
-
-      // Map parsed fields to our states with solid bounds protection
-      if (results.vix !== undefined && results.vix !== null && results.vix >= 5 && results.vix <= 100) {
-        updatedMarketState.vix = results.vix;
-        updatedCount++;
-      }
-      if (results.vxv !== undefined && results.vxv !== null && results.vxv >= 5 && results.vxv <= 100) {
-        updatedMarketState.vxv = results.vxv;
-        updatedCount++;
-      }
-      if (results.vvix !== undefined && results.vvix !== null && results.vvix >= 30 && results.vvix <= 300) {
-        updatedMarketState.vvix = results.vvix;
-        updatedCount++;
-      }
-      if (results.wti !== undefined && results.wti !== null && results.wti >= 20 && results.wti <= 200) {
-        updatedMarketState.wti = results.wti;
-        updatedCount++;
-      }
-      if (results.gas !== undefined && results.gas !== null && results.gas >= 1.1 && results.gas <= 15.0 && Math.abs(results.gas - 1.0) > 0.05) {
-        updatedMarketState.gas = results.gas;
-        updatedCount++;
-      }
-      if (results.tsla !== undefined && results.tsla !== null && results.tsla >= 10 && results.tsla <= 1500) {
-        updatedLivePrices.tsla = { ...updatedLivePrices.tsla, price: results.tsla };
-        updatedCount++;
-      }
-      if (results.now !== undefined && results.now !== null && results.now >= 50 && results.now <= 3000) {
-        updatedLivePrices.now = { ...updatedLivePrices.now, price: results.now };
-        updatedCount++;
-      }
-      if (results.baba !== undefined && results.baba !== null && results.baba >= 10 && results.baba <= 500) {
-        updatedLivePrices.baba = { ...updatedLivePrices.baba, price: results.baba };
-        updatedCount++;
-      }
-      if (results.btc !== undefined && results.btc !== null && results.btc >= 1000 && results.btc <= 250000) {
-        updatedLivePrices.btc = { ...updatedLivePrices.btc, price: results.btc };
-        updatedCount++;
-      }
-
-      if (updatedCount > 0) {
-        onMarketStateChange(updatedMarketState);
-        onLivePricesChange(updatedLivePrices);
-        saveToImportCache(updatedMarketState, updatedLivePrices);
-        triggerToast(
-          "Import erfolgreich",
-          `🎉 Es wurden ${updatedCount} Kennzahlen erfolgreich aus deinem Screenshot extrahiert und unbestechlich hinterlegt im Kurzzeit-Cache!`,
-          "success"
-        );
-        // Clear file state
-        setScreenshotFile(null);
-        setScreenshotPreviewUrl(null);
-      } else {
-        triggerToast(
-          "Keine Daten gefunden",
-          "⚠️ Der Screenshot wurde analysiert, es konnten aber keine bekannten Parameter (VIX, VVIX, TSLA etc.) abgelesen werden. Bitte stelle sicher, dass die Ticker-Symbole und Kurse gut lesbar sind.",
-          "warning"
-        );
-      }
-    } catch (err: any) {
-      console.error("Screenshot analysis failure:", err);
-      triggerToast(
-        "Verarbeitungsfehler",
-        `❌ ${err.message || "Der Screenshot konnte nicht per KI verarbeitet werden. Bitte prüfe deinen GEMINI_API_KEY."}`,
-        "error"
-      );
-    } finally {
-      setIsUploadingScreenshot(false);
-    }
-  };
 
   const toggleHelp = (id: string) => {
     setHelpId(helpId === id ? null : id);
@@ -615,514 +470,6 @@ export default function MorgenroutineTab({
     }
   };
 
-  const handleImportTradingViewData = () => {
-    if (!tvImportText.trim()) {
-      triggerToast(
-        "Schnell-Import",
-        "⚠️ Das Importfeld ist leer! Bitte kopiere Daten aus TradingView.",
-        "warning"
-      );
-      return;
-    }
-
-    const lines = tvImportText
-      .split("\n")
-      .map((l) => l.trim())
-      .filter((l) => l !== "");
-
-    if (lines.length === 0) {
-      triggerToast(
-        "Schnell-Import",
-        "⚠️ Keine verwertbaren Zeilen im eingegebenen Text gefunden.",
-        "warning"
-      );
-      return;
-    }
-
-    // Supported asset and index keys & mappings from user watches
-    const tvMappings = [
-      { field: "vxv" as const, matchers: ["VXV", "VXVCLS", "S&P 500 3-MONTH"] },
-      { field: "vvix" as const, matchers: ["VVIX", "VVIX D.", "CBOE VIX VOLATILITY"] },
-      { field: "vix" as const, matchers: ["VIX", "VOLATILITÄTSINDEX S&P"] },
-      { field: "spx" as const, matchers: ["SPX", "SPX·", "S&P 555", "S&P 500"] },
-      { field: "wti" as const, matchers: ["WT", "WTI", "WEST TEXAS"] },
-      { field: "gas" as const, matchers: ["NG1!", "NG1! D", "NATURAL GAS", "ERDGAS"] },
-      { field: "tsla" as const, matchers: ["TL0", "TLO", "TSLA", "TESLA"] },
-      { field: "now" as const, matchers: ["NOW", "SERVICENOW", "4S0", "4S0 L", "4S0L", "450", "450 L", "450L"] },
-      { field: "baba" as const, matchers: ["AHLA", "BABA", "ALIBABA"] },
-      { field: "btc" as const, matchers: ["BTCEUR", "BTC", "BITCOIN"] }
-    ];
-
-    const isValidPriceForField = (field: string, val: number): boolean => {
-      if (val === null || val === undefined || isNaN(val) || val <= 0) return false;
-      switch (field) {
-        case "vix":
-        case "vxv":
-          return val >= 5 && val <= 100;
-        case "vvix":
-          return val >= 30 && val <= 300;
-        case "wti":
-          return val >= 20 && val <= 200;
-        case "gas":
-          // Erdgas (Natural Gas) is a small decimal, typically 1.1 to 15.0 USD.
-          // It is never in the range of hundreds/thousands, and on no account exactly 1.0.
-          return val >= 1.1 && val <= 15.0 && Math.abs(val - 1.0) > 0.05;
-        case "tsla":
-          return val >= 10 && val <= 1500;
-        case "now":
-          return val >= 50 && val <= 3000;
-        case "baba":
-          return val >= 10 && val <= 500;
-        case "btc":
-          return val >= 1000 && val <= 250000;
-        default:
-          return true;
-      }
-    };
-
-    // Helper function to match a string to one of our mapped keys
-    const findMapping = (sym: string) => {
-      const s = sym.toUpperCase().trim();
-      return tvMappings.find((mapping) =>
-        mapping.matchers.some((keyword) => {
-          const kw = keyword.toUpperCase();
-          if (s === kw) return true;
-          if (
-            s.startsWith(kw + " ") ||
-            s.startsWith(kw + "·") ||
-            s.startsWith(kw + ".") ||
-            s.startsWith(kw + "CLS")
-          ) {
-            return true;
-          }
-          // Check words boundary
-          const words = s.split(/[\s,·.()]+/);
-          if (words.includes(kw)) {
-            return true;
-          }
-          // Special substring check for descriptive labels (e.g. S&P 500 3-MONTH)
-          if (kw.length > 5 && s.includes(kw)) {
-            return true;
-          }
-          return false;
-        })
-      );
-    };
-
-    // Helper to extract a price value if it resides directly on the same line
-    const extractPriceFromSameLine = (lText: string) => {
-      const words = lText.trim().split(/\s+/);
-      if (words.length <= 1) return null; // Needs at least the symbol/label and a price numeric field
-      
-      for (let i = words.length - 1; i >= 0; i--) {
-        const word = words[i];
-        const cleanWord = word.replace(/[()]/g, ""); // Strip trailing parentheses like (-0.20%)
-        
-        if (cleanWord.includes('%')) {
-          continue; // Skip percentage change values
-        }
-        if (cleanWord.startsWith('+') || cleanWord.startsWith('-')) {
-          continue; // Skip relative/absolute change values
-        }
-        
-        const parsed = parseCleanFloat(cleanWord);
-        if (parsed !== null && !isNaN(parsed)) {
-          // Avoid matching integers that are parts of descriptions: e.g. "500" in S&P 500, or "3" in 3-Month
-          const wordNumStr = cleanWord.replace(/[^\d]/g, "");
-          if (wordNumStr === "500" && (lText.toUpperCase().includes("S&P") || lText.toUpperCase().includes("SPX"))) {
-            continue;
-          }
-          if (wordNumStr === "3" && (lText.toUpperCase().includes("MON") || lText.toUpperCase().includes("3"))) {
-            continue;
-          }
-          return parsed;
-        }
-      }
-      return null;
-    };
-
-    // Check if we have Block (Grid Column-based) Format headings
-    const symbolHeaderIndex = lines.findIndex((l) => {
-      const s = l.toUpperCase();
-      return s === "SYMBOL" || s === "TICKER";
-    });
-
-    const priceHeaderIndex = lines.findIndex((l) => {
-      const s = l.toUpperCase();
-      return s === "ZULETZT" || s === "LAST" || s === "PREIS" || s === "PRICE" || s === "CURR" || s === "KURS";
-    });
-
-    const changeHeaderIndex = lines.findIndex((l) => {
-      const s = l.toUpperCase();
-      return s === "ÄND" || s === "ÄND." || s === "CHANGE" || s === "CHG" || s === "DIFF";
-    });
-
-    let updatedMarketState = { ...marketState };
-    let updatedLivePrices = { ...livePrices };
-    let importedCount = 0;
-
-    if (symbolHeaderIndex !== -1 && priceHeaderIndex !== -1 && priceHeaderIndex > symbolHeaderIndex) {
-      // MODE A: GRID TABLE LAYOUT (Symbols block first, then Prices block)
-      const symbolsEndIndex = priceHeaderIndex;
-      const pricesEndIndex =
-        changeHeaderIndex !== -1 && changeHeaderIndex > priceHeaderIndex
-          ? changeHeaderIndex
-          : lines.length;
-
-      const rawSymbols = lines.slice(symbolHeaderIndex + 1, symbolsEndIndex);
-      const rawPrices = lines.slice(priceHeaderIndex + 1, pricesEndIndex);
-
-      // Map aligned row-by-row on exact parallel indices to avoid index shifts or offsets!
-      rawSymbols.forEach((sym, idx) => {
-        const mapping = findMapping(sym);
-        if (mapping && idx < rawPrices.length) {
-          const priceVal = parseCleanFloat(rawPrices[idx]);
-          if (priceVal !== null) {
-            const field = mapping.field;
-            if (isValidPriceForField(field, priceVal)) {
-              if (field === "tsla") {
-                updatedLivePrices.tsla = { ...updatedLivePrices.tsla, price: priceVal };
-                importedCount++;
-              } else if (field === "now") {
-                updatedLivePrices.now = { ...updatedLivePrices.now, price: priceVal };
-                importedCount++;
-              } else if (field === "baba") {
-                updatedLivePrices.baba = { ...updatedLivePrices.baba, price: priceVal };
-                importedCount++;
-              } else if (field === "btc") {
-                updatedLivePrices.btc = { ...updatedLivePrices.btc, price: priceVal };
-                importedCount++;
-              } else if (field === "vix") {
-                updatedMarketState.vix = priceVal;
-                importedCount++;
-              } else if (field === "vxv") {
-                updatedMarketState.vxv = priceVal;
-                importedCount++;
-              } else if (field === "vvix") {
-                updatedMarketState.vvix = priceVal;
-                importedCount++;
-              } else if (field === "wti") {
-                updatedMarketState.wti = priceVal;
-                importedCount++;
-              } else if (field === "gas") {
-                updatedMarketState.gas = priceVal;
-                importedCount++;
-              }
-            }
-          }
-        }
-      });
-    } else {
-      // Helper to identify real ticker names vs descriptive multi-word index descriptions in Mode B
-      const isTickerLine = (lineStr: string): boolean => {
-        const trimmedOriginal = lineStr.trim();
-        if (!trimmedOriginal) return false;
-
-        // UI Noise Blacklist (TradingView and application labels)
-        const lower = trimmedOriginal.toLowerCase();
-        const uiBlacklist = [
-          "now", 
-          "watchlist", 
-          "chart", 
-          "erforschen", 
-          "community", 
-          "menü", 
-          "menu", 
-          "fehler im import", 
-          "import", 
-          "beobachten", 
-          "beobachtungsliste", 
-          "favoriten",
-          "t/ tradingview",
-          "tradingview"
-        ];
-        if (uiBlacklist.includes(lower)) {
-          return false;
-        }
-
-        // Ticker lines from TradingView copy-paste are always uppercase.
-        // If the line consists of mixed-case or lowercase (e.g. "Chart", "now", "Menü"), it is not a ticker line.
-        const hasLowercase = /[a-zäöüß]/.test(trimmedOriginal);
-        if (hasLowercase) {
-          return false;
-        }
-
-        const s = trimmedOriginal.toUpperCase();
-        
-        // Exact short names of our known tickers
-        const exactTickers = [
-          "VIX", "VXV", "VXVCLS", "VVIX", "WTI", "NG1!", "TSLA", "NOW", "BABA", "BTC", "SPX", "SPX-", "BTCEUR", "TLO", "AHLA", "450", "4S0"
-        ];
-        if (exactTickers.includes(s)) return true;
-
-        // Core known tickers
-        const coreTickers = ["VIX", "VXV", "VVIX", "WTI", "NG1!", "TSLA", "NOW", "BABA", "BTC", "SPX", "TL0", "TLO", "4S0", "AHLA", "450"];
-        if (coreTickers.some(t => s === t || s.startsWith(t + " ") || s.startsWith(t + "-") || s.startsWith(t + " -") || s.startsWith(t + "."))) {
-          return true;
-        }
-
-        // General fallback for single short alphanumeric words (no spaces/tabs, <= 7 chars, has letters)
-        const noSpaces = !s.includes(" ") && !s.includes("\t");
-        const isShort = s.length <= 7;
-        const hasLetters = /[A-Z]/.test(s);
-        if (noSpaces && isShort && hasLetters) {
-          return true;
-        }
-
-        return false;
-      };
-
-      // Helper to identify if a line is a valid clean indicator/price candidate
-      const isPriceCandidate = (lineStr: string): boolean => {
-        const s = lineStr.trim();
-        if (!s) return false;
-        // Must contain at least one digit
-        if (!/\d/.test(s)) return false;
-        // Must NOT contain % or + or - (indicates percentage or change lines)
-        if (s.includes("%") || s.includes("+") || s.includes("-")) return false;
-        // Must NOT contain long words with letters (which indicate descriptions like "Volatility" or "Index")
-        if (/[a-zA-Z]{4,}/.test(s)) return false;
-        return true;
-      };
-
-      // Gather all recognized tickers and their positions
-      const tickerLinesInfo: { field: "vxv" | "vvix" | "vix" | "spx" | "wti" | "gas" | "tsla" | "now" | "baba" | "btc"; lineText: string; lineIndex: number }[] = [];
-      const priceLinesInfo: { value: number; lineText: string; lineIndex: number }[] = [];
-
-      // Smart Block-Split detection based on percentage change delimiter
-      const firstPercentChangeIdx = lines.findIndex(l => {
-        const s = l.trim();
-        return s.includes("%") && (s.includes("+") || s.includes("-"));
-      });
-
-      let isBlockSplit = false;
-
-      if (firstPercentChangeIdx !== -1 && firstPercentChangeIdx > 1) {
-        // The first price is on the line right before the first percent change line
-        const splitIndex = firstPercentChangeIdx - 1;
-        
-        // Everything before splitIndex is tickers/descriptions part
-        const tickersLines = lines.slice(0, splitIndex);
-        // Everything from splitIndex onwards is prices/changes part
-        const pricesLines = lines.slice(splitIndex);
-
-        // 1. Gather tickers from tickers part only to prevent noise from matching as tickers later
-        const matchedFieldsTmp = new Set<string>();
-        tickersLines.forEach((line, idx) => {
-          if (isTickerLine(line)) {
-            const mapping = findMapping(line);
-            if (mapping && !matchedFieldsTmp.has(mapping.field)) {
-              tickerLinesInfo.push({
-                field: mapping.field,
-                lineText: line,
-                lineIndex: idx
-              });
-              matchedFieldsTmp.add(mapping.field);
-            }
-          }
-        });
-
-        // 2. Gather prices from prices part only.
-        // A true price line is immediately followed by a percent change line.
-        pricesLines.forEach((line, idx) => {
-          if (isPriceCandidate(line)) {
-            const cleanLine = line.replace(/[^0-9,. ]/g, "").trim();
-            const val = parseCleanFloat(cleanLine);
-            if (val !== null && !isNaN(val) && val > 0) {
-              const nextLine = pricesLines[idx + 1];
-              const hasPercentChangeNext = nextLine && nextLine.includes("%") && (nextLine.includes("+") || nextLine.includes("-"));
-              
-              if (hasPercentChangeNext) {
-                priceLinesInfo.push({
-                  value: val,
-                  lineText: line,
-                  lineIndex: splitIndex + idx
-                });
-              }
-            }
-          }
-        });
-
-        if (tickerLinesInfo.length > 0 && priceLinesInfo.length > 0) {
-          isBlockSplit = true;
-        }
-      }
-
-      // If split-by-percent failed, fallback to the indices heuristic
-      if (!isBlockSplit) {
-        tickerLinesInfo.splice(0, tickerLinesInfo.length);
-        priceLinesInfo.splice(0, priceLinesInfo.length);
-        const matchedFieldsFallback = new Set<string>();
-
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          if (isTickerLine(line)) {
-            const mapping = findMapping(line);
-            if (mapping && !matchedFieldsFallback.has(mapping.field)) {
-              tickerLinesInfo.push({
-                field: mapping.field,
-                lineText: line,
-                lineIndex: i
-              });
-              matchedFieldsFallback.add(mapping.field);
-            }
-          }
-        }
-
-        const tickerLineIndices = new Set(tickerLinesInfo.map(t => t.lineIndex));
-        for (let i = 0; i < lines.length; i++) {
-          if (tickerLineIndices.has(i)) continue;
-          const line = lines[i];
-          if (isPriceCandidate(line)) {
-            const cleanLine = line.replace(/[^0-9,. ]/g, "").trim();
-            const val = parseCleanFloat(cleanLine);
-            if (val !== null && !isNaN(val) && val > 0) {
-              priceLinesInfo.push({
-                value: val,
-                lineText: line,
-                lineIndex: i
-              });
-            }
-          }
-        }
-
-        isBlockSplit =
-          tickerLinesInfo.length > 0 &&
-          priceLinesInfo.length > 0 &&
-          Math.max(...tickerLinesInfo.map(t => t.lineIndex)) < Math.min(...priceLinesInfo.map(p => p.lineIndex));
-      }
-
-      if (isBlockSplit) {
-        // Map 1-to-1 in sequential parallel order
-        tickerLinesInfo.forEach((tickerInfo, idx) => {
-          if (idx < priceLinesInfo.length) {
-            const priceVal = priceLinesInfo[idx].value;
-            const field = tickerInfo.field;
-            if (isValidPriceForField(field, priceVal)) {
-              if (field === "tsla") {
-                updatedLivePrices.tsla = { ...updatedLivePrices.tsla, price: priceVal };
-                importedCount++;
-              } else if (field === "now") {
-                updatedLivePrices.now = { ...updatedLivePrices.now, price: priceVal };
-                importedCount++;
-              } else if (field === "baba") {
-                updatedLivePrices.baba = { ...updatedLivePrices.baba, price: priceVal };
-                importedCount++;
-              } else if (field === "btc") {
-                updatedLivePrices.btc = { ...updatedLivePrices.btc, price: priceVal };
-                importedCount++;
-              } else if (field === "vix") {
-                updatedMarketState.vix = priceVal;
-                importedCount++;
-              } else if (field === "vxv") {
-                updatedMarketState.vxv = priceVal;
-                importedCount++;
-              } else if (field === "vvix") {
-                updatedMarketState.vvix = priceVal;
-                importedCount++;
-              } else if (field === "wti") {
-                updatedMarketState.wti = priceVal;
-                importedCount++;
-              } else if (field === "gas") {
-                updatedMarketState.gas = priceVal;
-                importedCount++;
-              } else if (field === "spx") {
-                // S&P 500 Index is processed to keep parallel matching aligned, but not directly saved to standard states
-                importedCount++;
-              }
-            }
-          }
-        });
-      } else {
-        // Fallback to traditional interleaved parsing
-        for (let i = 0; i < lines.length; i++) {
-          const line = lines[i];
-          if (!isTickerLine(line)) {
-            continue; // Skip description lines, prices, changes, and empty lines!
-          }
-          const mapping = findMapping(line);
-          if (mapping) {
-            // Check same-line price extraction first
-            let foundPrice: number | null = extractPriceFromSameLine(line);
-            if (foundPrice !== null && !isValidPriceForField(mapping.field, foundPrice)) {
-              foundPrice = null;
-            }
-            
-            if (foundPrice === null) {
-              // Scan ahead in subsequent lines for the next available price value
-              for (let j = i + 1; j < Math.min(lines.length, i + 8); j++) {
-                const nextLine = lines[j];
-                // If we encounter another valid ticker immediately, stop scanning to avoid capturing incorrect numbers
-                if (isTickerLine(nextLine)) {
-                  break;
-                }
-                // Skip lines that are description text or change lines
-                if (!isPriceCandidate(nextLine)) {
-                  continue;
-                }
-                const cleanNext = nextLine.replace(/[-+%\s]/g, "");
-                const num = parseCleanFloat(cleanNext);
-                if (num !== null && isValidPriceForField(mapping.field, num)) {
-                  foundPrice = num;
-                  break;
-                }
-              }
-            }
-
-            if (foundPrice !== null) {
-              const field = mapping.field;
-              if (field === "tsla") {
-                updatedLivePrices.tsla = { ...updatedLivePrices.tsla, price: foundPrice };
-                importedCount++;
-              } else if (field === "now") {
-                updatedLivePrices.now = { ...updatedLivePrices.now, price: foundPrice };
-                importedCount++;
-              } else if (field === "baba") {
-                updatedLivePrices.baba = { ...updatedLivePrices.baba, price: foundPrice };
-                importedCount++;
-              } else if (field === "btc") {
-                updatedLivePrices.btc = { ...updatedLivePrices.btc, price: foundPrice };
-                importedCount++;
-              } else if (field === "vix") {
-                updatedMarketState.vix = foundPrice;
-                importedCount++;
-              } else if (field === "vxv") {
-                updatedMarketState.vxv = foundPrice;
-                importedCount++;
-              } else if (field === "vvix") {
-                updatedMarketState.vvix = foundPrice;
-                importedCount++;
-              } else if (field === "wti") {
-                updatedMarketState.wti = foundPrice;
-                importedCount++;
-              } else if (field === "gas") {
-                updatedMarketState.gas = foundPrice;
-                importedCount++;
-              }
-            }
-          }
-        }
-      }
-    }
-
-    if (importedCount > 0) {
-      onMarketStateChange(updatedMarketState);
-      onLivePricesChange(updatedLivePrices);
-      saveToImportCache(updatedMarketState, updatedLivePrices);
-      triggerToast(
-        "Schnell-Import",
-        `🟢 ${importedCount} Werte erfolgreich erkannt und unbestechlich eingepflegt!`,
-        "success"
-      );
-      setTvImportText("");
-    } else {
-      triggerToast(
-        "Schnell-Import",
-        "❌ Keine passenden Symbole mit nachfolgenden Preisen erkannt. Überprüfe das Format oder pflege die Kurse manuell ein.",
-        "error"
-      );
-    }
-  };
 
   const handleMarketFieldChange = (key: keyof MarketState, value: string) => {
     const num = parseCleanFloat(value);
@@ -1567,7 +914,7 @@ export default function MorgenroutineTab({
               </div>
 
               <p className="text-xs text-rose-850 font-medium mt-3.5 leading-relaxed font-sans">
-                Bitte nutze das Schnell-Import Center unten, um die tagesfrischen Kurse per Text oder Broker-Screenshot einzulesen oder klicke im Cache-Bereich auf "Letzten Cache laden", falls du heute bereits Daten geladen hast.
+                Klicke oben auf "Marktwerte holen", um die tagesfrischen Kurse automatisch einzulesen — oder auf "Letzten Cache laden", falls du heute bereits abgerufen hast.
               </p>
             </div>
           </div>
@@ -1595,7 +942,7 @@ export default function MorgenroutineTab({
                   <span>Unbestechlicher Cache</span>
                 </div>
                 <p className="text-slate-600 leading-relaxed font-semibold">
-                  Bei jedem erfolgreichen Schnell-Import (Text oder KI-Bildanalyse) wird ein unzerstörbarer Cache im lokalen Speicher angelegt. So überstehen die Werte jeden Code-Reload!
+                  Bei jedem Marktwerte-Abruf wird automatisch ein Cache im lokalen Speicher angelegt. So überstehen die Werte jeden Code-Reload!
                 </p>
               </div>
               <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm space-y-2">
@@ -1610,308 +957,76 @@ export default function MorgenroutineTab({
             </div>
             <div className="text-[11px] text-slate-500 font-semibold bg-slate-100/50 p-2.5 rounded-xl border border-slate-200/50 flex items-center gap-2">
               <span>💡</span>
-              <span><strong>Tipp für Neueinsteiger:</strong> Verwende den TradingView-Textimport oder ziehe einfach einen Screenshot deiner aktuellen Broker- oder Trading-Übersicht in den Uploadbereich.</span>
             </div>
           </div>
         )}
       </div>
 
-      {/* ⚡ SCHNELL-IMPORT-CENTER (Text-Kopieren & Screenshot-Upload) — JETZT PROMINENT OBEN PLATZIERT */}
-      <div className="bg-gradient-to-br from-slate-900 to-slate-950 border border-slate-800 rounded-3xl p-5 sm:p-6 shadow-xl text-white animate-fadeIn text-left">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4 mb-4">
-          <div className="flex items-center gap-2">
-            <div className="p-1.5 bg-slate-600/20 border border-slate-600/30 rounded-lg text-slate-400">
-              <Zap className="h-4 w-4 fill-amber-400 text-amber-400" />
+
+      {/* 💾 TAGES-CACHE — an Live-Daten gekoppelt, sichert die Kauf-Ampel */}
+      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-md">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
+          <div className="flex items-start gap-2.5">
+            <div className="p-1.5 bg-slate-100 border border-slate-200 rounded-lg shrink-0 mt-0.5">
+              <Clipboard className="h-4 w-4 text-slate-500" />
             </div>
             <div>
-              <h3 className="text-xs sm:text-sm font-bold uppercase tracking-widest text-slate-100 font-display flex items-center gap-2">
-                Daten Schnell-Import Center
-                <span className="px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-slate-600/20 border border-slate-600/30 text-slate-300">KI-Lösung</span>
-              </h3>
-              <p className="text-[10px] text-slate-400 font-medium leading-relaxed mt-0.5">
-                Spielt deine Tagesdaten rasant ein – entweder per Text-Kopie oder vollautomatisch per Screenshot!
-              </p>
-            </div>
-          </div>
-
-          <div className="flex bg-slate-955 p-1 rounded-xl border border-slate-800 shrink-0 self-start sm:self-center">
-            <button
-              type="button"
-              onClick={() => setActiveImportTab("text")}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeImportTab === "text"
-                  ? "bg-slate-800 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              📋 <span className="hidden sm:inline">Text kopieren</span><span className="sm:hidden">Text</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveImportTab("screenshot")}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeImportTab === "screenshot"
-                  ? "bg-slate-800 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              📸 <span className="hidden sm:inline">Screenshot hochladen</span><span className="sm:hidden">Bild</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setActiveImportTab("live")}
-              className={`px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
-                activeImportTab === "live"
-                  ? "bg-slate-800 text-white shadow-sm"
-                  : "text-slate-400 hover:text-slate-200"
-              }`}
-            >
-              🌐 <span className="hidden sm:inline">Live abrufen</span><span className="sm:hidden">Live</span>
-            </button>
-          </div>
-        </div>
-
-        {activeImportTab === "text" ? (
-          <div className="flex flex-col md:flex-row gap-4 items-stretch">
-            <div className="flex-1">
-              <textarea 
-                value={tvImportText}
-                onChange={(e) => setTvImportText(e.target.value)}
-                rows={3} 
-                placeholder="Füge deine TradingView-Daten hier ein...&#10;z.B. (VIX unter 16,31 oder im Spaltenlayout)" 
-                className="w-full p-3 bg-slate-950 border border-slate-850 rounded-xl text-xs font-mono text-slate-200 focus:outline-none focus:border-slate-600 focus:ring-1 focus:ring-slate-600 placeholder-slate-700 resize-none h-24"
-              />
-            </div>
-            <div className="flex flex-col justify-between md:w-64 shrink-0 gap-3">
-              <div className="text-[10px] text-slate-400 font-medium leading-normal p-2.5 bg-slate-950/40 border border-slate-850/30 rounded-xl">
-                <span className="text-amber-400 font-bold block mb-0.5">💡 Funktionsweise:</span>
-                Unterstützt automatisches Auslesen bei Grid-Kopien (mit Spaltenköpfen) und Zeilenumbruch-Listen untereinander.
-              </div>
-              <button 
-                type="button" 
-                onClick={handleImportTradingViewData} 
-                className="w-full h-11 bg-slate-800 hover:bg-slate-900 active:bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
-              >
-                <Zap className="h-4 w-4 fill-current text-amber-300" /> Einlesen &amp; Zuordnen
-              </button>
-            </div>
-          </div>
-        ) : activeImportTab === "screenshot" ? (
-          <div className="flex flex-col gap-4">
-            <div className="w-full">
-              {/* Drag n Drop Screenshot Area */}
-              <div
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setIsDragging(true);
-                }}
-                onDragLeave={() => setIsDragging(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setIsDragging(false);
-                  const file = e.dataTransfer.files?.[0];
-                  if (file) handleScreenshotChange(file);
-                }}
-                className={`border-2 border-dashed rounded-2xl p-5 text-center transition-all cursor-pointer flex flex-col items-center justify-center min-h-[140px] relative overflow-hidden ${
-                  isDragging 
-                    ? "border-slate-400 bg-slate-950/40 scale-[0.99]" 
-                    : "border-slate-800 bg-slate-950/60 hover:border-slate-700 hover:bg-slate-950"
-                }`}
-                onClick={() => {
-                  // Trigger native input hidden
-                  document.getElementById("screenshot_input_uploader")?.click();
-                }}
-              >
-                <input
-                  id="screenshot_input_uploader"
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    if (file) handleScreenshotChange(file);
-                  }}
-                  className="hidden"
-                />
-
-                {screenshotPreviewUrl ? (
-                  <div className="flex flex-col sm:flex-row items-center gap-4 w-full h-full relative z-10 p-1">
-                    <img
-                      src={screenshotPreviewUrl}
-                      alt="Preview"
-                      className="h-20 w-32 object-cover rounded-lg border border-slate-700 shadow-lg shrink-0"
-                    />
-                    <div className="text-left flex-1 min-w-0">
-                      <p className="text-xs font-bold text-slate-200 truncate">{screenshotFile?.name}</p>
-                      <p className="text-[10px] text-slate-400 font-semibold uppercase mt-0.5">
-                        {(screenshotFile ? screenshotFile.size / 1024 : 0).toFixed(0)} KB • Bereit für KI-Analyse
-                      </p>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setScreenshotFile(null);
-                          setScreenshotPreviewUrl(null);
-                        }}
-                        className="text-[10px] text-rose-450 hover:text-rose-400 underline font-bold mt-2 cursor-pointer block text-left"
-                      >
-                        Anderen Screenshot wählen
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="flex flex-col items-center justify-center">
-                    <UploadCloud className={`h-8 w-8 mb-2 text-slate-400 ${isDragging ? 'animate-bounce' : ''}`} />
-                    <p className="text-xs font-semibold text-slate-200">
-                      Zieh deinen Screenshot von TradingView / Broker hierher
-                    </p>
-                    <p className="text-[10px] text-slate-500 font-medium mt-1">
-                      Klicke, um eine Bilddatei (.png, .jpeg) von deinem Rechner/Smartphone auszuwählen.
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="text-[10px] text-slate-400 font-medium leading-normal p-2.5 bg-slate-950/40 border border-slate-850/30 rounded-xl">
-                <span className="text-emerald-400 font-bold block mb-0.5">🧠 KI Screenshot-Leser:</span>
-                Perfekt zum Einlesen von tabellarischen Depotwerten, Watchlist-Abbildungen oder Kursübersichten. Unser System identifiziert passende Ticker und trägt sie direkt ein.
-              </div>
-              <button 
-                type="button" 
-                disabled={isUploadingScreenshot || !screenshotFile}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleScreenshotUploadAndParse();
-                }} 
-                className="w-full h-11 bg-emerald-600 hover:bg-emerald-700 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
-              >
-                {isUploadingScreenshot ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin text-white" /> Analysiere...
-                  </>
-                ) : (
-                  <>
-                    <Camera className="h-4 w-4 text-emerald-250 shrink-0" /> Screenshot einlesen
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-4">
-            <div className="rounded-xl border border-slate-800 bg-slate-950 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-base">🌐</span>
-                <h4 className="text-sm font-bold text-slate-100">Aktuelle Kurse direkt holen</h4>
-              </div>
-              <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
-                Lädt VIX, VXV, VVIX, SPX, WTI, Erdgas <strong>und</strong> alle Aktien aus deinem Portfolio + deiner Watchlist live von Yahoo Finance. ATR wird aus der 14-Tage-Historie berechnet.
-              </p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
-                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Marktindikatoren</p>
-                  <p className="text-[10px] text-slate-300 font-mono leading-relaxed">VIX · VXV · VVIX · SPX · WTI · NG</p>
-                </div>
-                <div className="rounded-lg border border-slate-800 bg-slate-900 p-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500 mb-1.5">Deine Werte ({portfolioData.length + watchlist.length})</p>
-                  <p className="text-[10px] text-slate-300 font-mono leading-relaxed truncate">
-                    {[...portfolioData.map(p => p.ticker || p.key.toUpperCase()), ...watchlist.map(w => w.symbol)].join(" · ") || "(noch keine Werte)"}
-                  </p>
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={handleFetchLivePrices}
-                disabled={isFetchingLive}
-                className="w-full h-11 bg-slate-800 hover:bg-slate-900 disabled:bg-slate-800 disabled:text-slate-500 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all shadow-md active:scale-98 cursor-pointer flex items-center justify-center gap-2"
-              >
-                {isFetchingLive ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin text-white" /> Lade Live-Daten...
-                  </>
-                ) : (
-                  <>
-                    <Zap className="h-4 w-4 fill-current text-amber-300" /> Jetzt abrufen
-                  </>
-                )}
-              </button>
-              {lastLiveFetchAt && (
-                <p className="text-[10px] text-slate-500 text-center mt-2">
-                  Zuletzt aktualisiert: {new Date(lastLiveFetchAt).toLocaleString("de-DE", { hour: "2-digit", minute: "2-digit", second: "2-digit", day: "2-digit", month: "2-digit" })}
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* 💾 UNBESTECHLICHER IMPORTS-CACHE */}
-        <div className="border-t border-slate-800/80 pt-4 mt-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-xs">
-            <div className="flex items-start gap-2.5">
-              <div className="p-1.5 bg-slate-800/40 border border-slate-700/50 rounded-lg shrink-0 mt-0.5">
-                <Clipboard className="h-4 w-4 text-slate-400" />
-              </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-bold text-slate-200">💾 Letzter erfolgreicher Cache:</span>
-                  {importCache ? (
-                    isToday(importCache.timestamp) ? (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-500/20 border border-emerald-500/30 text-emerald-400 flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                        AKTUELL (Unbestechlich von heute, {new Date(importCache.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })})
-                      </span>
-                    ) : (
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-500/20 border border-amber-500/30 text-amber-400 flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-amber-450 animate-pulse"></span>
-                        VERALTET (Vom {new Date(importCache.timestamp).toLocaleDateString('de-DE')} • {new Date(importCache.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })})
-                      </span>
-                    )
-                  ) : (
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-800 border border-slate-700 text-slate-400">
-                      Kein Cache vorhanden
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-bold text-slate-900">💾 Letzter Tages-Cache:</span>
+                {importCache ? (
+                  isToday(importCache.timestamp) ? (
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-50 border border-emerald-200 text-emerald-700 flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      AKTUELL ({new Date(importCache.timestamp).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' })})
                     </span>
-                  )}
-                </div>
-                <p className="text-[10px] text-slate-400 mt-1 leading-normal max-w-xl text-left">
-                  {importCache ? (
-                    isToday(importCache.timestamp) ? (
-                      "🟢 Berechnungen sind für heute gesichert. Durch jede Änderung im Code oder Browser-Updates gehen deine Daten nicht verloren!"
-                    ) : (
-                      "⚠️ Achtung: Das Regelwerk schreibt unbestechliche Tageskurse vor! Veraltete Kurse können deine Risikorechnung verfälschen!"
-                    )
                   ) : (
-                    "Führe oben den TradingView-Import oder Screenshot-Zuweisung durch, um diesen Cache tagesaktuell zu sichern."
-                  )}
-                </p>
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-50 border border-amber-200 text-amber-700 flex items-center gap-1">
+                      <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                      VERALTET ({new Date(importCache.timestamp).toLocaleDateString('de-DE')})
+                    </span>
+                  )
+                ) : (
+                  <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-slate-100 border border-slate-200 text-slate-500">
+                    Kein Cache
+                  </span>
+                )}
               </div>
+              <p className="text-[10px] text-slate-500 mt-1 leading-relaxed max-w-md">
+                {importCache ? (
+                  isToday(importCache.timestamp) ? (
+                    "🟢 Heutige Werte gesichert. Bei App-Neuladen gehen die Tageskurse nicht verloren."
+                  ) : (
+                    "⚠️ Cache ist von einem früheren Tag. Das Regelwerk verlangt tagesfrische Kurse — bitte oben neu abrufen."
+                  )
+                ) : (
+                  "Ruf oben die Marktwerte ab — sie werden automatisch hier gesichert."
+                )}
+              </p>
             </div>
-
-            {importCache && (
-              <button
-                type="button"
-                onClick={handleApplyCache}
-                className="px-4 py-2 bg-slate-800/30 hover:bg-slate-800 border border-slate-700/40 text-slate-200 hover:text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all self-start sm:self-center cursor-pointer shrink-0 inline-flex items-center gap-1.5 shadow-sm"
-              >
-                📥 Letzten Cache laden ({new Date(importCache.timestamp).toLocaleDateString('de-DE', {day: 'numeric', month: 'short'})})
-              </button>
-            )}
           </div>
-
           {importCache && (
-            <div className="bg-slate-950/50 p-2.5 rounded-xl border border-slate-850/40 mt-3 text-[10px] font-mono text-slate-400 grid grid-cols-2 sm:grid-cols-5 gap-2 text-left">
-              <div>VIX: <span className="text-slate-200 font-bold">{importCache.marketState.vix !== null ? importCache.marketState.vix.toFixed(2) : '—'}</span></div>
-              <div>VXV: <span className="text-slate-200 font-bold">{importCache.marketState.vxv !== null ? importCache.marketState.vxv.toFixed(2) : '—'}</span></div>
-              <div>VVIX: <span className="text-slate-200 font-bold">{importCache.marketState.vvix !== null ? importCache.marketState.vvix.toFixed(2) : '—'}</span></div>
-              <div>WTI Oil: <span className="text-slate-200 font-bold">{importCache.marketState.wti !== null ? importCache.marketState.wti.toFixed(2) + ' $' : '—'}</span></div>
-              <div>Gas: <span className="text-slate-200 font-bold">{importCache.marketState.gas !== null ? importCache.marketState.gas.toFixed(2) + ' $' : '—'}</span></div>
-              <div>TSLA: <span className="text-slate-200 font-bold">{importCache.livePrices.tsla !== null ? importCache.livePrices.tsla.toFixed(2) + ' €' : '—'}</span></div>
-              <div>NOW: <span className="text-slate-200 font-bold">{importCache.livePrices.now !== null ? importCache.livePrices.now.toFixed(2) + ' €' : '—'}</span></div>
-              <div>BABA: <span className="text-slate-200 font-bold">{importCache.livePrices.baba !== null ? importCache.livePrices.baba.toFixed(2) + ' €' : '—'}</span></div>
-              <div className="col-span-2">BTC Index: <span className="text-slate-200 font-bold">{importCache.livePrices.btc !== null ? importCache.livePrices.btc.toLocaleString('de-DE') + ' €' : '—'}</span></div>
-            </div>
+            <button
+              type="button"
+              onClick={handleApplyCache}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs uppercase tracking-wider rounded-xl transition-all self-start sm:self-center cursor-pointer shrink-0 inline-flex items-center gap-1.5 shadow-sm active:scale-95"
+            >
+              📥 Letzten Cache laden ({new Date(importCache.timestamp).toLocaleDateString('de-DE', {day: 'numeric', month: 'short'})})
+            </button>
           )}
         </div>
+        {importCache && (
+          <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100 mt-3 text-[10px] font-mono text-slate-500 grid grid-cols-2 sm:grid-cols-5 gap-2 text-left">
+            <div>VIX: <span className="text-slate-800 font-bold">{importCache.marketState.vix !== null ? importCache.marketState.vix.toFixed(2) : '—'}</span></div>
+            <div>VXV: <span className="text-slate-800 font-bold">{importCache.marketState.vxv !== null ? importCache.marketState.vxv.toFixed(2) : '—'}</span></div>
+            <div>VVIX: <span className="text-slate-800 font-bold">{importCache.marketState.vvix !== null ? importCache.marketState.vvix.toFixed(2) : '—'}</span></div>
+            <div>WTI Oil: <span className="text-slate-800 font-bold">{importCache.marketState.wti !== null ? importCache.marketState.wti.toFixed(2) + ' $' : '—'}</span></div>
+            <div>Gas: <span className="text-slate-800 font-bold">{importCache.marketState.gas !== null ? importCache.marketState.gas.toFixed(2) + ' $' : '—'}</span></div>
+            <div>TSLA: <span className="text-slate-800 font-bold">{importCache.livePrices.tsla !== null ? importCache.livePrices.tsla.toFixed(2) + ' €' : '—'}</span></div>
+            <div>NOW: <span className="text-slate-800 font-bold">{importCache.livePrices.now !== null ? importCache.livePrices.now.toFixed(2) + ' €' : '—'}</span></div>
+            <div>BABA: <span className="text-slate-800 font-bold">{importCache.livePrices.baba !== null ? importCache.livePrices.baba.toFixed(2) + ' €' : '—'}</span></div>
+            <div className="col-span-2">BTC Index: <span className="text-slate-800 font-bold">{importCache.livePrices.btc !== null ? importCache.livePrices.btc.toLocaleString('de-DE') + ' €' : '—'}</span></div>
+          </div>
+        )}
       </div>
 
       {/* SCHNELL-EINGABE-ASSISTENT WENN DATEN FEHLEN (Bzw. unvollständig) */}
@@ -1927,7 +1042,7 @@ export default function MorgenroutineTab({
                 Unvollständige Tagesroutine-Daten: Werte eintragen
               </h4>
               <p className="text-sm text-slate-600 font-medium leading-relaxed mt-1">
-                Damit die unbestechliche Marktampel aktiv schalten kann und deine limit- und risikorechenbasierten Hebel vollkommen abgesichert sind, fehlen noch Werte für heute ({formatToGermanDate(routineDate)}). Tippe diese einfach weiter unten bei den <strong>Tages-Eingaben</strong> ein oder verwende das obige <strong>Schnell-Import-Center</strong> (per Text-Import oder Broker-Screenshot).
+                Damit die unbestechliche Marktampel aktiv schalten kann und deine limit- und risikorechenbasierten Hebel vollkommen abgesichert sind, fehlen noch Werte für heute ({formatToGermanDate(routineDate)}). Ruf oben die <strong>Marktwerte</strong> ab oder trage die Werte weiter unten bei den <strong>Tages-Eingaben</strong> ein.
               </p>
             </div>
             
