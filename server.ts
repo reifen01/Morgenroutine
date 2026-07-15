@@ -915,7 +915,8 @@ app.post("/api/calculate-distribution-days", async (req, res) => {
     return res.json({
       distSpx: cachedDistDays.distSpx,
       distNdx: cachedDistDays.distNdx,
-      reasoning: `${cachedDistDays.reasoning} (Werte für heute geladen aus dem Server-Cache)`
+      reasoning: `${cachedDistDays.reasoning} (Werte für heute geladen aus dem Server-Cache)`,
+      source: "yahoo"
     });
   }
 
@@ -939,7 +940,8 @@ Definition: Tagesschlusskurs fällt um mindestens -0,2% bei steigendem Volumen i
     const finalResult = {
       distSpx: spyCalc.count,
       distNdx: qqqCalc.count,
-      reasoning
+      reasoning,
+      source: "yahoo"
     };
     
     // Save to server-side cache
@@ -961,7 +963,8 @@ Definition: Tagesschlusskurs fällt um mindestens -0,2% bei steigendem Volumen i
     return res.json({
       distSpx: 2,
       distNdx: 3,
-      reasoning: "Hinweis: Gemini-API-Schlüssel ist nicht konfiguriert. Programmatische Ermittlung schlug fehl. Es wurden plausible Schätzwerte eingetragen."
+      reasoning: "Hinweis: Gemini-API-Schlüssel ist nicht konfiguriert. Programmatische Ermittlung schlug fehl. Es wurden plausible Schätzwerte eingetragen.",
+      source: "estimate"
     });
   }
 
@@ -971,7 +974,8 @@ Definition: Tagesschlusskurs fällt um mindestens -0,2% bei steigendem Volumen i
     return res.json({
       distSpx: 2,
       distNdx: 3,
-      reasoning: "Hinweis: Die automatische AI-Ermittlung befindet sich vorübergehend im Quoten-Schonmodus (5 Min. Cooldown nach RESOURCE_EXHAUSTED). Es wurden plausible Schätzwerte (S&P 500: 2, Nasdaq: 3) eingetragen, um Quoten zu sparen. Bitte passe diese ggf. manuell an."
+      reasoning: "Hinweis: Die automatische AI-Ermittlung befindet sich vorübergehend im Quoten-Schonmodus (5 Min. Cooldown nach RESOURCE_EXHAUSTED). Es wurden plausible Schätzwerte (S&P 500: 2, Nasdaq: 3) eingetragen, um Quoten zu sparen. Bitte passe diese ggf. manuell an.",
+      source: "estimate"
     });
   }
 
@@ -1027,7 +1031,7 @@ Gib das Ergebnis ausschließlich als valides JSON-Objekt im folgenden Format zur
       date: currentDateStr
     };
 
-    res.json(data);
+    res.json({ ...data, source: "ai" });
   } catch (error: any) {
     console.warn("[Distribution Days API] Primary Google Search evaluation failed or rate/quota limited:", error.message || error);
     
@@ -1086,7 +1090,7 @@ Gib das Ergebnis ausschließlich als valides JSON-Objekt im folgenden Format zur
         date: currentDateStr
       };
 
-      return res.json(fallbackData);
+      return res.json({ ...fallbackData, source: "ai" });
     } catch (fallbackError: any) {
       console.warn("[Distribution Days API] Fallback-Ermittlung ebenfalls fehlgeschlagen oder rate limited:", fallbackError.message || fallbackError);
       
@@ -1099,7 +1103,8 @@ Gib das Ergebnis ausschließlich als valides JSON-Objekt im folgenden Format zur
       const baselineDefaults = {
         distSpx: 2,
         distNdx: 3,
-        reasoning: `Hinweis: Die automatische AI-Ermittlung konnte wegen API-Quotenbeschränkungen (RESOURCE_EXHAUSTED) nicht vollständig ausgeführt werden. Es wurden temporäre Standard-Schätzwerte (SPX: 2, NDX: 3) eingetragen. Bitte passe diese manuell gem. TradingView an.`
+        reasoning: `Hinweis: Die automatische AI-Ermittlung konnte wegen API-Quotenbeschränkungen (RESOURCE_EXHAUSTED) nicht vollständig ausgeführt werden. Es wurden temporäre Standard-Schätzwerte (SPX: 2, NDX: 3) eingetragen. Bitte passe diese manuell gem. TradingView an.`,
+        source: "estimate"
       };
       return res.json(baselineDefaults);
     }
