@@ -1097,7 +1097,7 @@ export default function MorgenroutineTab({
                         <button
                           type="button"
                           onClick={() => toggleHelp('distDays')}
-                          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-rose-600 hover:text-rose-800 hover:bg-rose-100/80 bg-rose-50 border border-rose-100/60 shadow-xs transition-all cursor-pointer shrink-0"
+                          className="inline-flex items-center justify-center w-5 h-5 rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 bg-emerald-50 border border-emerald-100/60 shadow-xs transition-all cursor-pointer shrink-0"
                           title="Hilfe anzeigen"
                         >
                           <HelpCircle className="h-3.5 w-3.5" />
@@ -1117,6 +1117,28 @@ export default function MorgenroutineTab({
                       <div className="text-slate-500">NDX {marketState.distNdx ?? "—"}</div>
                     </td><td className="p-3 text-center text-slate-450 font-mono text-xs font-semibold">Sperrlimit: ≥ 5</td>
                   </tr>
+
+                  {/* Distribution Days Explainer */}
+                  {helpId === 'distDays' && (
+                    <tr className="bg-emerald-50/15">
+                      <td colSpan={4} className="p-4 text-xs text-slate-650 leading-relaxed font-semibold border-l-4 border-emerald-500 bg-emerald-500/5 pl-4 pr-4 space-y-3">
+                        <div>
+                          <strong className="text-slate-900">Was sind Distribution Days (Distributionstage)?</strong><br />
+                          Ein Distributionstag entsteht, wenn der Index (S&amp;P 500 oder Nasdaq 100) im Minus schließt — typisch ab −0,2 % — bei <strong>höherem Handelsvolumen</strong> als am Vortag. Das deutet auf institutionelle Verkäufe hin (die großen Adressen verteilen ihre Bestände). Gezählt werden sie über die letzten <strong>25 Handelstage</strong>.
+                        </div>
+                        <ul className="list-disc pl-4 space-y-1 font-bold">
+                          <li><span className="text-emerald-800">0 bis 4 Tage:</span> Normaler Markt — Neukäufe sind unbedenklich.</li>
+                          <li><span className="text-rose-800">≥ 5 Tage (Kaufstopp):</span> Hohe Gefahr einer Marktumkehr. Die Kaufampel schaltet automatisch auf Kaufsperre — Risiko minimieren, Stops enger ziehen &amp; keine Neukäufe.</li>
+                        </ul>
+                        <div className="p-2.5 bg-white/70 rounded-xl border border-emerald-100 text-[11px] font-semibold text-slate-800">
+                          <strong>Wichtig — woher die Zahl kommt:</strong> Die automatische Kaufsperre greift nur, wenn die Zahl aus <strong>verlässlicher Quelle</strong> stammt: der echten Berechnung aus Yahoo-Finance-Daten (SPY &amp; QQQ, Kurs + Volumen der letzten 25 Handelstage) oder deiner manuellen Eingabe. Das Badge in der Zeile zeigt dir die Quelle: <span className="text-emerald-700 font-bold">✓ Yahoo-berechnet / manuell</span> = scharf, Sperre aktiv. <span className="text-amber-700 font-bold">≈ KI-Schätzung / Notnagel</span> = nur ein Warnhinweis, <strong>keine</strong> harte Sperre — dann bitte den Wert selbst prüfen (z. B. über den Auto-Ermitteln-Button erneut, oder manuell in den Notfall-Eingaben eintragen).
+                        </div>
+                        <div className="text-[11px] text-slate-500">
+                          Zur eigenen Kontrolle in TradingView gibt es unten in den Notfall-Eingaben (bei „Distribution Days manuell verifizieren") ein fertiges Pine-Script zum Kopieren.
+                        </div>
+                      </td>
+                    </tr>
+                  )}
 
                   {/* Distribution Days Auto-Ermitteln */}
                   <tr>
