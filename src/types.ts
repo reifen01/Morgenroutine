@@ -82,6 +82,10 @@ export interface MarketState {
   gas: number | null;
   distSpx: number;
   distNdx: number;
+  /** Herkunft der Distribution-Days-Zahl: "yahoo" = echte Berechnung (verlässlich),
+   *  "ai" = KI-Schätzung per Websuche, "estimate" = fester Notnagel-Schätzwert,
+   *  "manual" = von Hand eingetragen. Nur "yahoo" und "manual" lösen die Kaufsperre aus. */
+  distSource?: "yahoo" | "ai" | "estimate" | "manual";
 }
 
 /** One captured day of market-regime values, used for the weekly/monthly
