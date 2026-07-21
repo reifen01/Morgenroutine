@@ -640,6 +640,7 @@ export default function App() {
               onShowToast={showToast}
               onOpenRestoreBackup={() => setBackupRestoreOpen(true)}
               onRecordDailySnapshot={recordDailySnapshot}
+              dailyHistory={dailyHistory}
             />
           )}
 
