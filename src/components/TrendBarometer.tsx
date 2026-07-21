@@ -167,7 +167,7 @@ export function TrendHistory({
   history,
   trendKey,
   label,
-  days = 7,
+  days = 5,
 }: {
   history: DailySnapshot[];
   trendKey: TrendKey;
@@ -179,7 +179,7 @@ export function TrendHistory({
 
   if (sorted.length === 0) {
     return (
-      <div className="text-[11px] text-slate-500 font-semibold">
+      <div className="text-[12px] text-slate-600 font-semibold">
         Noch keine Tageswerte gesammelt. Jeder Live-Abruf legt einen Schnappschuss an —
         nach ein paar Handelstagen erscheint hier der Verlauf.
       </div>
@@ -202,18 +202,18 @@ export function TrendHistory({
   return (
     <div className="space-y-2">
       <div className="font-bold text-slate-900 text-xs">
-        📈 {label} — gesammelte Tageswerte
+        📈 {label} — letzte Handelswoche
       </div>
 
       {/* Balken-Verlauf */}
-      <div className="flex items-end gap-1 h-14">
+      <div className="flex items-end gap-1 h-20">
         {sorted.map((snap, i) => {
           const v = vals[i];
-          const h = v === null || isNaN(v) ? 0 : 12 + ((v - min) / span) * 38;
+          const h = v === null || isNaN(v) ? 0 : 14 + ((v - min) / span) * 46;
           const isLast = i === sorted.length - 1;
           return (
             <div key={snap.date} className="flex-1 flex flex-col items-center justify-end gap-1 min-w-0">
-              <span className="text-[8px] font-mono font-bold text-slate-500 leading-none whitespace-nowrap">
+              <span className="text-[11px] font-mono font-bold text-slate-600 leading-none whitespace-nowrap">
                 {fmt(v, trendKey)}
               </span>
               <div
@@ -221,7 +221,7 @@ export function TrendHistory({
                 style={{ height: `${h}px` }}
                 title={`${snap.date}: ${fmt(v, trendKey)}`}
               />
-              <span className="text-[8px] font-mono text-slate-400 leading-none whitespace-nowrap">
+              <span className="text-[10px] font-mono text-slate-500 leading-none whitespace-nowrap">
                 {snap.date.slice(8, 10)}.{snap.date.slice(5, 7)}.
               </span>
             </div>
@@ -229,7 +229,7 @@ export function TrendHistory({
         })}
       </div>
 
-      <div className="text-[10px] text-slate-500 font-semibold pt-1 border-t border-slate-100">
+      <div className="text-[12px] text-slate-600 font-semibold pt-1.5 border-t border-slate-100">
         {result.hint}
         {sorted.length < 4 && (
           <span className="block mt-1 text-amber-700">

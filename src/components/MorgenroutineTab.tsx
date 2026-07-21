@@ -953,7 +953,7 @@ export default function MorgenroutineTab({
                     </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${vix && vix >= 25 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
                     
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–25</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;25</span></div>
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">0–25</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;25</span></div>
                     </td><td className="p-3 text-center pr-4">
                       <div className="flex items-center justify-center gap-1">
                         <TrendArrow result={computeTrend(dailyHistory, "vix")} />
@@ -1014,7 +1014,7 @@ export default function MorgenroutineTab({
                     </td><td className="p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base text-slate-800">
                       {vxv ? vxv.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
                     
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥1,00</span></div>
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥1,00</span></div>
                     </td><td className="p-3 text-center pr-4">
                       <div className="flex items-center justify-center gap-1">
                         <TrendArrow result={computeTrend(dailyHistory, "ratio")} />
@@ -1077,7 +1077,7 @@ export default function MorgenroutineTab({
                     </td><td className="p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base text-slate-800">
                       {marketState.vvix !== null ? marketState.vvix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
                     
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–110</span><span className="text-slate-300">|</span><span className="text-amber-500/90">110–130</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;130</span></div>
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">0–110</span><span className="text-slate-300">|</span><span className="text-amber-500/90">110–130</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;130</span></div>
                     </td><td className="p-3 text-center pr-4">
                       <div className="flex items-center justify-center gap-1">
                         <TrendArrow result={computeTrend(dailyHistory, "vvix")} />
@@ -1139,7 +1139,7 @@ export default function MorgenroutineTab({
                     </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${wti && wti >= 100 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {wti ? `$ ${wti.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "FEHLT"}
                     
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;100</span></div>
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;100</span></div>
                     </td><td className="p-3 text-center pr-4">
                       <div className="flex items-center justify-center gap-1">
                         <TrendArrow result={computeTrend(dailyHistory, "wti")} />
@@ -1199,7 +1199,7 @@ export default function MorgenroutineTab({
                     </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${gas && gas >= 4.5 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {gas ? `$ ${gas.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : "FEHLT"}
                     
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;4,50</span></div>
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;4,50</span></div>
                     </td><td className="p-3 text-center pr-4">
                       <div className="flex items-center justify-center gap-1">
                         <TrendArrow result={computeTrend(dailyHistory, "gas")} />
@@ -1271,7 +1271,7 @@ export default function MorgenroutineTab({
                       <div>SPX {marketState.distSpx ?? "—"}</div>
                       <div className="text-slate-500">NDX {marketState.distNdx ?? "—"}</div>
                     
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–4</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥5</span></div>
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">0–4</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥5</span></div>
                     </td><td className="p-3 text-center pr-4">
                       <div className="flex items-center justify-center gap-1">
                         <TrendArrow result={computeTrend(dailyHistory, "dist")} />
