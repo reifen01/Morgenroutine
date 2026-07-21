@@ -149,3 +149,95 @@ export function TrendArrow({ result }: { result: TrendResult }) {
     </span>
   );
 }
+
+/** Formatiert einen Wert je nach Kennzahl */
+function fmt(v: number | null, key: TrendKey): string {
+  if (v === null || v === undefined || isNaN(v)) return "—";
+  if (key === "dist") return String(Math.round(v));
+  if (key === "ratio") return v.toLocaleString("de-DE", { minimumFractionDigits: 3, maximumFractionDigits: 3 });
+  if (key === "spx") return v.toLocaleString("de-DE", { maximumFractionDigits: 0 });
+  return v.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+/**
+ * Aufklappbare Verlaufsliste: zeigt die zuletzt gesammelten Tageswerte
+ * für einen Indikator — die Datenbasis, aus der der Pfeil entsteht.
+ */
+export function TrendHistory({
+  history,
+  trendKey,
+  label,
+  days = 7,
+}: {
+  history: DailySnapshot[];
+  trendKey: TrendKey;
+  label: string;
+  days?: number;
+}) {
+  const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date)).slice(-days);
+  const result = computeTrend(history, trendKey);
+
+  if (sorted.length === 0) {
+    return (
+      <div className="text-[11px] text-slate-500 font-semibold">
+        Noch keine Tageswerte gesammelt. Jeder Live-Abruf legt einen Schnappschuss an —
+        nach ein paar Handelstagen erscheint hier der Verlauf.
+      </div>
+    );
+  }
+
+  const vals = sorted.map((s) => {
+    switch (trendKey) {
+      case "dist": return Math.max(s.distSpx ?? 0, s.distNdx ?? 0);
+      case "ratio": return s.ratio;
+      default: return (s as any)[trendKey] as number | null;
+    }
+  });
+
+  const nums = vals.filter((v): v is number => v !== null && !isNaN(v));
+  const min = nums.length ? Math.min(...nums) : 0;
+  const max = nums.length ? Math.max(...nums) : 0;
+  const span = max - min || 1;
+
+  return (
+    <div className="space-y-2">
+      <div className="font-bold text-slate-900 text-xs">
+        📈 {label} — gesammelte Tageswerte
+      </div>
+
+      {/* Balken-Verlauf */}
+      <div className="flex items-end gap-1 h-14">
+        {sorted.map((snap, i) => {
+          const v = vals[i];
+          const h = v === null || isNaN(v) ? 0 : 12 + ((v - min) / span) * 38;
+          const isLast = i === sorted.length - 1;
+          return (
+            <div key={snap.date} className="flex-1 flex flex-col items-center justify-end gap-1 min-w-0">
+              <span className="text-[8px] font-mono font-bold text-slate-500 leading-none whitespace-nowrap">
+                {fmt(v, trendKey)}
+              </span>
+              <div
+                className={`w-full rounded-t ${isLast ? "bg-slate-800" : "bg-slate-300"}`}
+                style={{ height: `${h}px` }}
+                title={`${snap.date}: ${fmt(v, trendKey)}`}
+              />
+              <span className="text-[8px] font-mono text-slate-400 leading-none whitespace-nowrap">
+                {snap.date.slice(8, 10)}.{snap.date.slice(5, 7)}.
+              </span>
+            </div>
+          );
+        })}
+      </div>
+
+      <div className="text-[10px] text-slate-500 font-semibold pt-1 border-t border-slate-100">
+        {result.hint}
+        {sorted.length < 4 && (
+          <span className="block mt-1 text-amber-700">
+            Hinweis: erst {sorted.length} {sorted.length === 1 ? "Tag" : "Tage"} gesammelt —
+            der Trend wird ab etwa 4–6 Handelstagen aussagekräftig.
+          </span>
+        )}
+      </div>
+    </div>
+  );
+}

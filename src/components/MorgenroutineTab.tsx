@@ -19,10 +19,11 @@ import {
   Loader2,
   Copy,
   Check,
-  Sparkles
+  Sparkles,
+  Info
 } from "lucide-react";
 import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot } from "../types";
-import { computeTrend, TrendArrow } from "./TrendBarometer";
+import { computeTrend, TrendArrow, TrendHistory } from "./TrendBarometer";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
   parseCleanFloat, 
@@ -880,10 +881,10 @@ export default function MorgenroutineTab({
             </h3>
             
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[520px] text-left border-collapse text-xs sm:text-sm">
+              <table className="w-full min-w-[560px] text-left border-collapse text-xs sm:text-sm">
                 <thead>
                   <tr className="border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-widest bg-slate-50/40">
-                    <th className="p-3 pl-4">Ampel-Status</th>
+                    <th className="p-3 pl-4">Kauf-Status</th>
                     <th className="p-3">Indikator</th>
                     <th className="p-3 text-right">Wert</th>
                     <th className="p-3 text-center pr-4">
@@ -921,7 +922,7 @@ export default function MorgenroutineTab({
                           <strong>Trend und Kaufstopp sind zwei verschiedene Dinge.</strong> Der Pfeil zeigt nur die <em>Richtung</em> — er sperrt nichts und gibt nichts frei. Gesperrt wird ausschließlich über die Schranken in der Status-Spalte links. Ein grüner Pfeil bei roten Distribution Days heißt also: <em>es wird besser, aber der Kaufstopp gilt weiterhin.</em>
                         </div>
                         <div className="text-[11px] text-slate-500">
-                          Der Pfeil folgt der Bewertung, nicht der nackten Zahl: Ein fallender VIX ist gut → grüner Pfeil nach oben. Ein steigender Ölpreis ist schlecht → roter Pfeil nach unten. Nach etwa 4–6 Handelstagen sind alle Pfeile aussagekräftig.
+                          Der Pfeil folgt der Bewertung, nicht der nackten Zahl: Ein fallender VIX ist gut → grüner Pfeil nach oben. Ein steigender Ölpreis ist schlecht → roter Pfeil nach unten. Nach etwa 4–6 Handelstagen sind alle Pfeile aussagekräftig. Über das ⓘ neben jedem Pfeil siehst du die gesammelten Tageswerte, aus denen er berechnet wurde.
                         </div>
                       </td>
                     </tr>
@@ -937,7 +938,6 @@ export default function MorgenroutineTab({
                       ) : (
                         <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Panikverbot</span>
                       )}
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–25</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;25</span></div>
                     </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>VIX (US-Angst)</span>
@@ -952,8 +952,31 @@ export default function MorgenroutineTab({
                       </div>
                     </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${vix && vix >= 25 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    </td><td className="p-3 text-center pr-4"><TrendArrow result={computeTrend(dailyHistory, "vix")} /></td>
+                    
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–25</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;25</span></div>
+                    </td><td className="p-3 text-center pr-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <TrendArrow result={computeTrend(dailyHistory, "vix")} />
+                        <button
+                          type="button"
+                          onClick={() => toggleHelp('hist-vix')}
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
+                          title="Gesammelte Tageswerte anzeigen"
+                        >
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
+
+                  {/* Verlauf VIX (US-Angst) */}
+                  {helpId === 'hist-vix' && (
+                    <tr className="bg-slate-50/50">
+                      <td colSpan={4} className="p-4 border-l-4 border-slate-400 bg-slate-500/5">
+                        <TrendHistory history={dailyHistory} trendKey="vix" label="VIX (US-Angst)" />
+                      </td>
+                    </tr>
+                  )}
                   
                   {/* VIX Help Explainer */}
                   {helpId === 'vix' && (
@@ -976,7 +999,6 @@ export default function MorgenroutineTab({
                       ) : (
                         <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Backwardation</span>
                       )}
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥1,00</span></div>
                     </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>VXV (3-Monats VIX)</span>
@@ -991,8 +1013,31 @@ export default function MorgenroutineTab({
                       </div>
                     </td><td className="p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base text-slate-800">
                       {vxv ? vxv.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    </td><td className="p-3 text-center pr-4"><TrendArrow result={computeTrend(dailyHistory, "ratio")} /></td>
+                    
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥1,00</span></div>
+                    </td><td className="p-3 text-center pr-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <TrendArrow result={computeTrend(dailyHistory, "ratio")} />
+                        <button
+                          type="button"
+                          onClick={() => toggleHelp('hist-ratio')}
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
+                          title="Gesammelte Tageswerte anzeigen"
+                        >
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
+
+                  {/* Verlauf VIX/VXV-Verhältnis */}
+                  {helpId === 'hist-ratio' && (
+                    <tr className="bg-slate-50/50">
+                      <td colSpan={4} className="p-4 border-l-4 border-slate-400 bg-slate-500/5">
+                        <TrendHistory history={dailyHistory} trendKey="ratio" label="VIX/VXV-Verhältnis" />
+                      </td>
+                    </tr>
+                  )}
                   
                   {/* VXV Explainer */}
                   {helpId === 'vxv' && (
@@ -1017,7 +1062,6 @@ export default function MorgenroutineTab({
                       ) : (
                         <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
                       )}
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–110</span><span className="text-slate-300">|</span><span className="text-amber-500/90">110–130</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;130</span></div>
                     </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>VVIX (Angst der Angst)</span>
@@ -1032,8 +1076,31 @@ export default function MorgenroutineTab({
                       </div>
                     </td><td className="p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base text-slate-800">
                       {marketState.vvix !== null ? marketState.vvix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    </td><td className="p-3 text-center pr-4"><TrendArrow result={computeTrend(dailyHistory, "vvix")} /></td>
+                    
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–110</span><span className="text-slate-300">|</span><span className="text-amber-500/90">110–130</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;130</span></div>
+                    </td><td className="p-3 text-center pr-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <TrendArrow result={computeTrend(dailyHistory, "vvix")} />
+                        <button
+                          type="button"
+                          onClick={() => toggleHelp('hist-vvix')}
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
+                          title="Gesammelte Tageswerte anzeigen"
+                        >
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
+
+                  {/* Verlauf VVIX */}
+                  {helpId === 'hist-vvix' && (
+                    <tr className="bg-slate-50/50">
+                      <td colSpan={4} className="p-4 border-l-4 border-slate-400 bg-slate-500/5">
+                        <TrendHistory history={dailyHistory} trendKey="vvix" label="VVIX" />
+                      </td>
+                    </tr>
+                  )}
 
                   {/* VVIX Explainer */}
                   {helpId === 'vvix' && (
@@ -1057,7 +1124,6 @@ export default function MorgenroutineTab({
                       ) : (
                         <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Risiko -50%</span>
                       )}
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;100</span></div>
                     </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-900 text-sm sm:text-base flex items-center gap-1.5">
                         <span>WTI Oil ($ pro Barrel)</span>
@@ -1072,8 +1138,31 @@ export default function MorgenroutineTab({
                       </div>
                     </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${wti && wti >= 100 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {wti ? `$ ${wti.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "FEHLT"}
-                    </td><td className="p-3 text-center pr-4"><TrendArrow result={computeTrend(dailyHistory, "wti")} /></td>
+                    
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;100</span></div>
+                    </td><td className="p-3 text-center pr-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <TrendArrow result={computeTrend(dailyHistory, "wti")} />
+                        <button
+                          type="button"
+                          onClick={() => toggleHelp('hist-wti')}
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
+                          title="Gesammelte Tageswerte anzeigen"
+                        >
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
+
+                  {/* Verlauf WTI Öl */}
+                  {helpId === 'hist-wti' && (
+                    <tr className="bg-slate-50/50">
+                      <td colSpan={4} className="p-4 border-l-4 border-slate-400 bg-slate-500/5">
+                        <TrendHistory history={dailyHistory} trendKey="wti" label="WTI Öl" />
+                      </td>
+                    </tr>
+                  )}
                   
                   {/* WTI Explainer */}
                   {helpId === 'wti' && (
@@ -1095,7 +1184,6 @@ export default function MorgenroutineTab({
                       ) : (
                         <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
                       )}
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;4,50</span></div>
                     </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-905 text-sm sm:text-base flex items-center gap-1.5">
                         <span>Henry Hub Gas ($)</span>
@@ -1110,8 +1198,31 @@ export default function MorgenroutineTab({
                       </div>
                     </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${gas && gas >= 4.5 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       {gas ? `$ ${gas.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : "FEHLT"}
-                    </td><td className="p-3 text-center pr-4"><TrendArrow result={computeTrend(dailyHistory, "gas")} /></td>
+                    
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;4,50</span></div>
+                    </td><td className="p-3 text-center pr-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <TrendArrow result={computeTrend(dailyHistory, "gas")} />
+                        <button
+                          type="button"
+                          onClick={() => toggleHelp('hist-gas')}
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
+                          title="Gesammelte Tageswerte anzeigen"
+                        >
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
+
+                  {/* Verlauf Erdgas */}
+                  {helpId === 'hist-gas' && (
+                    <tr className="bg-slate-50/50">
+                      <td colSpan={4} className="p-4 border-l-4 border-slate-400 bg-slate-500/5">
+                        <TrendHistory history={dailyHistory} trendKey="gas" label="Erdgas" />
+                      </td>
+                    </tr>
+                  )}
 
                   {/* Erdgas Explainer */}
                   {helpId === 'gas' && (
@@ -1135,7 +1246,6 @@ export default function MorgenroutineTab({
                       ) : (
                         <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Ok</span>
                       )}
-                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–4</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥5</span></div>
                     </td><td className="p-3 pl-4">
                       <div className="font-bold text-slate-905 text-sm sm:text-base flex items-center gap-1.5">
                         <span>Distribution Days</span>
@@ -1160,8 +1270,31 @@ export default function MorgenroutineTab({
                     </td><td className={`p-3 text-right font-mono font-bold tabular-nums text-sm sm:text-base ${distBlocks ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                       <div>SPX {marketState.distSpx ?? "—"}</div>
                       <div className="text-slate-500">NDX {marketState.distNdx ?? "—"}</div>
-                    </td><td className="p-3 text-center pr-4"><TrendArrow result={computeTrend(dailyHistory, "dist")} /></td>
+                    
+                      <div className="mt-1 flex items-center justify-end gap-1 text-[9px] font-mono font-normal tracking-tight leading-none"><span className="text-emerald-600/90">0–4</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥5</span></div>
+                    </td><td className="p-3 text-center pr-4">
+                      <div className="flex items-center justify-center gap-1">
+                        <TrendArrow result={computeTrend(dailyHistory, "dist")} />
+                        <button
+                          type="button"
+                          onClick={() => toggleHelp('hist-dist')}
+                          className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
+                          title="Gesammelte Tageswerte anzeigen"
+                        >
+                          <Info className="h-3 w-3" />
+                        </button>
+                      </div>
+                    </td>
                   </tr>
+
+                  {/* Verlauf Distribution Days */}
+                  {helpId === 'hist-dist' && (
+                    <tr className="bg-slate-50/50">
+                      <td colSpan={4} className="p-4 border-l-4 border-slate-400 bg-slate-500/5">
+                        <TrendHistory history={dailyHistory} trendKey="dist" label="Distribution Days" />
+                      </td>
+                    </tr>
+                  )}
 
                   {/* Distribution Days Explainer */}
                   {helpId === 'distDays' && (
