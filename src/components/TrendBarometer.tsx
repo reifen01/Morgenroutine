@@ -77,7 +77,13 @@ export function computeTrend(
   key: TrendKey,
   window = 3
 ): TrendResult {
-  const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date));
+  // Defensiv: nur Einträge mit gültigem Datum verwenden. Alt-Daten aus
+  // früheren App-Versionen können unvollständig sein — das darf die App
+  // niemals zum Absturz bringen.
+  const clean = (Array.isArray(history) ? history : []).filter(
+    (s): s is DailySnapshot => !!s && typeof s.date === "string" && s.date.length > 0
+  );
+  const sorted = [...clean].sort((a, b) => a.date.localeCompare(b.date));
 
   if (sorted.length < 2) {
     return { direction: "none", changePct: null, hint: "Noch zu wenig Historie — ab 2 Handelstagen mit Live-Abruf" };
@@ -174,7 +180,10 @@ export function TrendHistory({
   label: string;
   days?: number;
 }) {
-  const sorted = [...history].sort((a, b) => a.date.localeCompare(b.date)).slice(-days);
+  const clean = (Array.isArray(history) ? history : []).filter(
+    (s): s is DailySnapshot => !!s && typeof s.date === "string" && s.date.length > 0
+  );
+  const sorted = [...clean].sort((a, b) => a.date.localeCompare(b.date)).slice(-days);
   const result = computeTrend(history, trendKey);
 
   if (sorted.length === 0) {
