@@ -6,9 +6,9 @@
  * Liest Limits & Signale aus dem zentralen Asset-Register.
  */
 import { useState, useMemo } from "react";
-import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
-import { LivePrices } from "../types";
-import { formatAccounting } from "../utils/mathUtils";
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Pencil, Trash2 } from "lucide-react";
+import { LivePrices, PortfolioPurchase } from "../types";
+import { formatAccounting, formatToGermanDate } from "../utils/mathUtils";
 import { RegisteredAsset, limitFor } from "../utils/assetRegistry";
 import { MarketHealth } from "../utils/marketHealth";
 
@@ -32,11 +32,16 @@ interface DepotTableProps {
   registry: Map<string, RegisteredAsset>;
   marketHealth: MarketHealth;
   onExit: (h: DepotHolding, livePrice: number) => void;
+  /** Alle Käufe — für die Detailansicht je Position */
+  purchases?: PortfolioPurchase[];
+  onEditPurchase?: (p: PortfolioPurchase) => void;
+  onDeletePurchase?: (id: string) => void;
 }
 
-export default function DepotTable({ holdings, livePrices, registry, marketHealth, onExit }: DepotTableProps) {
+export default function DepotTable({ holdings, livePrices, registry, marketHealth, onExit, purchases = [], onEditPurchase, onDeletePurchase }: DepotTableProps) {
   const [sortField, setSortField] = useState<SortField>("value");
   const [sortAsc, setSortAsc] = useState(false);
+  const [offen, setOffen] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     const enriched = holdings.map((h) => {
@@ -115,10 +120,30 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
             rows.map((r, idx) => {
               const isProfit = r.pl >= 0;
               const hasLivePrice = !!livePrices[r.key as keyof LivePrices]?.price;
+              const rowId = `${r.key}|${r.depot}|${r.besitzerName}`;
+              const istOffen = offen === rowId;
+              // Käufe, die genau zu dieser Position gehören
+              const meineKaeufe = purchases.filter(
+                (p) =>
+                  String(p.key).toLowerCase() === r.key.toLowerCase() &&
+                  (p.depot || "") === r.depot &&
+                  (p.besitzerName || "") === r.besitzerName
+              );
               return (
-                <tr key={`${r.key}-${r.depot}-${r.besitzerName}-${idx}`} className="hover:bg-slate-50/50 transition-colors">
+                <>
+                <tr
+                  key={`${r.key}-${r.depot}-${r.besitzerName}-${idx}`}
+                  className={`transition-colors cursor-pointer ${istOffen ? "bg-slate-50" : "hover:bg-slate-50/50"}`}
+                  onClick={() => setOffen(istOffen ? null : rowId)}
+                  title="Antippen für Käufe zu dieser Position"
+                >
                   <td className="py-3 px-3 whitespace-nowrap">
-                    <div className="font-bold text-slate-900">{r.name}</div>
+                    <div className="font-bold text-slate-900 flex items-center gap-1">
+                      {istOffen
+                        ? <ChevronDown className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        : <ChevronRight className="h-3.5 w-3.5 text-slate-300 shrink-0" />}
+                      {r.name}
+                    </div>
                     <span className="inline-block px-1.5 py-0.5 rounded font-mono text-[9px] font-bold text-slate-800 bg-slate-50 uppercase mt-0.5">
                       {r.key.toUpperCase()}
                     </span>
@@ -161,7 +186,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                   </td>
                   <td className="py-3 px-3 text-center whitespace-nowrap">
                     <button
-                      onClick={() => onExit(r, r.livePrice)}
+                      onClick={(e) => { e.stopPropagation(); onExit(r, r.livePrice); }}
                       className="px-2.5 py-1 text-[10px] font-bold bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white rounded-lg border border-rose-200 transition-all cursor-pointer active:scale-95"
                       title="Verkauf für diese Position einbuchen"
                     >
@@ -169,6 +194,85 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                     </button>
                   </td>
                 </tr>
+
+                {istOffen && (
+                  <tr key={`${rowId}-detail`} className="bg-slate-50/70">
+                    <td colSpan={10} className="px-4 py-4 border-l-4 border-slate-800">
+                      <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-2">
+                        📥 Käufe zu dieser Position ({meineKaeufe.length})
+                      </div>
+
+                      {meineKaeufe.length === 0 ? (
+                        <div className="text-[11px] text-slate-500 font-semibold">
+                          Keine Einzelkäufe gefunden — der Bestand stammt aus einer älteren Buchung.
+                        </div>
+                      ) : (
+                        <div className="space-y-1.5">
+                          {[...meineKaeufe]
+                            .sort((a, b) => String(b.kaufDatum).localeCompare(String(a.kaufDatum)))
+                            .map((p) => (
+                              <div
+                                key={p.id}
+                                className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-white rounded-xl border border-slate-200 px-3 py-2"
+                              >
+                                <span className="font-mono text-[11px] font-bold text-slate-800 whitespace-nowrap">
+                                  {formatToGermanDate(String(p.kaufDatum))}
+                                </span>
+                                <span className="font-mono text-[11px] text-slate-600 whitespace-nowrap">
+                                  {Number(p.anzahlAktien).toFixed(2)} × € {formatAccounting(Number(p.kaufKurs))}
+                                </span>
+                                {Number(p.verbleibendeAnzahlAktien) !== Number(p.anzahlAktien) && (
+                                  <span className="font-mono text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 whitespace-nowrap">
+                                    noch {Number(p.verbleibendeAnzahlAktien).toFixed(2)}
+                                  </span>
+                                )}
+                                <span className="font-mono text-[11px] font-bold text-slate-900 whitespace-nowrap">
+                                  = € {formatAccounting(Number(p.tatsaechlicheKosten) || Number(p.anzahlAktien) * Number(p.kaufKurs))}
+                                </span>
+                                {p.notiz && (
+                                  <span className="text-[10px] text-slate-500 font-semibold italic truncate max-w-[180px]">
+                                    {p.notiz}
+                                  </span>
+                                )}
+                                <span className="flex-1" />
+                                {onEditPurchase && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); onEditPurchase(p); }}
+                                    className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
+                                    title="Diesen Kauf bearbeiten"
+                                  >
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                                {onDeletePurchase && (
+                                  <button
+                                    onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }}
+                                    className="p-1.5 rounded-lg text-rose-500 hover:text-white hover:bg-rose-600 transition-colors"
+                                    title="Diesen Kauf löschen"
+                                  >
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+
+                      <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-200">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onExit(r, r.livePrice); }}
+                          className="px-3 py-1.5 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-all active:scale-95"
+                        >
+                          💸 Position verkaufen
+                        </button>
+                        <span className="text-[10px] text-slate-500 font-semibold self-center">
+                          Ø Kauf € {formatAccounting(r.averageKaufkurs)} · Einstand € {formatAccounting(r.totalCost)}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+                </>
               );
             })
           )}
