@@ -9,12 +9,57 @@ export interface LivePriceData {
   atr: number;
 }
 
-export interface LivePrices {
-  tsla: LivePriceData;
-  now: LivePriceData;
-  baba: LivePriceData;
-  btc: LivePriceData;
-}
+/**
+ * Kursspeicher — offen für beliebig viele Assets.
+ *
+ * WICHTIG (Umbau 07/2026): Früher war das ein festes Interface mit exakt
+ * vier Feldern (tsla/now/baba/btc). Dadurch wurde der Kurs jeder fünften
+ * Position beim Live-Abruf stillschweigend verworfen — genau der Grund,
+ * warum NFLX nie einen Kurs bekam. Jetzt: freier Schlüsselraum.
+ *
+ * Zugriffe können `undefined` liefern → immer über `ensureLivePrice()`
+ * bzw. mit Optional Chaining absichern.
+ */
+export type LivePrices = Record<string, LivePriceData>;
+
+/** Leerer Kurs-Datensatz für neu auftauchende Assets. */
+export const emptyLivePrice = (date = ""): LivePriceData => ({
+  price: null,
+  date,
+  atr: 0,
+});
+
+/** Einheitliche Schreibweise aller Asset-Keys: klein, ohne Leerzeichen. */
+export const normalizeAssetKey = (key: unknown): string =>
+  String(key ?? "").trim().toLowerCase();
+
+/**
+ * Kurs lesen — tolerant gegenüber Gross-/Kleinschreibung.
+ * Alt-Daten aus dem localStorage können "NFLX" statt "nflx" enthalten.
+ * Liefert undefined, wenn nichts gefunden wird (nie ein Absturz).
+ */
+export const getLivePrice = (
+  store: LivePrices | undefined | null,
+  key: unknown
+): LivePriceData | undefined => {
+  if (!store) return undefined;
+  const raw = String(key ?? "");
+  return store[raw] ?? store[normalizeAssetKey(raw)];
+};
+
+/**
+ * Liefert den Kurs-Datensatz zu einem Key und legt ihn an, falls er fehlt.
+ * Mutiert das übergebene Objekt bewusst — Aufrufer arbeiten auf einer Kopie.
+ */
+export const ensureLivePrice = (
+  store: LivePrices,
+  key: string,
+  date = ""
+): LivePriceData => {
+  const k = normalizeAssetKey(key);
+  if (!store[k]) store[k] = emptyLivePrice(date);
+  return store[k];
+};
 
 export interface PortfolioItem {
   id: string;
@@ -25,7 +70,7 @@ export interface PortfolioItem {
   tranchenGroesse: number;
   status: 'green' | 'yellow' | 'red' | 'sold';
   stopKurs: number;
-  key: keyof LivePrices;
+  key: string;
   beschreibung: string;
   ticker?: string;
   isin?: string;
@@ -34,7 +79,7 @@ export interface PortfolioItem {
 export interface SoldTradeItem {
   id: string;
   name: string;
-  key: keyof LivePrices | string;
+  key: string;
   verkaufsDatum: string;
   kaufKurs: number;
   verkaufsKurs: number;
@@ -51,7 +96,7 @@ export interface SoldTradeItem {
 
 export interface PortfolioPurchase {
   id: string;
-  key: keyof LivePrices | string;
+  key: string;
   name: string;
   kaufDatum: string;
   kaufKurs: number;

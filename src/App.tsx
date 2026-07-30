@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { initialLivePrices } from "./utils/assetRegistry";
 import { useState, useEffect } from "react";
 import { 
   CloudSun, 
@@ -27,7 +28,7 @@ import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OnboardingScreen from "./components/OnboardingScreen";
-import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem, DailySnapshot, PeriodLearning } from "./types";
+import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem, DailySnapshot, PeriodLearning, getLivePrice } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 import BackupSetupModal from "./components/BackupSetupModal";
 import BackupRestoreModal from "./components/BackupRestoreModal";
@@ -159,12 +160,7 @@ export default function App() {
         console.error("Error reading live prices from local storage:", e);
       }
     }
-    return {
-      tsla: { price: null, date: initialDate, atr: 0 },
-      now: { price: null, date: initialDate, atr: 0 },
-      baba: { price: null, date: initialDate, atr: 0 },
-      btc: { price: null, date: initialDate, atr: 0 }
-    };
+    return initialLivePrices(initialDate);
   });
 
   // Portfolio items — completely empty by default. The user either
@@ -452,12 +448,14 @@ export default function App() {
 
   // Auto synchronizes asset dates whenever parent-level routineDate switches
   useEffect(() => {
-    setLivePrices((prev) => ({
-      tsla: { ...prev.tsla, date: routineDate },
-      now: { ...prev.now, date: routineDate },
-      baba: { ...prev.baba, date: routineDate },
-      btc: { ...prev.btc, date: routineDate }
-    }));
+    // Generisch über alle vorhandenen Keys — früher vier feste Felder,
+    // wodurch jede weitere Position kein Datum bekam (und beim Zugriff
+    // auf ein fehlendes Feld ein Absturz drohte).
+    setLivePrices((prev) =>
+      Object.fromEntries(
+        Object.entries(prev || {}).map(([k, v]) => [k, { ...v, date: routineDate }])
+      )
+    );
   }, [routineDate]);
 
   // Excel CSV single line compiler
@@ -471,7 +469,7 @@ export default function App() {
     trancheSize: number,
     currentStop: number
   ) => {
-    const liveData = livePrices[assetKey as keyof LivePrices];
+    const liveData = getLivePrice(livePrices, assetKey);
     const liveVal = liveData ? liveData.price : null;
 
     if (liveVal === null) {
@@ -711,6 +709,7 @@ export default function App() {
               periodLearnings={periodLearnings}
               onSaveLearning={saveLearning}
               onShowToast={showToast}
+              soldTrades={soldTrades}
             />
           )}
 
@@ -804,12 +803,7 @@ export default function App() {
                 setDepotStartingCash({});
                 setDailyHistory([]);
                 setPeriodLearnings([]);
-                setLivePrices({
-                  tsla: { price: null, date: initialDate, atr: 0 },
-                  now: { price: null, date: initialDate, atr: 0 },
-                  baba: { price: null, date: initialDate, atr: 0 },
-                  btc: { price: null, date: initialDate, atr: 0 },
-                });
+                setLivePrices(initialLivePrices(initialDate));
                 setMarketState({
                   vix: null, vxv: null, vvix: null, spx: null,
                   wti: null, gas: null, distSpx: 0, distNdx: 0,
