@@ -23,7 +23,7 @@ import {
   Info
 } from "lucide-react";
 import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot, ensureLivePrice, emptyLivePrice, getLivePrice } from "../types";
-import { CORE_ASSET_META } from "../utils/assetRegistry";
+import { resolveAssetMeta } from "../utils/assetRegistry";
 import { computeTrend, TrendArrow, TrendHistory } from "./TrendBarometer";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
@@ -682,13 +682,14 @@ export default function MorgenroutineTab({
     const item = portfolioData.find(
       (p) => String(p.key).trim().toLowerCase() === k && p.status !== "sold"
     );
-    const meta = CORE_ASSET_META[k];
+    const meta = resolveAssetMeta(k, item?.name);
     const limit = item?.limitPreis ?? 0;
     return {
       key: k,
       name: item?.name || meta?.name || k.toUpperCase(),
       ticker: item?.ticker || meta?.ticker || k.toUpperCase(),
       isin: item?.isin || meta?.isin || "",
+      wkn: meta?.wkn || "",
       limit,
       desc: limit > 0 ? `Limit @ € ${limit.toLocaleString("de-DE")}` : "Kein Limit gesetzt",
     };

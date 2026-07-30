@@ -17,7 +17,7 @@ import { useState, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Pencil, Trash2, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { LivePrices, PortfolioPurchase, getLivePrice } from "../types";
 import { formatAccounting, formatToGermanDate, KEST_SATZ, kestAuf } from "../utils/mathUtils";
-import { RegisteredAsset, limitFor, CORE_ASSET_META } from "../utils/assetRegistry";
+import { RegisteredAsset, limitFor, resolveAssetMeta } from "../utils/assetRegistry";
 import { MarketHealth } from "../utils/marketHealth";
 
 export interface DepotHolding {
@@ -48,9 +48,13 @@ interface DepotTableProps {
   onDeletePurchase?: (id: string) => void;
 }
 
-/** ISIN/WKN eines Assets auflösen: Stammdaten-Register, sonst leer. */
-function stammdaten(key: string, override?: { isin?: string; wkn?: string }) {
-  const meta = CORE_ASSET_META[key.trim().toLowerCase()];
+/**
+ * ISIN/WKN eines Assets auflösen: exakter Key → bekannte Aliase
+ * (Alt-Positionen mit frei getipptem Kürzel) → Namens-Teiltreffer.
+ * `override` gewinnt immer, falls die Position eigene Werte trägt.
+ */
+function stammdaten(key: string, name: string, override?: { isin?: string; wkn?: string }) {
+  const meta = resolveAssetMeta(key, name);
   return {
     isin: override?.isin || meta?.isin || "",
     wkn: override?.wkn || meta?.wkn || "",
@@ -243,7 +247,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                 const hasLivePrice = !!getLivePrice(livePrices, r.key)?.price;
                 const id = rowId(r);
                 const istOffen = offeneRows.has(id);
-                const sd = stammdaten(r.key, { isin: r.isin, wkn: r.wkn });
+                const sd = stammdaten(r.key, r.name, { isin: r.isin, wkn: r.wkn });
                 const meineKaeufe = purchases.filter(
                   (p) =>
                     String(p.key).toLowerCase() === r.key.toLowerCase() &&
