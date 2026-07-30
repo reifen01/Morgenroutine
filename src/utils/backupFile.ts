@@ -19,6 +19,7 @@
  * for the PIN first.
  */
 
+import { initialLivePrices } from "./assetRegistry";
 import { decryptJson, encryptJson } from "./encryption";
 import type { PortfolioItem, WatchlistItem, LivePrices, ChecklistItem, SoldTradeItem, PortfolioPurchase, DailySnapshot, PeriodLearning } from "../types";
 
@@ -188,12 +189,7 @@ function isLegacyV8Backup(value: unknown): value is LegacyV8Backup {
 }
 
 function legacyToPayload(legacy: LegacyV8Backup): BackupPayload {
-  const liveDefault: LivePrices = {
-    tsla: { price: null, date: "", atr: 0 },
-    now: { price: null, date: "", atr: 0 },
-    baba: { price: null, date: "", atr: 0 },
-    btc: { price: null, date: "", atr: 0 },
-  };
+  const liveDefault: LivePrices = initialLivePrices("");
   return {
     portfolio: legacy.portfolioData ?? [],
     watchlist: legacy.watchlist ?? [],

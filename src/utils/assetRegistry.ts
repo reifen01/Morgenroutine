@@ -10,7 +10,7 @@
  * Ziel: Neue Assets erfordern KEINE Codeänderung an mehreren
  * Stellen mehr. Dropdowns, Tabellen und Wächter lesen von hier.
  */
-import { PortfolioItem, WatchlistItem } from "../types";
+import { PortfolioItem, WatchlistItem, LivePrices, emptyLivePrice } from "../types";
 
 export interface RegisteredAsset {
   key: string;                 // Kleingeschriebener Schlüssel, z.B. "tsla"
@@ -19,12 +19,36 @@ export interface RegisteredAsset {
   source: "depot" | "watchlist" | "core";
 }
 
-/** Kern-Assets als Fallback (nur Metadaten, Limits kommen aus dem Depot) */
+/**
+ * Stammdaten bekannter Assets — die EINE Stelle für Name/Ticker/ISIN.
+ *
+ * Wichtig: Das ist ein Nachschlagewerk, KEINE Zugangsbeschränkung. Assets,
+ * die hier fehlen, funktionieren trotzdem vollständig (Name/Ticker werden
+ * dann aus der Depot-Position bzw. dem Key abgeleitet). Vor dem Umbau
+ * 07/2026 waren diese Daten zusätzlich in MorgenroutineTab hartkodiert.
+ */
+export const CORE_ASSET_META: Record<
+  string,
+  { name: string; ticker: string; isin: string; wkn?: string }
+> = {
+  tsla: { name: "Tesla, Inc.", ticker: "TSLA", isin: "US88160R1014", wkn: "A1CX3T" },
+  nflx: { name: "Netflix, Inc.", ticker: "NFLX", isin: "US64110L1061", wkn: "552484" },
+  baba: { name: "Alibaba Group Holding Ltd.", ticker: "BABA", isin: "US01609W1027", wkn: "A117ME" },
+  btc:  { name: "Bitcoin", ticker: "BTC", isin: "", wkn: "" },
+  now:  { name: "ServiceNow, Inc.", ticker: "NOW", isin: "US81762P1021", wkn: "A1JX4P" },
+};
+
+/**
+ * Kern-Assets (Reinhards reale Bestände, Stand 07/2026).
+ * NOW wurde vollständig verkauft und ist daher kein Kern-Asset mehr —
+ * die Stammdaten bleiben in CORE_ASSET_META für die Verkaufshistorie.
+ * BTC läuft als Sparplan bei Coinfinity.
+ */
 export const CORE_ASSETS: ReadonlyArray<Omit<RegisteredAsset, "source">> = [
-  { key: "tsla", name: "Tesla, Inc.", limit: 0 },
-  { key: "now",  name: "ServiceNow, Inc.", limit: 0 },
-  { key: "baba", name: "Alibaba Group Holding Ltd.", limit: 0 },
-  { key: "btc",  name: "Bitcoin Tracker Index", limit: 0 },
+  { key: "tsla", name: CORE_ASSET_META.tsla.name, limit: 0 },
+  { key: "nflx", name: CORE_ASSET_META.nflx.name, limit: 0 },
+  { key: "baba", name: CORE_ASSET_META.baba.name, limit: 0 },
+  { key: "btc",  name: CORE_ASSET_META.btc.name,  limit: 0 },
 ];
 
 /**
@@ -98,3 +122,9 @@ export function registryGroups(registry: Map<string, RegisteredAsset>): {
     watchlist: all.filter((a) => a.source === "watchlist").sort(byName),
   };
 }
+
+/** Startbelegung des Kursspeichers aus den Kern-Assets — keine feste Liste. */
+export const initialLivePrices = (date = ""): LivePrices =>
+  Object.fromEntries(
+    CORE_ASSETS.map((c) => [c.key, emptyLivePrice(date)])
+  ) as LivePrices;

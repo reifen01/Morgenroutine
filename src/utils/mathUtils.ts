@@ -73,3 +73,15 @@ export function formatToGermanDate(isoDateStr: string): string {
   if (parts.length !== 3) return isoDateStr;
   return `${parts[2]}.${parts[1]}.${parts[0]}`;
 }
+
+/**
+ * Österreichischer KESt-Satz auf Kapitalerträge (Kursgewinne): 27,5 %.
+ * EINE Quelle der Wahrheit — vor der Zentralisierung stand 0.275 direkt
+ * in PortfolioTab. Bei einer Gesetzesänderung nur hier anpassen.
+ */
+export const KEST_SATZ = 0.275;
+
+/** KESt auf einen Gewinn; Verluste ergeben 0 (kein negativer Steuerbetrag). */
+export function kestAuf(gewinn: number): number {
+  return gewinn > 0 ? gewinn * KEST_SATZ : 0;
+}

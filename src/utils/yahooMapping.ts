@@ -31,11 +31,15 @@ export const SPX_SURROGATE_MULTIPLIER = 10;
 // Known portfolio key -> primary Yahoo ticker (Tradegate / XETRA EUR-listings preferred).
 // BABA.F (Frankfurt) is more reliable on Yahoo than BABA.DE which sometimes
 // returns no data — see FALLBACKS below.
+// Diese Tabelle ist eine OPTIMIERUNG, keine Zugangsberechtigung: Sie liefert
+// bevorzugt die EUR-Notierung. Fehlt ein Key hier, greift der generische
+// Fallback in yahooTickerForPortfolio() (Ticker → Key in Großbuchstaben).
 const KEY_TO_YAHOO: Record<string, string> = {
   tsla: "TL0.F",
   now: "4S0.F",
   baba: "BABA.F",
   btc: "BTC-EUR",
+  nflx: "NFC.F",
 };
 
 // Ticker shorthand -> Yahoo ticker (handles German Tradegate symbols)
@@ -51,6 +55,9 @@ const TICKER_TO_YAHOO: Record<string, string> = {
   BTC: "BTC-EUR",
   BTCEUR: "BTC-EUR",
   "BTC-EUR": "BTC-EUR",
+  NFLX: "NFC.F",
+  NFC: "NFC.F",
+  NETFLIX: "NFC.F",
 };
 
 // Fallback candidates per primary ticker. Yahoo periodically drops a specific
@@ -61,6 +68,7 @@ const FALLBACKS: Record<string, string[]> = {
   "4S0.F": ["4S0.F", "4S0.DE"],
   "BABA.F": ["BABA.F", "BABA.DE", "BABA.MU", "BABA.SG"],
   "BTC-EUR": ["BTC-EUR"],
+  "NFC.F": ["NFC.F", "NFC.DE", "NFLX"],
 };
 
 /**
@@ -74,8 +82,13 @@ export function yahooTickerForPortfolio(item: PortfolioItem): string | null {
     // Already-Yahoo-looking ticker (contains dot or dash) → take as-is
     if (upper.includes(".") || upper.includes("-")) return upper;
   }
-  if (item.key && KEY_TO_YAHOO[item.key]) return KEY_TO_YAHOO[item.key];
-  return item.ticker ? item.ticker.toUpperCase() : null;
+  const key = item.key ? String(item.key).trim().toLowerCase() : "";
+  if (key && KEY_TO_YAHOO[key]) return KEY_TO_YAHOO[key];
+  if (item.ticker) return item.ticker.toUpperCase();
+  // Generischer Fallback: Der Key selbst ist bei US-Titeln fast immer schon
+  // ein gültiges Yahoo-Symbol (nflx → NFLX). Vor dem Umbau wurde hier `null`
+  // zurückgegeben — der Kurs fiel dadurch komplett aus.
+  return key ? key.toUpperCase() : null;
 }
 
 /**
