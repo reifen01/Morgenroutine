@@ -39,6 +39,52 @@ export const CORE_ASSET_META: Record<
 };
 
 /**
+ * Bekannte Schreibweisen, die NICHT direkt als Registry-Key vorkommen.
+ * Grund: Bevor ein Asset ein Kern-Asset war, wurde es über "Sonstiges /
+ * manuell" mit einem frei getippten Kürzel angelegt (z.B. "netflix" statt
+ * "nflx"). Solche Alt-Positionen sollen trotzdem ISIN/WKN finden.
+ */
+const KEY_ALIASES: Record<string, string> = {
+  netflix: "nflx",
+  nflx: "nflx",
+  nfc: "nflx",
+  tesla: "tsla",
+  tsla: "tsla",
+  alibaba: "baba",
+  baba: "baba",
+  bitcoin: "btc",
+  btc: "btc",
+  servicenow: "now",
+  now: "now",
+};
+
+/**
+ * Stammdaten robust auflösen — zuerst exakter Key, dann bekannte Aliase,
+ * zuletzt (falls ein Name mitgegeben wird) ein Teiltreffer auf den
+ * hinterlegten Namen. Liefert undefined, wenn nichts passt (kein Erfinden
+ * von Daten).
+ */
+export function resolveAssetMeta(
+  key: string,
+  name?: string
+): { name: string; ticker: string; isin: string; wkn?: string } | undefined {
+  const k = String(key ?? "").trim().toLowerCase();
+  if (CORE_ASSET_META[k]) return CORE_ASSET_META[k];
+  if (KEY_ALIASES[k] && CORE_ASSET_META[KEY_ALIASES[k]]) return CORE_ASSET_META[KEY_ALIASES[k]];
+
+  const n = String(name ?? "").trim().toLowerCase();
+  if (n) {
+    for (const meta of Object.values(CORE_ASSET_META)) {
+      const firstWord = meta.name.toLowerCase().split(/[\s,]/)[0];
+      if (firstWord.length >= 3 && (n.includes(firstWord) || meta.ticker.toLowerCase() === n)) {
+        return meta;
+      }
+    }
+  }
+  return undefined;
+}
+
+/**
  * Kern-Assets (Reinhards reale Bestände, Stand 07/2026).
  * NOW wurde vollständig verkauft und ist daher kein Kern-Asset mehr —
  * die Stammdaten bleiben in CORE_ASSET_META für die Verkaufshistorie.
