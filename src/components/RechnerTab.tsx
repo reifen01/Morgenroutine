@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { useStockSearch } from "../utils/useStockSearch";
 import { useState, useEffect } from "react";
 import { 
   Calculator, 
@@ -21,7 +22,7 @@ import {
   Search
 } from "lucide-react";
 import { parseCleanFloat, formatAccounting } from "../utils/mathUtils";
-import { LivePrices, PortfolioItem, WatchlistItem } from "../types";
+import { LivePrices, PortfolioItem, WatchlistItem, getLivePrice } from "../types";
 
 interface RechnerTabProps {
   routineDate: string;
@@ -63,75 +64,23 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
   const [wlAtr, setWlAtr] = useState("");
   const [wlPrice, setWlPrice] = useState("");
 
-  // Live stock lookup states
-  const [stockSearchQuery, setStockSearchQuery] = useState("");
-  const [stockSuggestions, setStockSuggestions] = useState<any[]>([]);
-  const [isSearchingStocks, setIsSearchingStocks] = useState(false);
+  // Live-Aktiensuche — beide Suchfelder nutzen denselben Hook.
+  // Vor dem Umbau 07/2026 stand die identische fetch-/Debounce-Logik hier
+  // zweimal wortgleich untereinander.
+  const watchlistSearch = useStockSearch(600);
+  const globalSearch = useStockSearch(500);
 
-  useEffect(() => {
-    if (!stockSearchQuery.trim()) {
-      setStockSuggestions([]);
-      return;
-    }
+  const stockSearchQuery = watchlistSearch.query;
+  const setStockSearchQuery = watchlistSearch.setQuery;
+  const stockSuggestions = watchlistSearch.suggestions;
+  const isSearchingStocks = watchlistSearch.isSearching;
+  const setStockSuggestions = (_: any[]) => watchlistSearch.clear();
 
-    const delayDebounce = setTimeout(async () => {
-      setIsSearchingStocks(true);
-      try {
-        const response = await fetch("/api/stock-search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: stockSearchQuery })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data)) {
-            setStockSuggestions(data);
-          }
-        }
-      } catch (e) {
-        console.error("Error searching stocks:", e);
-      } finally {
-        setIsSearchingStocks(false);
-      }
-    }, 600); // 600ms debounce
-
-    return () => clearTimeout(delayDebounce);
-  }, [stockSearchQuery]);
-
-  // Global Unified Stock Search States
-  const [globalSearchQuery, setGlobalSearchQuery] = useState("");
-  const [globalSuggestions, setGlobalSuggestions] = useState<any[]>([]);
-  const [isSearchingGlobal, setIsSearchingGlobal] = useState(false);
-
-  useEffect(() => {
-    if (!globalSearchQuery.trim()) {
-      setGlobalSuggestions([]);
-      return;
-    }
-
-    const delayDebounce = setTimeout(async () => {
-      setIsSearchingGlobal(true);
-      try {
-        const response = await fetch("/api/stock-search", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ query: globalSearchQuery })
-        });
-        if (response.ok) {
-          const data = await response.json();
-          if (Array.isArray(data)) {
-            setGlobalSuggestions(data);
-          }
-        }
-      } catch (e) {
-        console.error("Error searching stocks globally:", e);
-      } finally {
-        setIsSearchingGlobal(false);
-      }
-    }, 500); // 500ms debounce
-
-    return () => clearTimeout(delayDebounce);
-  }, [globalSearchQuery]);
+  const globalSearchQuery = globalSearch.query;
+  const setGlobalSearchQuery = globalSearch.setQuery;
+  const globalSuggestions = globalSearch.suggestions;
+  const isSearchingGlobal = globalSearch.isSearching;
+  const setGlobalSuggestions = (_: any[]) => globalSearch.clear();
 
   // ATR Stop-Loss Finder States (TradingView Pine Script Sync)
   const [atrCalcAsset, setAtrCalcAsset] = useState<string>("");
@@ -177,7 +126,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
     if (livePrices) {
       const assetKey = atrCalcAsset.toLowerCase();
       if (assetKey in livePrices) {
-        const data = livePrices[assetKey as keyof LivePrices];
+        const data = getLivePrice(livePrices, assetKey);
         if (data) {
           const assetChanged = atrCalcAsset !== lastAutofilledAsset;
           const atrChangedInMR = data.atr !== lastAutofilledAtr;
@@ -514,11 +463,11 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                         onClick={() => {
                           // 1. Fill Positionsrechner with symbol and price
                           if (s.symbol) setTicker(s.symbol);
-                          if (s.price) setEntryPrice(s.price);
+                          if (s.price) setEntryPrice(String(s.price));
                           // 2. Fill ATR Stop-Loss Finder
                           if (s.symbol) setAtrCalcAsset(s.symbol);
-                          if (s.price) setAtrCalcEntry(s.price);
-                          if (s.atr) setAtrCalcValue(s.atr);
+                          if (s.price) setAtrCalcEntry(String(s.price));
+                          if (s.atr) setAtrCalcValue(String(s.atr));
                           
                           // Clear suggestions
                           setGlobalSuggestions([]);
@@ -988,7 +937,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
             <div className="p-3 bg-amber-50/25 border border-amber-100 rounded-xl text-[10px] text-amber-855 leading-relaxed flex items-start gap-1.5 font-sans">
               <Info className="h-4 w-4 shrink-0 mt-0.5 text-amber-600 font-bold" />
               <span>
-                <strong>Hinweis zur Synchronisation:</strong> Die Standard-ATR-Werte (z.B. {livePrices?.tsla.atr || 15.5} für TSLA, {livePrices?.baba.atr || 4.1} für BABA) werden live aus den Daten deiner Morgenroutine-Tabelle ausgelesen. Du kannst sie hier frei korrigieren. Beachte, dass gemäß Pine-Script bei einem Long-Signal das <strong>Tief (Low)</strong> minus ATR*m gerechnet wird!
+                <strong>Hinweis zur Synchronisation:</strong> Die Standard-ATR-Werte (z.B. {livePrices?.tsla?.atr || 15.5} für TSLA, {livePrices?.baba?.atr || 4.1} für BABA) werden live aus den Daten deiner Morgenroutine-Tabelle ausgelesen. Du kannst sie hier frei korrigieren. Beachte, dass gemäß Pine-Script bei einem Long-Signal das <strong>Tief (Low)</strong> minus ATR*m gerechnet wird!
               </span>
             </div>
           </div>
@@ -1117,8 +1066,8 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                         onClick={() => {
                           setWlSymbol(s.symbol || "");
                           setWlName(s.name || "");
-                          setWlAtr(s.atr || "");
-                          setWlPrice(s.price || "");
+                          setWlAtr(s.atr != null ? String(s.atr) : "");
+                          setWlPrice(s.price != null ? String(s.price) : "");
                           setStockSuggestions([]);
                           setStockSearchQuery("");
                           onShowToast?.("Ausgewählt 🎯", `Werte für '${s.name}' wurden eingetragen!`, "success");

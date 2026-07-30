@@ -21,10 +21,10 @@ import {
   RotateCcw
 } from "lucide-react";
 import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, MarketState, WatchlistItem } from "../types";
-import { formatAccounting, formatToGermanDate, parseCleanDate } from "../utils/mathUtils";
+import { formatAccounting, formatToGermanDate, parseCleanDate, kestAuf } from "../utils/mathUtils";
 import { CombinedJournal } from "./CombinedJournal";
 import DepotTable from "./DepotTable";
-import { buildAssetRegistry } from "../utils/assetRegistry";
+import { buildAssetRegistry, CORE_ASSETS } from "../utils/assetRegistry";
 import { evaluateMarketHealth } from "../utils/marketHealth";
 import DepotCurveChart from "./DepotCurveChart";
 
@@ -175,7 +175,7 @@ export default function PortfolioTab({
   // Form states for documenting sales
   const [showAddSaleForm, setShowAddSaleForm] = useState(false);
   const [saleAssetName, setSaleAssetName] = useState("");
-  const [saleAssetKey, setSaleAssetKey] = useState("now");
+  const [saleAssetKey, setSaleAssetKey] = useState("tsla");
   const [saleKaufKurs, setSaleKaufKurs] = useState("");
   const [saleVerkaufsKurs, setSaleVerkaufsKurs] = useState("");
   const [saleAnzahlAktien, setSaleAnzahlAktien] = useState("");
@@ -959,7 +959,7 @@ export default function PortfolioTab({
     
     // Determine if the key is known and standard in dropdown options
     const knownKeys = [
-      "tsla", "now", "baba", "btc",
+      ...CORE_ASSETS.map(c => c.key),
       ...portfolioData.map(item => String(item.key).toLowerCase()),
       ...watchlist.map(item => item.symbol.toLowerCase()),
     ];
@@ -1232,7 +1232,7 @@ export default function PortfolioTab({
     }
 
     // 2. Perform the matching calculation dynamically on currentPurchases
-    const targetAssetKey = saleAssetKey || (portfolioData.find(p => p.name === saleAssetName)?.key) || "now";
+    const targetAssetKey = saleAssetKey || (portfolioData.find(p => p.name === saleAssetName)?.key) || "tsla";
     
     const targetDepotNorm = (saleDepot || "Standard Depot").toLowerCase().trim();
     const targetBesitzerNorm = (saleBesitzer || "Standard Besitzer").toLowerCase().trim();
@@ -1305,7 +1305,7 @@ export default function PortfolioTab({
     }
 
     const gewinnVerlust = (verkauf - finalKaufKurs) * anzahl;
-    const kestBetrag = gewinnVerlust > 0 ? (gewinnVerlust * 0.275) : 0;
+    const kestBetrag = kestAuf(gewinnVerlust);
     const nettoGewinn = gewinnVerlust - kestBetrag;
 
     if (editingTradeId) {
@@ -1475,9 +1475,11 @@ export default function PortfolioTab({
   };
 
   // Distribution safety sentinel
-  const isHighDistributionDays = 
-    (livePrices.tsla.price !== null && livePrices.tsla.price < 0) || // placeholder check
-    false;
+  // Hinweis: Dies war ein toter Platzhalter (Kurs < 0 ist nie wahr) mit
+  // direktem Zugriff auf livePrices.tsla — hätte ohne TSLA-Eintrag die
+  // ganze Seite zum Absturz gebracht. Die echte Distribution-Days-Sperre
+  // liegt in marketHealth.ts.
+  const isHighDistributionDays = false;
 
   // Verification helper for alarm states
   let anyStopTriggered = false;  return (

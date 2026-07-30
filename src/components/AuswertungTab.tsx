@@ -6,7 +6,8 @@
 
 import { useMemo, useState } from "react";
 import { CalendarDays, CalendarRange, Sparkles, Save, TrendingUp } from "lucide-react";
-import type { DailySnapshot, PeriodLearning } from "../types";
+import type { DailySnapshot, PeriodLearning, SoldTradeItem } from "../types";
+import Ertraegnisaufstellung from "./Ertraegnisaufstellung";
 import { buildPeriods, type PeriodKind, type PeriodStats } from "../utils/periodStats";
 
 interface Props {
@@ -14,6 +15,7 @@ interface Props {
   periodLearnings: PeriodLearning[];
   onSaveLearning: (learning: PeriodLearning) => void;
   onShowToast: (title: string, msg: string, type: "success" | "warning" | "error") => void;
+  soldTrades: SoldTradeItem[];
 }
 
 function fmt(n: number | null, digits = 2): string {
@@ -21,7 +23,8 @@ function fmt(n: number | null, digits = 2): string {
   return n.toLocaleString("de-DE", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
-export default function AuswertungTab({ dailyHistory, periodLearnings, onSaveLearning, onShowToast }: Props) {
+export default function AuswertungTab({ dailyHistory, periodLearnings, onSaveLearning, onShowToast, soldTrades }: Props) {
+  const [ansicht, setAnsicht] = useState<"routine" | "ertraege">("routine");
   const [kind, setKind] = useState<PeriodKind>("week");
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [drafts, setDrafts] = useState<Record<string, string>>({});
@@ -70,6 +73,26 @@ export default function AuswertungTab({ dailyHistory, periodLearnings, onSaveLea
 
   return (
     <div className="space-y-6">
+      {/* Umschalter: Routine-Auswertung vs. Erträgnisaufstellung */}
+      <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200 w-fit">
+        <button
+          onClick={() => setAnsicht("routine")}
+          className={"px-3 py-1.5 rounded-lg text-xs font-bold transition-colors " + (ansicht === "routine" ? "bg-slate-900 text-white" : "text-slate-600")}
+        >
+          Routine-Auswertung
+        </button>
+        <button
+          onClick={() => setAnsicht("ertraege")}
+          className={"px-3 py-1.5 rounded-lg text-xs font-bold transition-colors " + (ansicht === "ertraege" ? "bg-slate-900 text-white" : "text-slate-600")}
+        >
+          Erträgnisaufstellung
+        </button>
+      </div>
+
+      {ansicht === "ertraege" ? (
+        <Ertraegnisaufstellung soldTrades={soldTrades} />
+      ) : (
+      <>
       <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-md">
         <div className="flex items-center justify-between flex-wrap gap-3">
           <div>
@@ -177,6 +200,8 @@ export default function AuswertungTab({ dailyHistory, periodLearnings, onSaveLea
           </div>
         );
       })}
+      </>
+      )}
     </div>
   );
 }

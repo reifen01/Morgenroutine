@@ -13,6 +13,8 @@ import {
 } from "lucide-react";
 import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem } from "../types";
 import { formatAccounting, formatToGermanDate } from "../utils/mathUtils";
+import { CORE_ASSETS } from "../utils/assetRegistry";
+import { useStockSearch, symbolToKey } from "../utils/useStockSearch";
 import AICoachTab from "./AICoachTab";
 
 interface CombinedJournalProps {
@@ -197,6 +199,21 @@ export function CombinedJournal({
   
   // Tab within the journal
   const [journalTab, setJournalTab] = useState<'combined' | 'purchases' | 'sales'>('combined');
+
+  // Auswahlliste fuer das Kauf-Dropdown: Kern-Assets aus dem Register plus
+  // alle tatsaechlich im Depot vorhandenen Positionen, ohne Duplikate.
+  const kaufAssetOptionen = useMemo(() => {
+    const map = new Map<string, { key: string; name: string }>();
+    CORE_ASSETS.forEach((c) => map.set(c.key, { key: c.key, name: c.name }));
+    (portfolioData || []).forEach((item) => {
+      const k = String(item.key).trim().toLowerCase();
+      if (k) map.set(k, { key: k, name: item.name });
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  }, [portfolioData]);
+
+  // Aktiensuche fuer das Kauf-Formular — nutzt denselben Hook wie der Rechner.
+  const kaufSuche = useStockSearch(500);
 
   // Regelcoach visibility states
   const [showBuyCoach, setShowBuyCoach] = useState(false);
@@ -721,20 +738,16 @@ export function CombinedJournal({
                   onChange={(e) => handlePurchaseAssetChange(e.target.value)}
                   className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:outline-none cursor-pointer"
                 >
+                  {/* Kern-Assets kommen aus dem Register (assetRegistry.ts),
+                      nicht mehr hartkodiert. Vor dem Umbau 07/2026 stand hier
+                      eine vierte Kopie der Asset-Liste — inkl. ServiceNow,
+                      das laengst verkauft war. */}
                   <optgroup label="Depot / Kern-Assets">
-                    <option value="tsla">Tesla (TSLA)</option>
-                    <option value="now">ServiceNow (NOW)</option>
-                    <option value="baba">Alibaba (BABA)</option>
-                    <option value="btc">Bitcoin (BTC)</option>
-                    {portfolioData.map((item) => {
-                      const keyLower = String(item.key).toLowerCase();
-                      if (["tsla", "now", "baba", "btc"].includes(keyLower)) return null;
-                      return (
-                        <option key={`purchase-opt-${item.key}`} value={item.key}>
-                          {item.name} ({String(item.key).toUpperCase()})
-                        </option>
-                      );
-                    })}
+                    {kaufAssetOptionen.map((opt) => (
+                      <option key={`purchase-opt-${opt.key}`} value={opt.key}>
+                        {opt.name} ({opt.key.toUpperCase()})
+                      </option>
+                    ))}
                   </optgroup>
 
                   {watchlist.length > 0 && (
@@ -742,7 +755,7 @@ export function CombinedJournal({
                       {watchlist.map((item) => {
                         const symLower = item.symbol.toLowerCase();
                         // Duplikate zu Depot-/Kern-Assets ausblenden
-                        if (["tsla", "now", "baba", "btc"].includes(symLower)) return null;
+                        if (kaufAssetOptionen.some((o) => o.key === symLower)) return null;
                         if (portfolioData.some(p => String(p.key).toLowerCase() === symLower)) return null;
                         return (
                           <option key={`purchase-wl-${item.symbol}`} value={symLower}>
@@ -761,8 +774,60 @@ export function CombinedJournal({
 
               {purchaseCustomKeyEnabled && (
                 <>
+                  {/* ONLINE-SUCHE — dieselbe Quelle wie im Rechner/Watchlist.
+                      Der Endpunkt /api/stock-search existierte laengst, war im
+                      Kauf-Formular aber nie angebunden. */}
+                  <div className="md:col-span-3">
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">
+                      Aktie online suchen
+                    </label>
+                    <div className="relative">
+                      <input
+                        type="text"
+                        placeholder="Name oder Kuerzel eingeben, z.B. Netflix"
+                        value={kaufSuche.query}
+                        onChange={(e) => kaufSuche.setQuery(e.target.value)}
+                        className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 pr-9 font-semibold text-slate-850 focus:outline-none"
+                      />
+                      {kaufSuche.isSearching && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-slate-400 font-semibold">
+                          sucht...
+                        </span>
+                      )}
+                      {kaufSuche.suggestions.length > 0 && (
+                        <div className="absolute z-30 mt-1 w-full bg-white border border-slate-200 rounded-xl shadow-lg overflow-hidden">
+                          {kaufSuche.suggestions.map((tref, idx) => (
+                            <button
+                              key={`kauf-tref-${tref.symbol}-${idx}`}
+                              type="button"
+                              onClick={() => {
+                                setPurchaseAssetKey(symbolToKey(tref.symbol));
+                                setPurchaseAssetName(tref.name || tref.symbol);
+                                kaufSuche.setQuery("");
+                                kaufSuche.clear();
+                              }}
+                              className="w-full text-left px-3 py-2 hover:bg-slate-50 border-b border-slate-100 last:border-b-0"
+                            >
+                              <div className="text-[13px] font-bold text-slate-900">
+                                {tref.name || tref.symbol}
+                              </div>
+                              <div className="text-[11px] text-slate-500 font-mono">
+                                {tref.symbol.toUpperCase()}
+                                {tref.isin ? ` · ISIN ${tref.isin}` : ""}
+                                {tref.price != null ? ` · ca. ${tref.price}` : ""}
+                              </div>
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Treffer antippen — Kuerzel und Bezeichnung werden unten eingetragen.
+                    </p>
+                  </div>
+
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Asset-Kürzel *</label>
+                    <label className="block text-[11px] font-bold text-slate-500 uppercase tracking-wide mb-1">Asset-Kürzel *</label>
                     <input
                       type="text"
                       required
@@ -996,10 +1061,12 @@ export function CombinedJournal({
                   onChange={(e) => setSaleAssetKey(e.target.value)}
                   className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:outline-none cursor-pointer"
                 >
-                  <option value="now">ServiceNow (NOW)</option>
-                  <option value="tsla">Tesla (TSLA)</option>
-                  <option value="baba">Alibaba (BABA)</option>
-                  <option value="btc">Bitcoin (BTC)</option>
+                  {/* Ebenfalls aus dem Register statt hartkodiert. */}
+                  {kaufAssetOptionen.map((opt) => (
+                    <option key={`sale-opt-${opt.key}`} value={opt.key}>
+                      {opt.name} ({opt.key.toUpperCase()})
+                    </option>
+                  ))}
                   <option value="other">Sonstiger Vermögenswert</option>
                 </select>
               </div>

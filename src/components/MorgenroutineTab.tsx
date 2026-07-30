@@ -22,7 +22,8 @@ import {
   Sparkles,
   Info
 } from "lucide-react";
-import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot } from "../types";
+import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot, ensureLivePrice, emptyLivePrice, getLivePrice } from "../types";
+import { CORE_ASSET_META } from "../utils/assetRegistry";
 import { computeTrend, TrendArrow, TrendHistory } from "./TrendBarometer";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
@@ -129,12 +130,7 @@ export default function MorgenroutineTab({
       wti: number | null;
       gas: number | null;
     };
-    livePrices: {
-      tsla: number | null;
-      now: number | null;
-      baba: number | null;
-      btc: number | null;
-    };
+    livePrices: Record<string, number | null>;
   } | null>(() => {
     const saved = localStorage.getItem("morgenroutine_prices_cache");
     if (saved) {
@@ -187,12 +183,9 @@ export default function MorgenroutineTab({
         wti: updatedMarket.wti,
         gas: updatedMarket.gas
       },
-      livePrices: {
-        tsla: updatedLive.tsla.price,
-        now: updatedLive.now.price,
-        baba: updatedLive.baba.price,
-        btc: updatedLive.btc.price
-      }
+      livePrices: Object.fromEntries(
+        Object.entries(updatedLive).map(([k, v]) => [k, v?.price ?? null])
+      )
     };
     setImportCache(newCache);
     localStorage.setItem("morgenroutine_prices_cache", JSON.stringify(newCache));
@@ -214,13 +207,11 @@ export default function MorgenroutineTab({
       gas: importCache.marketState.gas
     };
 
-    const updatedLivePrices = {
-      ...livePrices,
-      tsla: { ...livePrices.tsla, price: importCache.livePrices.tsla },
-      now: { ...livePrices.now, price: importCache.livePrices.now },
-      baba: { ...livePrices.baba, price: importCache.livePrices.baba },
-      btc: { ...livePrices.btc, price: importCache.livePrices.btc }
-    };
+    const updatedLivePrices: LivePrices = { ...livePrices };
+    for (const [k, cachedPrice] of Object.entries(importCache.livePrices || {})) {
+      const slot = ensureLivePrice(updatedLivePrices, k);
+      updatedLivePrices[k] = { ...slot, price: cachedPrice as number | null };
+    }
 
     onMarketStateChange(updatedMarketState);
     onLivePricesChange(updatedLivePrices);
@@ -346,12 +337,9 @@ export default function MorgenroutineTab({
       }
 
       // 2. Update livePrices for every portfolio item
-      const newLive: LivePrices = {
-        tsla: { ...livePrices.tsla },
-        now: { ...livePrices.now },
-        baba: { ...livePrices.baba },
-        btc: { ...livePrices.btc }
-      };
+      const newLive: LivePrices = Object.fromEntries(
+        Object.entries(livePrices).map(([k, v]) => [k, { ...v }])
+      );
       // Walk through each item's candidate symbols, take the first that
       // actually came back with a numeric price (so BABA.DE → BABA.F
       // fallbacks resolve transparently).
@@ -367,14 +355,16 @@ export default function MorgenroutineTab({
         const candidates = yahooCandidatesForPortfolio(item);
         const entry = firstEntryWithPrice(candidates);
         if (!entry) continue;
-        const key = item.key as keyof LivePrices;
-        if (newLive[key]) {
-          newLive[key].price = entry.price as number;
-          newLive[key].date = routineDate;
-          updatedCount++;
-          if (typeof entry.atr === "number" && entry.atr > 0) {
-            newLive[key].atr = entry.atr;
-          }
+        const key = String(item.key);
+        // Vor dem Umbau stand hier `if (newLive[key])` — fehlte der Schlüssel
+        // im festen Vierer-Objekt, wurde der Kurs kommentarlos verworfen.
+        // ensureLivePrice legt fehlende Einträge jetzt an.
+        const slot = ensureLivePrice(newLive, key, routineDate);
+        slot.price = entry.price as number;
+        slot.date = routineDate;
+        updatedCount++;
+        if (typeof entry.atr === "number" && entry.atr > 0) {
+          slot.atr = entry.atr;
         }
       }
       onLivePricesChange(newLive);
@@ -543,7 +533,7 @@ export default function MorgenroutineTab({
     if (fx <= 0) return;
 
     const updatedPrices = { ...livePrices };
-    const keys: Array<keyof LivePrices> = ["tsla", "now", "baba", "btc"];
+    const keys: string[] = Object.keys(updatedPrices);
     let convertedAny = false;
 
     keys.forEach((k) => {
@@ -675,30 +665,35 @@ export default function MorgenroutineTab({
     return portfolioData.some(item => item.key === key && item.status !== "sold");
   };
 
-  // Derive the limit thresholds from the user's own portfolio entries
-  // instead of carrying any default numbers. If the user has no Tesla
-  // position the TSLA row disappears, etc.
-  const coreAssetMeta: Record<keyof LivePrices, { name: string; ticker: string; isin: string }> = {
-    tsla: { name: "Tesla, Inc.", ticker: "TSLA", isin: "US88160R1014" },
-    now: { name: "ServiceNow, Inc.", ticker: "NOW", isin: "US81762P1021" },
-    baba: { name: "Alibaba Group Holding Ltd.", ticker: "BABA", isin: "US01609W1027" },
-    btc: { name: "Bitcoin Tracker Index", ticker: "BTC", isin: "DE000A27Z304" },
-  };
-  const coreAssets = (Object.keys(coreAssetMeta) as Array<keyof LivePrices>)
-    .filter((k) => isAssetActiveInDepot(k))
-    .map((k) => {
-      const item = portfolioData.find((p) => p.key === k);
-      const limit = item?.limitPreis ?? 0;
-      return {
-        key: k,
-        name: item?.name || coreAssetMeta[k].name,
-        ticker: item?.ticker || coreAssetMeta[k].ticker,
-        isin: item?.isin || coreAssetMeta[k].isin,
-        limit,
-        desc: limit > 0 ? `Limit @ € ${limit.toLocaleString("de-DE")}` : "Kein Limit gesetzt",
-      };
-    });
-  const limitFor = (key: keyof LivePrices): number =>
+  // Aktive Assets kommen AUSSCHLIESSLICH aus dem Depot des Nutzers.
+  // Vor dem Umbau stand hier eine zweite, hartkodierte Vierer-Liste parallel
+  // zum Asset-Register — jedes neue Asset musste an zwei Stellen gepflegt
+  // werden. CORE_ASSET_META liefert jetzt nur noch optionale Zusatzdaten
+  // (ISIN/Ticker), falls die Depot-Position sie nicht selbst mitbringt.
+  const activeKeys = Array.from(
+    new Set(
+      (portfolioData || [])
+        .filter((p) => p.status !== "sold")
+        .map((p) => String(p.key).trim().toLowerCase())
+        .filter(Boolean)
+    )
+  );
+  const coreAssets = activeKeys.map((k) => {
+    const item = portfolioData.find(
+      (p) => String(p.key).trim().toLowerCase() === k && p.status !== "sold"
+    );
+    const meta = CORE_ASSET_META[k];
+    const limit = item?.limitPreis ?? 0;
+    return {
+      key: k,
+      name: item?.name || meta?.name || k.toUpperCase(),
+      ticker: item?.ticker || meta?.ticker || k.toUpperCase(),
+      isin: item?.isin || meta?.isin || "",
+      limit,
+      desc: limit > 0 ? `Limit @ € ${limit.toLocaleString("de-DE")}` : "Kein Limit gesetzt",
+    };
+  });
+  const limitFor = (key: string): number =>
     coreAssets.find((a) => a.key === key)?.limit ?? 0;
 
   // Mathematically complete check of all 9 system requirements (skipped if asset is sold/inactive in portfolio)
@@ -711,8 +706,8 @@ export default function MorgenroutineTab({
 
   // Pflichtprüfung pro aktivem Asset — generisch statt 4× kopiert
   coreAssets.forEach((asset) => {
-    const lp = livePrices[asset.key];
-    if (!lp.price) {
+    const lp = getLivePrice(livePrices, asset.key);
+    if (!lp?.price) {
       missingForToday.push(`${asset.ticker} Preis fehlt`);
     } else if (lp.date !== routineDate) {
       missingForToday.push(`${asset.ticker} Kurs ist veraltet (Datum Alt)`);
@@ -1709,7 +1704,9 @@ plotchar(series=(is_distribution?cnt:false), char='D', color=white)`}
                 {/* GENERISCHE KURS-EINGABE — eine Schleife statt 4 kopierter Blöcke.
                     Limits kommen dynamisch aus dem Depot (limitFor), nie mehr hartcodiert. */}
                 {coreAssets.map((asset) => {
-                  const lp = livePrices[asset.key];
+                  // Fallback, falls für ein neu hinzugekommenes Asset noch
+                  // kein Kurs-Datensatz existiert — sonst weisser Bildschirm.
+                  const lp = getLivePrice(livePrices, asset.key) ?? emptyLivePrice(routineDate);
                   const kaufLabel = asset.key === "btc" ? "Sparpl." : "Kauf";
                   return (
                     <div key={`price-input-${asset.key}`} className="space-y-1 border-b border-slate-100 pb-3">
