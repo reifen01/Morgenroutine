@@ -85,3 +85,23 @@ export const KEST_SATZ = 0.275;
 export function kestAuf(gewinn: number): number {
   return gewinn > 0 ? gewinn * KEST_SATZ : 0;
 }
+
+/**
+ * Depots, die NICHT steuereinfach sind: Der Broker behält die KESt nicht
+ * automatisch ein, sie muss selbst über die Steuererklärung erklärt werden.
+ * Krypto-Broker wie Coinfinity fallen hierunter (Österreich besteuert
+ * Krypto-Gewinne seit 2022 mit 27,5 %, aber ohne automatischen Abzug).
+ * Zentrale Liste — bei neuem Broker nur hier ergänzen.
+ */
+const NICHT_STEUEREINFACHE_DEPOTS = ["coinfinity"];
+
+/**
+ * true = steuereinfacher Broker (KESt automatisch einbehalten, z.B. DADAT,
+ * Flatex.at). false = KESt muss selbst erklärt werden. Unbekannte/leere
+ * Depots gelten als steuereinfach, um keine Falschwarnung zu erzeugen.
+ */
+export function istSteuereinfach(depot?: string): boolean {
+  const d = String(depot ?? "").trim().toLowerCase();
+  if (!d) return true;
+  return !NICHT_STEUEREINFACHE_DEPOTS.some((x) => d.includes(x));
+}
