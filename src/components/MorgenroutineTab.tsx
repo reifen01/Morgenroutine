@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, useMemo, ChangeEvent } from "react";
 import { 
   CheckCircle, 
   HelpCircle, 
@@ -22,8 +22,8 @@ import {
   Sparkles,
   Info
 } from "lucide-react";
-import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot, ensureLivePrice, emptyLivePrice, getLivePrice } from "../types";
-import { resolveAssetMeta } from "../utils/assetRegistry";
+import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot, ensureLivePrice, emptyLivePrice, getLivePrice, PortfolioPurchase } from "../types";
+import { resolveAssetMeta, canonicalAssetKey } from "../utils/assetRegistry";
 import { computeTrend, TrendArrow, TrendHistory } from "./TrendBarometer";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
@@ -88,6 +88,7 @@ interface MorgenroutineTabProps {
   livePrices: LivePrices;
   onLivePricesChange: (prices: LivePrices) => void;
   portfolioData: PortfolioItem[];
+  portfolioPurchases?: PortfolioPurchase[];
   watchlist: WatchlistItem[];
   onWatchlistChange: (next: WatchlistItem[]) => void;
   routineDate: string;
@@ -103,6 +104,7 @@ export default function MorgenroutineTab({
   livePrices,
   onLivePricesChange,
   portfolioData,
+  portfolioPurchases = [],
   watchlist,
   onWatchlistChange,
   routineDate,
@@ -236,9 +238,28 @@ export default function MorgenroutineTab({
   // returns no data for the primary listing (e.g. BABA.DE went stale).
   // SPY is always pulled as a surrogate for ^GSPC (Yahoo flakes on the
   // bare index quote — see SPX_SURROGATE_SYMBOL in yahooMapping).
+  // Preisziele für den Live-Abruf: Kern-Liste (portfolioData) PLUS alle
+  // tatsächlich gehaltenen Positionen aus den Käufen. Ohne die Käufe würden
+  // Assets, die nur im Kauf-Journal existieren (z.B. eine importierte
+  // Netflix-Position ohne Kern-Eintrag), NIE einen Kurs bekommen.
+  // Dedupliziert über den kanonischen Key.
+  const priceTargets = useMemo(() => {
+    const map = new Map<string, { key: string; name: string; ticker?: string }>();
+    for (const it of portfolioData || []) {
+      const ck = canonicalAssetKey(it.key, it.name);
+      if (ck) map.set(ck, { key: ck, name: it.name, ticker: it.ticker });
+    }
+    for (const p of portfolioPurchases || []) {
+      if (Number(p.verbleibendeAnzahlAktien) <= 0) continue;
+      const ck = canonicalAssetKey(p.key, p.name);
+      if (ck && !map.has(ck)) map.set(ck, { key: ck, name: p.name });
+    }
+    return Array.from(map.values());
+  }, [portfolioData, portfolioPurchases]);
+
   const collectLiveSymbols = () => {
     const marketSyms = Object.values(MARKET_SYMBOLS);
-    const portfolioSyms = portfolioData.flatMap(p => yahooCandidatesForPortfolio(p));
+    const portfolioSyms = priceTargets.flatMap(p => yahooCandidatesForPortfolio(p));
     const watchlistSyms = watchlist.flatMap(w => yahooCandidatesForWatchlist(w));
     return Array.from(new Set([...marketSyms, SPX_SURROGATE_SYMBOL, ...portfolioSyms, ...watchlistSyms]));
   };
@@ -351,11 +372,13 @@ export default function MorgenroutineTab({
         return null;
       };
 
-      for (const item of portfolioData) {
+      for (const item of priceTargets) {
         const candidates = yahooCandidatesForPortfolio(item);
         const entry = firstEntryWithPrice(candidates);
         if (!entry) continue;
-        const key = String(item.key);
+        // Kanonischer Key: Kurs landet unter "nflx", egal ob die Position
+        // "netflix" hiess — und DepotTable liest ihn unter demselben Key.
+        const key = canonicalAssetKey(item.key, item.name);
         // Vor dem Umbau stand hier `if (newLive[key])` — fehlte der Schlüssel
         // im festen Vierer-Objekt, wurde der Kurs kommentarlos verworfen.
         // ensureLivePrice legt fehlende Einträge jetzt an.
@@ -674,13 +697,13 @@ export default function MorgenroutineTab({
     new Set(
       (portfolioData || [])
         .filter((p) => p.status !== "sold")
-        .map((p) => String(p.key).trim().toLowerCase())
+        .map((p) => canonicalAssetKey(p.key, p.name))
         .filter(Boolean)
     )
   );
   const coreAssets = activeKeys.map((k) => {
     const item = portfolioData.find(
-      (p) => String(p.key).trim().toLowerCase() === k && p.status !== "sold"
+      (p) => canonicalAssetKey(p.key, p.name) === k && p.status !== "sold"
     );
     const meta = resolveAssetMeta(k, item?.name);
     const limit = item?.limitPreis ?? 0;

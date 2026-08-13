@@ -17,7 +17,7 @@ import { useState, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Pencil, Trash2, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { LivePrices, PortfolioPurchase, getLivePrice } from "../types";
 import { formatAccounting, formatToGermanDate, KEST_SATZ, kestAuf } from "../utils/mathUtils";
-import { RegisteredAsset, limitFor, resolveAssetMeta } from "../utils/assetRegistry";
+import { RegisteredAsset, limitFor, resolveAssetMeta, canonicalAssetKey } from "../utils/assetRegistry";
 import { MarketHealth } from "../utils/marketHealth";
 
 export interface DepotHolding {
@@ -69,7 +69,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
 
   const rows = useMemo(() => {
     const enriched = holdings.map((h) => {
-      const lp = getLivePrice(livePrices, h.key)?.price || h.averageKaufkurs;
+      const lp = getLivePrice(livePrices, canonicalAssetKey(h.key, h.name))?.price || h.averageKaufkurs;
       const mktVal = h.totalShares * lp;
       const pl = mktVal - h.totalCost;
       const plPct = h.totalCost > 0 ? (pl / h.totalCost) * 100 : 0;
@@ -244,7 +244,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
             ) : (
               rows.map((r, idx) => {
                 const isProfit = r.pl >= 0;
-                const hasLivePrice = !!getLivePrice(livePrices, r.key)?.price;
+                const hasLivePrice = !!getLivePrice(livePrices, canonicalAssetKey(r.key, r.name))?.price;
                 const id = rowId(r);
                 const istOffen = offeneRows.has(id);
                 const sd = stammdaten(r.key, r.name, { isin: r.isin, wkn: r.wkn });
