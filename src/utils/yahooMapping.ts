@@ -3,7 +3,8 @@
  * Shared by frontend (symbol collection) and backend (Yahoo API calls).
  */
 
-import type { PortfolioItem, WatchlistItem } from "../types";
+import type { WatchlistItem } from "../types";
+import { canonicalAssetKey } from "./assetRegistry";
 
 // Fixed market regime indicators
 export const MARKET_SYMBOLS = {
@@ -75,14 +76,24 @@ const FALLBACKS: Record<string, string[]> = {
  * Convert a portfolio item to a Yahoo Finance ticker.
  * Tries: explicit ticker mapping → key mapping → fall back to raw ticker.
  */
-export function yahooTickerForPortfolio(item: PortfolioItem): string | null {
+/** Minimales Objekt, das zur Ticker-Auflösung reicht (Depot-Item ODER Kauf-Holding). */
+export interface TickerResolvable {
+  key?: string;
+  ticker?: string;
+  name?: string;
+}
+
+export function yahooTickerForPortfolio(item: TickerResolvable): string | null {
   if (item.ticker) {
     const upper = item.ticker.toUpperCase();
     if (TICKER_TO_YAHOO[upper]) return TICKER_TO_YAHOO[upper];
     // Already-Yahoo-looking ticker (contains dot or dash) → take as-is
     if (upper.includes(".") || upper.includes("-")) return upper;
   }
-  const key = item.key ? String(item.key).trim().toLowerCase() : "";
+  // Key kanonisch normalisieren: "netflix" → "nflx", damit KEY_TO_YAHOO greift.
+  // Genau hier scheiterte der Netflix-Kurs, wenn die Position unter einem frei
+  // getippten Kürzel lief.
+  const key = canonicalAssetKey(item.key, item.name);
   if (key && KEY_TO_YAHOO[key]) return KEY_TO_YAHOO[key];
   if (item.ticker) return item.ticker.toUpperCase();
   // Generischer Fallback: Der Key selbst ist bei US-Titeln fast immer schon
@@ -107,7 +118,7 @@ export function yahooTickerForWatchlist(item: WatchlistItem): string | null {
  * First entry is the preferred one; subsequent entries are fallbacks
  * used if Yahoo returns no data for the primary.
  */
-export function yahooCandidatesForPortfolio(item: PortfolioItem): string[] {
+export function yahooCandidatesForPortfolio(item: TickerResolvable): string[] {
   const primary = yahooTickerForPortfolio(item);
   if (!primary) return [];
   return FALLBACKS[primary] || [primary];

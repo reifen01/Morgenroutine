@@ -59,6 +59,31 @@ const KEY_ALIASES: Record<string, string> = {
 };
 
 /**
+ * Liefert den KANONISCHEN Registry-Key zu einer beliebigen Schreibweise.
+ * "netflix"/"Netflix"/"NFLX" → "nflx". Unbekannte Keys werden nur
+ * kleingeschrieben zurückgegeben (kein Erfinden). Zweiter Parameter erlaubt
+ * einen Namens-Fallback ("Netflix, Inc." → nflx), falls der Key nichts hergibt.
+ *
+ * DIE eine Stelle für Key-Normalisierung — nutzt dieselbe Alias-Tabelle wie
+ * resolveAssetMeta, damit nichts doppelt gepflegt wird.
+ */
+export function canonicalAssetKey(key: unknown, name?: string): string {
+  const k = String(key ?? "").trim().toLowerCase();
+  if (CORE_ASSET_META[k]) return k;
+  if (KEY_ALIASES[k] && CORE_ASSET_META[KEY_ALIASES[k]]) return KEY_ALIASES[k];
+  const n = String(name ?? "").trim().toLowerCase();
+  if (n) {
+    for (const [rk, meta] of Object.entries(CORE_ASSET_META)) {
+      const firstWord = meta.name.toLowerCase().split(/[\s,]/)[0];
+      if (firstWord.length >= 3 && (n.includes(firstWord) || meta.ticker.toLowerCase() === n)) {
+        return rk;
+      }
+    }
+  }
+  return k;
+}
+
+/**
  * Stammdaten robust auflösen — zuerst exakter Key, dann bekannte Aliase,
  * zuletzt (falls ein Name mitgegeben wird) ein Teiltreffer auf den
  * hinterlegten Namen. Liefert undefined, wenn nichts passt (kein Erfinden
