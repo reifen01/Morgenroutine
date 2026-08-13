@@ -14,7 +14,7 @@
 import { useMemo, useState } from "react";
 import { FileText, ChevronDown, ChevronRight } from "lucide-react";
 import type { SoldTradeItem } from "../types";
-import { formatAccounting } from "../utils/mathUtils";
+import { formatAccounting, istSteuereinfach } from "../utils/mathUtils";
 
 interface Props {
   soldTrades: SoldTradeItem[];
@@ -158,10 +158,17 @@ export default function Ertraegnisaufstellung({ soldTrades }: Props) {
               <div className="border-t border-slate-100 divide-y divide-slate-50">
                 {y.depots.map((d) => (
                   <div key={`${y.jahr}-${d.depot}`} className="px-3 py-2.5 bg-slate-50/40">
-                    <div className="flex items-center justify-between mb-1.5">
+                    <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
                       <span className="text-[11px] font-extrabold text-slate-800">Depot {d.depot}</span>
-                      <span className="text-[9px] font-bold text-slate-500 bg-white border border-slate-200 rounded px-1.5 py-0.5">
-                        Methode: {d.method}
+                      <span className="flex items-center gap-1.5 flex-wrap">
+                        <span className="text-[9px] font-bold text-slate-500 bg-white border border-slate-200 rounded px-1.5 py-0.5">
+                          Methode: {d.method}
+                        </span>
+                        {!istSteuereinfach(d.depot) && (
+                          <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5" title="Nicht steuereinfacher Broker: Die KESt wurde NICHT automatisch einbehalten. Dieser Gewinn ist selbst über die Steuererklärung zu erklären.">
+                            ⚠ KESt selbst erklären
+                          </span>
+                        )}
                       </span>
                     </div>
                     <div className="flex flex-wrap gap-2 mb-1">

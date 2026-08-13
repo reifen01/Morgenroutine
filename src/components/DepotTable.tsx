@@ -16,7 +16,7 @@
 import { useState, useMemo } from "react";
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Pencil, Trash2, ChevronsDownUp, ChevronsUpDown } from "lucide-react";
 import { LivePrices, PortfolioPurchase, getLivePrice } from "../types";
-import { formatAccounting, formatToGermanDate, KEST_SATZ, kestAuf } from "../utils/mathUtils";
+import { formatAccounting, formatToGermanDate, KEST_SATZ, kestAuf, istSteuereinfach } from "../utils/mathUtils";
 import { RegisteredAsset, limitFor, resolveAssetMeta, canonicalAssetKey } from "../utils/assetRegistry";
 import { MarketHealth } from "../utils/marketHealth";
 
@@ -158,12 +158,19 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
         <div className="mb-3 space-y-2">
           {steuerProDepot.map((d) => (
             <div key={`steuer-${d.depot}`} className="bg-white border border-slate-200 rounded-xl px-3 py-2">
-              <div className="flex items-center justify-between mb-1.5">
+              <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
                 <span className="text-[11px] font-extrabold text-slate-800">
                   Depot {d.depot}
                 </span>
-                <span className="text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5" title="Österreich: gleitender Durchschnittspreis. Beim Teilverkauf im Verkaufsformular wählbar (FIFO/Durchschnitt).">
-                  Methode: Durchschnitt (AT)
+                <span className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5" title="Österreich: gleitender Durchschnittspreis. Beim Teilverkauf im Verkaufsformular wählbar (FIFO/Durchschnitt).">
+                    Methode: Durchschnitt (AT)
+                  </span>
+                  {!istSteuereinfach(d.depot) && (
+                    <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5" title="Dieser Broker behält die KESt nicht automatisch ein. Der Gewinn muss selbst über die Steuererklärung erklärt und die KESt abgeführt werden.">
+                      ⚠ nicht steuereinfach · KESt bei Verkauf selbst erklären
+                    </span>
+                  )}
                 </span>
               </div>
               <div className="flex flex-wrap gap-2">
