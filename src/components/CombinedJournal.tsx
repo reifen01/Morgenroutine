@@ -200,6 +200,94 @@ export function CombinedJournal({
   // Tab within the journal
   const [journalTab, setJournalTab] = useState<'combined' | 'purchases' | 'sales'>('combined');
 
+  // ── Sicherer JSON-Anhäng-Import (z.B. Coinfinity-Sparplan) ──
+  // Hängt Käufe NUR AN, ersetzt nie bestehende Daten, und überspringt
+  // Duplikate. Ideal für wiederkehrende Broker-Exporte.
+  const [showImporter, setShowImporter] = useState(false);
+  const [importText, setImportText] = useState("");
+
+  const handleAppendPurchases = () => {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(importText);
+    } catch {
+      onShowToast("Import fehlgeschlagen", "Der Text ist kein gültiges JSON.", "error");
+      return;
+    }
+    const rows = Array.isArray(parsed) ? parsed : [parsed];
+
+    // Signatur bestehender Käufe für Duplikat-Schutz
+    const sig = (k: unknown, d: unknown, kurs: unknown, anz: unknown) =>
+      `${String(k).trim().toLowerCase()}|${String(d).slice(0, 10)}|${Number(kurs)}|${Number(anz)}`;
+    const vorhanden = new Set(
+      portfolioPurchases.map((p) => sig(p.key, p.kaufDatum, p.kaufKurs, p.anzahlAktien))
+    );
+    const belegteIds = new Set(portfolioPurchases.map((p) => p.id));
+
+    const neue: PortfolioPurchase[] = [];
+    let uebersprungen = 0;
+    let ungueltig = 0;
+
+    for (const r of rows as any[]) {
+      const key = String(r?.key ?? "").trim().toLowerCase();
+      const kaufDatum = String(r?.kaufDatum ?? "").slice(0, 10);
+      const kaufKurs = Number(r?.kaufKurs);
+      const anzahlAktien = Number(r?.anzahlAktien);
+      if (!key || !kaufDatum || !(kaufKurs > 0) || !(anzahlAktien > 0)) {
+        ungueltig++;
+        continue;
+      }
+      const s = sig(key, kaufDatum, kaufKurs, anzahlAktien);
+      if (vorhanden.has(s)) {
+        uebersprungen++;
+        continue;
+      }
+      vorhanden.add(s);
+
+      let id = String(r?.id ?? "").trim();
+      if (!id || belegteIds.has(id)) {
+        id = `imp_${key}_${kaufDatum.replace(/-/g, "")}_${Math.random().toString(36).slice(2, 8)}`;
+      }
+      belegteIds.add(id);
+
+      const kosten = Number(r?.tatsaechlicheKosten);
+      neue.push({
+        id,
+        key,
+        name: String(r?.name ?? key.toUpperCase()),
+        kaufDatum,
+        kaufKurs,
+        anzahlAktien,
+        tatsaechlicheKosten: kosten > 0 ? kosten : anzahlAktien * kaufKurs,
+        verbleibendeAnzahlAktien:
+          Number(r?.verbleibendeAnzahlAktien) >= 0 ? Number(r.verbleibendeAnzahlAktien) : anzahlAktien,
+        notiz: r?.notiz ? String(r.notiz) : undefined,
+        depot: r?.depot ? String(r.depot) : undefined,
+        besitzerName: r?.besitzerName ? String(r.besitzerName) : undefined,
+      });
+    }
+
+    if (neue.length === 0) {
+      onShowToast(
+        "Nichts angehängt",
+        `Keine neuen Käufe. ${uebersprungen} Duplikate, ${ungueltig} ungültig.`,
+        "warning"
+      );
+      return;
+    }
+
+    // NUR ANHÄNGEN — bestehende Käufe bleiben unangetastet.
+    onPortfolioPurchasesChange([...portfolioPurchases, ...neue]);
+    setImportText("");
+    setShowImporter(false);
+    onShowToast(
+      "Käufe angehängt",
+      `${neue.length} neu · ${uebersprungen} Duplikate übersprungen${ungueltig ? ` · ${ungueltig} ungültig` : ""}.`,
+      "success"
+    );
+  };
+
+
   // Auswahlliste fuer das Kauf-Dropdown: Kern-Assets aus dem Register plus
   // alle tatsaechlich im Depot vorhandenen Positionen, ohne Duplikate.
   const kaufAssetOptionen = useMemo(() => {
@@ -624,8 +712,53 @@ export function CombinedJournal({
             >
               <Plus className="h-4 w-4" /> {showAddSaleForm ? "Formular schließen" : "💸 Verkauf buchen"}
             </button>
+
+            <button
+              onClick={() => { setShowImporter(!showImporter); setShowAddPurchaseForm(false); setShowAddSaleForm(false); }}
+              className="h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
+              title="Käufe aus JSON anhängen (z.B. Coinfinity-Sparplan) — hängt nur an, ersetzt nichts"
+            >
+              <Plus className="h-4 w-4" /> {showImporter ? "Import schließen" : "📥 Sparplan-Import"}
+            </button>
           </div>
         </div>
+
+        {/* ── JSON-ANHÄNG-IMPORT (append-only, mit Duplikat-Schutz) ── */}
+        {showImporter && (
+          <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
+            <div>
+              <h4 className="text-[13px] font-extrabold text-slate-800">📥 Käufe aus JSON anhängen</h4>
+              <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
+                Fügt Käufe zu deinem Journal hinzu — <strong>ohne</strong> bestehende Daten zu verändern.
+                Bereits vorhandene Käufe (gleiches Asset, Datum, Kurs, Menge) werden automatisch übersprungen.
+              </p>
+            </div>
+            <textarea
+              value={importText}
+              onChange={(e) => setImportText(e.target.value)}
+              placeholder='[ { "key": "btc", "name": "Bitcoin", "kaufDatum": "2025-07-14", "kaufKurs": 95000, "anzahlAktien": 0.0021, "depot": "Coinfinity", "besitzerName": "Reinhard" } ]'
+              className="w-full h-40 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-[11px] text-slate-800 focus:outline-none focus:border-slate-400"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleAppendPurchases}
+                disabled={!importText.trim()}
+                className="h-9 px-4 bg-slate-800 hover:bg-slate-900 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+              >
+                Käufe anhängen
+              </button>
+              <button
+                onClick={() => { setImportText(""); setShowImporter(false); }}
+                className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+              >
+                Abbrechen
+              </button>
+              <span className="text-[10px] text-slate-400 font-semibold">
+                Erwartet ein JSON-Array. Pflichtfelder: key, kaufDatum, kaufKurs, anzahlAktien.
+              </span>
+            </div>
+          </div>
+        )}
 
         {/* STATISTIKEN DER TRANSAKTIONEN */}
         <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 text-center bg-slate-50 border border-slate-100 p-4 rounded-2xl">
