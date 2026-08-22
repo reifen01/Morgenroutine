@@ -150,22 +150,54 @@ app.post("/api/analyze-period", async (req, res) => {
 
   const prompt = `Du bist Renes unbestechlicher Trading-Coach. Analysiere die Marktregime-Daten für den Zeitraum "${label}" (${kind === "month" ? "Monat" : "Woche"}).
 
+=== VERBINDLICHE REGEL-MATRIX (das "unbestechliche Handbuch") ===
+Dies sind die EINZIGEN Kaufsperre-Kriterien. Kursbewegungen (z.B. ein fallender SPX)
+sind AUSDRÜCKLICH KEIN Sperrgrund und dürfen nie als solcher genannt werden.
+
+Kaufampel-Schranken (Sperre, wenn verletzt):
+- VIX < 25
+- VIX/VXV-Ratio < 1,0 (Contango). Ratio >= 1,0 = Backwardation = Sperre
+- VVIX < 130 (Warnzone 110-130, Sperre erst ab 130)
+- WTI Öl < 100 USD
+- Erdgas < 4,50 USD
+- Distribution Days: max(SPX, NDX) < 5
+
+Sonderregel Distribution Days (kritisch):
+- Nur bei distSource "yahoo" oder "manual" gilt eine HARTE Sperre.
+- Bei distSource "ai" oder "estimate" gilt NUR eine gelbe Warnung, KEINE Sperre.
+- Fehlt distSource, weise darauf hin, dass die Belastbarkeit unklar ist.
+
+Position Sizing: 1%-Regel; bei WTI >= 100 halbieren (0,5%).
+Stop-Loss: max(harter Anker, Kurs - 2x ATR); niemals nach unten verschieben.
+
+=== DATEN ===
 Aggregierte Kennzahlen:
 ${JSON.stringify(stats, null, 2)}
 
-Tägliche Snapshots (VIX, VXV, VVIX, SPX, WTI, Gas, Distribution Days, Status GREEN/RED):
+Tägliche Snapshots (VIX, VXV, VVIX, SPX, WTI, Gas, Distribution Days, distSource, Status GREEN/RED):
 ${JSON.stringify(snapshots, null, 2)}
 
+=== AUFGABE ===
 Erstelle eine Zusammenfassung nach dem PARETO-PRINZIP (80/20): Finde die wenigen entscheidenden Marktereignisse/Trends (die ~20%), die den Großteil (~80%) der Regime-Veränderung erklären. Struktur:
 
 **📊 Was am Markt vorgefallen ist**
 (2-3 Sätze: VIX-Trend, Contango/Backwardation, Energie, Distribution-Day-Druck)
 
+**📋 Regel-Check (Ist-Werte gegen die Schranken)**
+Liste ALLE SECHS Schranken als kurze Zeilen mit Ist-Wert am Ende des Zeitraums und Status:
+"VIX 15,89 < 25 → OK" bzw. "Distribution Days max 8 >= 5 (Quelle: yahoo) → SPERRE".
+Nenne bei den Distribution Days IMMER die Quelle (distSource) und ob daraus eine harte
+Sperre oder nur eine Warnung folgt.
+
 **🎯 Die 20% die zählen (Pareto-Kern)**
 (2-4 Bulletpoints mit den wirklich wichtigen Bewegungen)
 
 **🧭 Learning & Disziplin**
-(1-2 Sätze: Was bedeutet das für die Kaufdisziplin nach dem unbestechlichen Handbuch — durfte gekauft werden oder galt Kaufverbot?)
+(1-2 Sätze: Durfte gekauft werden oder galt Kaufverbot? Begründe AUSSCHLIESSLICH mit der
+konkret verletzten Schranke aus der Regel-Matrix, niemals mit Kursbewegungen oder
+allgemeiner Marktschwäche. Wenn keine Schranke verletzt war, war Kaufen erlaubt — auch
+wenn der Markt gefallen ist. Weise auf Widersprüche zwischen dem gespeicherten
+GREEN/RED-Status und der Regel-Matrix ausdrücklich hin.)
 
 Schreibe auf Deutsch, sachlich, kompakt. Keine erfundenen Kurse — nur was die Daten hergeben.`;
 
