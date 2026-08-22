@@ -49,6 +49,23 @@ export default function App() {
   const initialDate = getTodayDateStr();
   const [routineDate, setRoutineDate] = useState(initialDate);
   const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
+
+  // Hilfe-Fragezeichen: springt in den passenden Handbuch-Abschnitt.
+  // Laeuft ueber ein CustomEvent, damit HilfeLink ueberall einsetzbar ist,
+  // ohne Props durch mehrere Ebenen zu reichen.
+  const [handbuchAbschnitt, setHandbuchAbschnitt] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { abschnitt?: string } | undefined;
+      if (!detail?.abschnitt) return;
+      setActiveTab("regelwerk");
+      // Neu setzen erzwingen, auch wenn derselbe Abschnitt nochmal kommt.
+      setHandbuchAbschnitt(null);
+      setTimeout(() => setHandbuchAbschnitt(detail.abschnitt as string), 0);
+    };
+    window.addEventListener("morgenroutine:handbuch", handler);
+    return () => window.removeEventListener("morgenroutine:handbuch", handler);
+  }, []);
   const [helpOpen, setHelpOpen] = useState(false);
   const pwaUpdate = usePWAUpdate();
   const [backupSetupOpen, setBackupSetupOpen] = useState(false);
@@ -740,7 +757,7 @@ export default function App() {
           )}
 
           {activeTab === "regelwerk" && (
-            <RegelwerkTab routineDate={routineDate} />
+            <RegelwerkTab routineDate={routineDate} handbuchAbschnitt={handbuchAbschnitt} />
           )}
 
           {activeTab === "workspace" && (

@@ -145,6 +145,13 @@ export interface DailySnapshot {
   gas: number | null;
   distSpx: number;
   distNdx: number;
+  /**
+   * Herkunft der Distribution Days: "yahoo"/"manual" = belastbar (harte
+   * Kaufsperre), "ai"/"estimate" = Fallback (nur Warnung, keine Sperre).
+   * Ohne dieses Feld kann die Wochenanalyse nicht unterscheiden, ob ein
+   * Tag zu Recht GRUEN war.
+   */
+  distSource?: "yahoo" | "manual" | "ai" | "estimate" | null;
   ratio: number | null;  // vix / vxv
   status: "GREEN" | "RED"; // overall regime verdict for that day
 }
