@@ -18,6 +18,8 @@ import { ArrowUpDown, ArrowUp, ArrowDown, ChevronDown, ChevronRight, Pencil, Tra
 import { LivePrices, PortfolioPurchase, getLivePrice } from "../types";
 import { formatAccounting, formatToGermanDate, KEST_SATZ, kestAuf, istSteuereinfach } from "../utils/mathUtils";
 import { RegisteredAsset, limitFor, resolveAssetMeta, canonicalAssetKey } from "../utils/assetRegistry";
+import HilfeLink from "./HilfeLink";
+import { yahooTickerForPortfolio } from "../utils/yahooMapping";
 import { MarketHealth } from "../utils/marketHealth";
 
 export interface DepotHolding {
@@ -191,6 +193,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                 <div className="flex-1 min-w-[110px] bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
                   <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">
                     KESt-Vorschau ({(KEST_SATZ * 100).toLocaleString("de-DE")} %)
+                    <HilfeLink abschnitt="steuern" titel="KESt, Verlustausgleich und Berechnungsmethode nachlesen" />
                   </div>
                   <div className="text-[12px] font-mono font-extrabold text-slate-900">− € {formatAccounting(d.kestVorschau)}</div>
                 </div>
@@ -224,7 +227,179 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
         </div>
       )}
 
-      <div className="overflow-x-auto rounded-xl border border-slate-100">
+      {/* ═══════════════════════════════════════════════════════════
+          HANDY-ANSICHT (< 640px) — TradingView-Stil, 3 Zeilen je Position.
+          Die 11-spaltige Tabelle darunter erzwang seitwärts scrollen;
+          hier passt alles in die Breite.
+          ═══════════════════════════════════════════════════════════ */}
+      <div className="sm:hidden space-y-1.5">
+        {rows.length === 0 ? (
+          <div className="py-10 text-center text-slate-400 font-semibold text-[13px] bg-white border border-slate-100 rounded-xl">
+            Keine aktiven Bestände. Buche unten im Journal einen Kauf ein!
+          </div>
+        ) : (
+          rows.map((r, idx) => {
+            const isProfit = r.pl >= 0;
+            const ck = canonicalAssetKey(r.key, r.name);
+            const hasLivePrice = !!getLivePrice(livePrices, ck)?.price;
+            const id = rowId(r);
+            const istOffen = offeneRows.has(id);
+            const sd = stammdaten(r.key, r.name, { isin: r.isin, wkn: r.wkn });
+            const meineKaeufe = purchases.filter(
+              (p) =>
+                String(p.key).toLowerCase() === r.key.toLowerCase() &&
+                (p.depot || "") === r.depot &&
+                (p.besitzerName || "") === r.besitzerName
+            );
+            const kestPos = kestAuf(r.pl);
+
+            return (
+              <div
+                key={`m-${r.key}-${r.depot}-${r.besitzerName}-${idx}`}
+                className={`bg-white border rounded-xl overflow-hidden ${istOffen ? "border-slate-800" : "border-slate-200"}`}
+              >
+                <button
+                  onClick={() => toggleRow(id)}
+                  className="w-full px-3 py-2.5 text-left active:bg-slate-50 transition-colors"
+                >
+                  {/* Zeile 1: Kürzel + Name  |  Kurs */}
+                  <div className="flex items-baseline justify-between gap-2">
+                    <span className="flex items-baseline gap-1.5 min-w-0">
+                      <span className="font-mono text-[11px] font-extrabold text-slate-800 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 shrink-0">
+                        {ck.toUpperCase()}
+                      </span>
+                      <span className="text-[14px] font-extrabold text-slate-900 truncate">{r.name}</span>
+                    </span>
+                    <span className="font-mono text-[15px] font-extrabold text-slate-900 whitespace-nowrap shrink-0">
+                      {formatAccounting(r.livePrice)}
+                      {!hasLivePrice && <span className="text-amber-600 ml-0.5">*</span>}
+                    </span>
+                  </div>
+
+                  {/* Zeile 2: Depot · Besitzer  |  Gewinn/Verlust */}
+                  <div className="flex items-baseline justify-between gap-2 mt-1">
+                    <span className="text-[11px] font-bold text-slate-500 truncate">
+                      {r.depot} · {r.besitzerName}
+                    </span>
+                    <span className={`font-mono text-[12px] font-extrabold whitespace-nowrap shrink-0 ${isProfit ? "text-emerald-600" : "text-rose-600"}`}>
+                      {isProfit ? "+" : ""}{formatAccounting(r.pl)} € ({isProfit ? "+" : ""}{r.plPct.toFixed(1)} %)
+                    </span>
+                  </div>
+
+                  {/* Zeile 3: Menge × Ø  |  Marktwert */}
+                  <div className="flex items-baseline justify-between gap-2 mt-0.5">
+                    <span className="font-mono text-[11px] text-slate-500 truncate">
+                      {r.totalShares.toFixed(2)} × Ø {formatAccounting(r.averageKaufkurs)}
+                    </span>
+                    <span className="font-mono text-[12px] font-bold text-slate-700 whitespace-nowrap shrink-0">
+                      = € {formatAccounting(r.mktVal)}
+                    </span>
+                  </div>
+
+                  {/* Signal-Zeile nur wenn relevant */}
+                  {(r.limit > 0 || !hasLivePrice) && (
+                    <div className="mt-1.5">
+                      {!hasLivePrice ? (
+                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 border border-amber-200 rounded">
+                          Kurs fehlt — Ø-Kaufkurs eingesetzt
+                        </span>
+                      ) : r.livePrice <= r.limit && marketHealth.blocked ? (
+                        <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 border border-rose-200 rounded">
+                          🔴 Marktsperre
+                        </span>
+                      ) : r.livePrice <= r.limit ? (
+                        <span className="text-[10px] font-bold text-white bg-emerald-600 px-1.5 py-0.5 rounded animate-pulse">
+                          ✓ Kaufsignal ≤ {formatAccounting(r.limit)} €
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 border border-slate-200 rounded">
+                          Aktiv &gt; {formatAccounting(r.limit)} €
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </button>
+
+                {/* Aufgeklappt: Stammdaten, Steuer, Käufe */}
+                {istOffen && (
+                  <div className="border-t border-slate-100 px-3 py-3 space-y-2.5 bg-slate-50/60">
+                    <div className="bg-white rounded-lg border border-slate-200 px-2.5 py-2">
+                      <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wide mb-1">Stammdaten</div>
+                      <div className="font-mono text-[11px] text-slate-700 space-y-0.5">
+                        <div>ISIN: <strong className="text-slate-900">{sd.isin || "—"}</strong></div>
+                        <div>WKN: <strong className="text-slate-900">{sd.wkn || "—"}</strong></div>
+                        <div>
+                          Kurs-Symbol: <strong className="text-slate-900">{yahooTickerForPortfolio({ key: ck, name: r.name }) || "—"}</strong>
+                          {!hasLivePrice && (
+                            <span className="text-amber-700 font-bold"> · liefert derzeit keinen Kurs</span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="bg-white rounded-lg border border-slate-200 px-2.5 py-2">
+                      <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wide mb-1">
+                        Steuer-Matching (KESt {(KEST_SATZ * 100).toLocaleString("de-DE")} %)
+                        <HilfeLink abschnitt="steuern" titel="KESt und Verlustausgleich nachlesen" />
+                      </div>
+                      <div className="font-mono text-[11px] space-y-0.5">
+                        <div className="text-slate-700">
+                          Buchergebnis: <strong className={r.pl >= 0 ? "text-emerald-600" : "text-rose-600"}>
+                            {r.pl >= 0 ? "+" : ""}€ {formatAccounting(r.pl)}
+                          </strong>
+                        </div>
+                        <div className="text-slate-700">KESt bei Verkauf: <strong className="text-slate-900">− € {formatAccounting(kestPos)}</strong></div>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-[10px] font-bold text-slate-700 uppercase tracking-wide mb-1.5">
+                        📥 Käufe ({meineKaeufe.length})
+                      </div>
+                      {meineKaeufe.length === 0 ? (
+                        <div className="text-[11px] text-slate-500 font-semibold">Keine Einzelkäufe gefunden.</div>
+                      ) : (
+                        <div className="space-y-1">
+                          {[...meineKaeufe]
+                            .sort((a, b) => String(b.kaufDatum).localeCompare(String(a.kaufDatum)))
+                            .map((p) => (
+                              <div key={p.id} className="bg-white rounded-lg border border-slate-200 px-2.5 py-1.5 flex items-center gap-2">
+                                <span className="font-mono text-[11px] flex-1 min-w-0">
+                                  <span className="font-bold text-slate-800">{formatToGermanDate(String(p.kaufDatum))}</span>
+                                  <span className="text-slate-600"> · {Number(p.anzahlAktien).toFixed(2)} × {formatAccounting(Number(p.kaufKurs))}</span>
+                                </span>
+                                {onEditPurchase && (
+                                  <button onClick={(e) => { e.stopPropagation(); onEditPurchase(p); }} className="p-1 text-slate-500" title="Kauf bearbeiten">
+                                    <Pencil className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                                {onDeletePurchase && (
+                                  <button onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }} className="p-1 text-rose-500" title="Kauf löschen">
+                                    <Trash2 className="h-3.5 w-3.5" />
+                                  </button>
+                                )}
+                              </div>
+                            ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onExit(r, r.livePrice); }}
+                      className="w-full py-2 text-[12px] font-bold bg-rose-600 text-white rounded-lg active:scale-95 transition-transform"
+                    >
+                      💸 Position verkaufen
+                    </button>
+                  </div>
+                )}
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* ═══ TABELLE — ab 640px Breite ═══ */}
+      <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-100">
         <table className="w-full border-collapse text-xs sm:text-sm">
           <thead>
             <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-sans">
