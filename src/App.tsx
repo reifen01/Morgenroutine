@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { initialLivePrices } from "./utils/assetRegistry";
+import { tageSeitBackup } from "./utils/backupFile";
 import { useState, useEffect } from "react";
 import { 
   CloudSun, 
@@ -27,7 +29,7 @@ import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OnboardingScreen from "./components/OnboardingScreen";
-import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem, DailySnapshot, PeriodLearning } from "./types";
+import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem, DailySnapshot, PeriodLearning, getLivePrice } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 import BackupSetupModal from "./components/BackupSetupModal";
 import BackupRestoreModal from "./components/BackupRestoreModal";
@@ -48,7 +50,42 @@ export default function App() {
   const initialDate = getTodayDateStr();
   const [routineDate, setRoutineDate] = useState(initialDate);
   const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
+
+  // Hilfe-Fragezeichen: springt in den passenden Handbuch-Abschnitt.
+  // Laeuft ueber ein CustomEvent, damit HilfeLink ueberall einsetzbar ist,
+  // ohne Props durch mehrere Ebenen zu reichen.
+  const [handbuchAbschnitt, setHandbuchAbschnitt] = useState<string | null>(null);
+  // Merkt sich, von welchem Tab aus das Fragezeichen angetippt wurde, damit
+  // man aus dem Handbuch direkt wieder dorthin zurueckspringen kann.
+  const [handbuchHerkunft, setHandbuchHerkunft] = useState<string | null>(null);
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { abschnitt?: string } | undefined;
+      if (!detail?.abschnitt) return;
+      setActiveTab((prev) => {
+        // Aus dem Handbuch heraus nicht die Herkunft ueberschreiben.
+        if (prev !== "regelwerk") setHandbuchHerkunft(prev);
+        return "regelwerk";
+      });
+      // Neu setzen erzwingen, auch wenn derselbe Abschnitt nochmal kommt.
+      setHandbuchAbschnitt(null);
+      setTimeout(() => setHandbuchAbschnitt(detail.abschnitt as string), 0);
+    };
+    window.addEventListener("morgenroutine:handbuch", handler);
+    return () => window.removeEventListener("morgenroutine:handbuch", handler);
+  }, []);
+
+  /** Klartext-Namen der Tabs fuer den Zurueck-Knopf im Handbuch. */
+  const TAB_LABELS: Record<string, string> = {
+    morgenroutine: "Morgen",
+    journal: "Depot",
+    rechner: "Analyse",
+    auswertung: "Analyse",
+    workspace: "System",
+  };
   const [helpOpen, setHelpOpen] = useState(false);
+  // Alter der letzten Sicherung fuer den Erinnerungs-Hinweis im Kopf.
+  const [backupAlter, setBackupAlter] = useState<number | null>(() => tageSeitBackup());
   const pwaUpdate = usePWAUpdate();
   const [backupSetupOpen, setBackupSetupOpen] = useState(false);
   const [backupRestoreOpen, setBackupRestoreOpen] = useState(false);
@@ -159,12 +196,7 @@ export default function App() {
         console.error("Error reading live prices from local storage:", e);
       }
     }
-    return {
-      tsla: { price: null, date: initialDate, atr: 0 },
-      now: { price: null, date: initialDate, atr: 0 },
-      baba: { price: null, date: initialDate, atr: 0 },
-      btc: { price: null, date: initialDate, atr: 0 }
-    };
+    return initialLivePrices(initialDate);
   });
 
   // Portfolio items — completely empty by default. The user either
@@ -452,12 +484,14 @@ export default function App() {
 
   // Auto synchronizes asset dates whenever parent-level routineDate switches
   useEffect(() => {
-    setLivePrices((prev) => ({
-      tsla: { ...prev.tsla, date: routineDate },
-      now: { ...prev.now, date: routineDate },
-      baba: { ...prev.baba, date: routineDate },
-      btc: { ...prev.btc, date: routineDate }
-    }));
+    // Generisch über alle vorhandenen Keys — früher vier feste Felder,
+    // wodurch jede weitere Position kein Datum bekam (und beim Zugriff
+    // auf ein fehlendes Feld ein Absturz drohte).
+    setLivePrices((prev) =>
+      Object.fromEntries(
+        Object.entries(prev || {}).map(([k, v]) => [k, { ...v, date: routineDate }])
+      )
+    );
   }, [routineDate]);
 
   // Excel CSV single line compiler
@@ -471,7 +505,7 @@ export default function App() {
     trancheSize: number,
     currentStop: number
   ) => {
-    const liveData = livePrices[assetKey as keyof LivePrices];
+    const liveData = getLivePrice(livePrices, assetKey);
     const liveVal = liveData ? liveData.price : null;
 
     if (liveVal === null) {
@@ -541,6 +575,8 @@ export default function App() {
         updateAvailable={pwaUpdate.needRefresh}
         onApplyUpdate={pwaUpdate.applyUpdate}
         isSystemReady={isSystemReady}
+        tageSeitBackup={backupAlter}
+        onOpenBackup={() => setBackupSetupOpen(true)}
       />
 
       <HelpModal
@@ -551,7 +587,7 @@ export default function App() {
 
       <BackupSetupModal
         isOpen={backupSetupOpen}
-        onClose={() => setBackupSetupOpen(false)}
+        onClose={() => { setBackupSetupOpen(false); setBackupAlter(tageSeitBackup()); }}
         collectPayload={collectBackupPayload}
         onSuccess={() => showToast("Backup gespeichert", "💾 Verschlüsselte Datei wurde heruntergeladen.", "success")}
       />
@@ -634,6 +670,7 @@ export default function App() {
               livePrices={livePrices}
               onLivePricesChange={setLivePrices}
               portfolioData={portfolioData}
+              portfolioPurchases={portfolioPurchases}
               watchlist={watchlist}
               onWatchlistChange={setWatchlist}
               routineDate={routineDate}
@@ -711,6 +748,7 @@ export default function App() {
               periodLearnings={periodLearnings}
               onSaveLearning={saveLearning}
               onShowToast={showToast}
+              soldTrades={soldTrades}
             />
           )}
 
@@ -740,7 +778,17 @@ export default function App() {
           )}
 
           {activeTab === "regelwerk" && (
-            <RegelwerkTab routineDate={routineDate} />
+            <RegelwerkTab
+              routineDate={routineDate}
+              handbuchAbschnitt={handbuchAbschnitt}
+              zurueckLabel={handbuchHerkunft ? (TAB_LABELS[handbuchHerkunft] || "zurück") : null}
+              onZurueck={() => {
+                if (!handbuchHerkunft) return;
+                setActiveTab(handbuchHerkunft as typeof activeTab);
+                setHandbuchAbschnitt(null);
+                setHandbuchHerkunft(null);
+              }}
+            />
           )}
 
           {activeTab === "workspace" && (
@@ -804,12 +852,7 @@ export default function App() {
                 setDepotStartingCash({});
                 setDailyHistory([]);
                 setPeriodLearnings([]);
-                setLivePrices({
-                  tsla: { price: null, date: initialDate, atr: 0 },
-                  now: { price: null, date: initialDate, atr: 0 },
-                  baba: { price: null, date: initialDate, atr: 0 },
-                  btc: { price: null, date: initialDate, atr: 0 },
-                });
+                setLivePrices(initialLivePrices(initialDate));
                 setMarketState({
                   vix: null, vxv: null, vvix: null, spx: null,
                   wti: null, gas: null, distSpx: 0, distNdx: 0,
