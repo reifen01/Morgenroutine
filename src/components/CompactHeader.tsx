@@ -12,6 +12,10 @@ interface CompactHeaderProps {
   updateAvailable: boolean;
   onApplyUpdate: () => void;
   isSystemReady: boolean;
+  /** Tage seit der letzten Sicherung; null = noch nie gesichert. */
+  tageSeitBackup?: number | null;
+  /** Oeffnet den Backup-Dialog. */
+  onOpenBackup?: () => void;
 }
 
 export default function CompactHeader({
@@ -21,6 +25,8 @@ export default function CompactHeader({
   updateAvailable,
   onApplyUpdate,
   isSystemReady,
+  tageSeitBackup,
+  onOpenBackup,
 }: CompactHeaderProps) {
   // Convert YYYY-MM-DD back to DD.MM.YYYY for display
   const getDeDateString = (isoDate: string) => {
@@ -64,6 +70,24 @@ export default function CompactHeader({
             >
               <ArrowUp className="w-3 h-3" />
               Update verfügbar
+            </button>
+          )}
+
+          {/* ── Backup-Erinnerung ──
+              Die Daten liegen ausschliesslich im Browser-Speicher. Wird der
+              geleert (z.B. Safari-Websitedaten), ist alles weg. Deshalb ein
+              dezenter Hinweis, wenn die letzte Sicherung laenger her ist. */}
+          {onOpenBackup && (tageSeitBackup === null || (tageSeitBackup ?? 0) >= 7) && (
+            <button
+              onClick={onOpenBackup}
+              className="mt-1 ml-1 inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-100 text-slate-700 border border-slate-300 hover:bg-slate-200 transition-colors"
+              title={
+                tageSeitBackup === null
+                  ? "Noch keine Sicherung vorhanden — jetzt eine erstellen"
+                  : `Letzte Sicherung vor ${tageSeitBackup} Tagen — jetzt eine neue erstellen`
+              }
+            >
+              🛟 {tageSeitBackup === null ? "Kein Backup" : `Backup: ${tageSeitBackup} T`}
             </button>
           )}
         </div>

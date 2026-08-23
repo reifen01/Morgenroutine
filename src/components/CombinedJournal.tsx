@@ -303,6 +303,8 @@ export function CombinedJournal({
   // Aktiensuche fuer das Kauf-Formular — nutzt denselben Hook wie der Rechner.
   const kaufSuche = useStockSearch(500);
 
+
+
   // Regelcoach visibility states
   const [showBuyCoach, setShowBuyCoach] = useState(false);
   const [showSellCoach, setShowSellCoach] = useState(false);
@@ -452,6 +454,69 @@ export function CombinedJournal({
 
     return filtered;
   }, [portfolioPurchases, soldTrades, txTypeFilter, txDepotFilter, txBesitzerFilter, txSearchQuery, txSortField, txSortAsc]);
+
+  // ── SPARPLAN-GRUPPIERUNG ──
+  // Ein laufender Sparplan erzeugt Dutzende Einzelkaeufe (z.B. 23x Bitcoin
+  // bei Coinfinity). Ungruppiert ersaeuft jede andere Transaktion darin.
+  // Zusammengefasst werden NUR Kaeufe, deren Notiz "Sparplan" enthaelt —
+  // gruppiert nach Asset + Depot + Besitzer. Normale Kaeufe bleiben einzeln.
+  const [offeneGruppen, setOffeneGruppen] = useState<Set<string>>(new Set());
+
+  const gruppierteTransaktionen = useMemo(() => {
+    const istSparplan = (tx: any) =>
+      tx.type === "buy" && String(tx.notiz || "").toLowerCase().includes("sparplan");
+
+    const gruppen = new Map<string, any[]>();
+    const einzeln: any[] = [];
+
+    for (const tx of combinedTransactions) {
+      if (!istSparplan(tx)) { einzeln.push(tx); continue; }
+      const gid = `sp|${String(tx.key).toLowerCase()}|${tx.depot || ""}|${tx.besitzerName || ""}`;
+      if (!gruppen.has(gid)) gruppen.set(gid, []);
+      gruppen.get(gid)!.push(tx);
+    }
+
+    const ergebnis: any[] = [...einzeln];
+    for (const [gid, txs] of gruppen) {
+      // Einzelner Sparplan-Kauf lohnt keine Gruppe
+      if (txs.length < 2) { ergebnis.push(...txs); continue; }
+      const menge = txs.reduce((sum, t) => sum + (Number(t.anzahl) || 0), 0);
+      const volumen = txs.reduce((sum, t) => sum + (Number(t.volumen) || 0), 0);
+      const daten = txs.map((t) => String(t.datum)).sort();
+      ergebnis.push({
+        istGruppe: true,
+        id: gid,
+        datum: daten[daten.length - 1],   // neuester Kauf bestimmt die Sortierung
+        datumVon: daten[0],
+        datumBis: daten[daten.length - 1],
+        type: "buy",
+        key: txs[0].key,
+        name: txs[0].name,
+        depot: txs[0].depot,
+        besitzerName: txs[0].besitzerName,
+        anzahl: menge,
+        volumen,
+        kurs: menge > 0 ? volumen / menge : 0,
+        anzahlKaeufe: txs.length,
+        kinder: txs.sort((a, b) => String(b.datum).localeCompare(String(a.datum))),
+      });
+    }
+
+    // Sortierung des Originals beibehalten (nach Datum)
+    ergebnis.sort((a, b) =>
+      txSortAsc
+        ? String(a.datum).localeCompare(String(b.datum))
+        : String(b.datum).localeCompare(String(a.datum))
+    );
+    return ergebnis;
+  }, [combinedTransactions, txSortAsc]);
+
+  const toggleGruppe = (gid: string) =>
+    setOffeneGruppen((prev) => {
+      const next = new Set(prev);
+      next.has(gid) ? next.delete(gid) : next.add(gid);
+      return next;
+    });
 
   // Purchases list memo (traditional list)
   const sortedPurchases = useMemo(() => {
@@ -1591,17 +1656,74 @@ export function CombinedJournal({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                {combinedTransactions.length === 0 ? (
+                {gruppierteTransaktionen.length === 0 ? (
                   <tr>
                     <td colSpan={8} className="py-8 text-center text-slate-400 font-semibold font-sans">
                       Keine Transaktionen gefunden, die dem Filter entsprechen.
                     </td>
                   </tr>
                 ) : (
-                  combinedTransactions.map((tx) => {
+                  gruppierteTransaktionen.map((tx: any) => {
                     const isBuy = tx.type === 'buy';
                     const isProfit = !isBuy && (tx.gewinnVerlust || 0) >= 0;
-                    
+
+                    // ── Sparplan-Sammelzeile (aufklappbar) ──
+                    if (tx.istGruppe) {
+                      const offen = offeneGruppen.has(tx.id);
+                      return (
+                        <>
+                          <tr
+                            key={tx.id}
+                            onClick={() => toggleGruppe(tx.id)}
+                            className="hover:bg-slate-50/40 transition-colors border-b border-slate-50 cursor-pointer bg-slate-50/30"
+                          >
+                            <td className="py-3">
+                              <span className="flex items-center gap-1.5">
+                                <span className={`inline-flex items-center justify-center h-4 w-4 rounded border text-[9px] font-extrabold shrink-0 ${offen ? "border-slate-800 text-slate-900" : "border-slate-300 text-slate-500"}`}>
+                                  {offen ? "▾" : "▸"}
+                                </span>
+                                <span className="font-semibold text-slate-400 font-mono text-[9px] uppercase whitespace-nowrap">
+                                  {formatToGermanDate(tx.datumVon)} – {formatToGermanDate(tx.datumBis)}
+                                </span>
+                              </span>
+                              <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase mt-1 bg-sky-50 text-sky-700 border border-sky-100">
+                                🔁 SPARPLAN · {tx.anzahlKaeufe} KÄUFE
+                              </span>
+                            </td>
+                            <td className="py-3">
+                              <span className="block font-bold text-slate-900 text-sm sm:text-base">{tx.name}</span>
+                              <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase mt-1">
+                                {String(tx.key).toUpperCase()}
+                              </span>
+                            </td>
+                            <td className="py-3">
+                              <span className="block font-mono text-[10px] font-bold text-slate-700">{tx.depot}</span>
+                              <span className="block font-mono text-[10px] text-slate-500">{tx.besitzerName}</span>
+                            </td>
+                            <td className="py-3 text-right font-mono font-bold">{Number(tx.anzahl).toFixed(8)}</td>
+                            <td className="py-3 text-right font-mono text-slate-500">Ø € {formatAccounting(tx.kurs)}</td>
+                            <td className="py-3 text-right font-mono font-bold text-slate-900">€ {formatAccounting(tx.volumen)}</td>
+                            <td className="py-3 pl-8 text-[10px] text-slate-500 font-semibold">
+                              Sammelzeile — antippen für alle {tx.anzahlKaeufe} Einzelkäufe
+                            </td>
+                            <td className="py-3"></td>
+                          </tr>
+                          {offen && tx.kinder.map((k: any) => (
+                            <tr key={k.id} className="bg-slate-50/60 border-b border-slate-50 text-[11px]">
+                              <td className="py-2 pl-6 font-mono text-slate-500 whitespace-nowrap">{formatToGermanDate(k.datum)}</td>
+                              <td className="py-2 font-semibold text-slate-600">{String(k.key).toUpperCase()}</td>
+                              <td className="py-2 font-mono text-slate-500">{k.depot}</td>
+                              <td className="py-2 text-right font-mono">{Number(k.anzahl).toFixed(8)}</td>
+                              <td className="py-2 text-right font-mono">€ {formatAccounting(k.kurs)}</td>
+                              <td className="py-2 text-right font-mono font-bold">€ {formatAccounting(k.volumen)}</td>
+                              <td className="py-2 pl-8 text-[10px] text-slate-400 italic truncate max-w-[260px]">{k.notiz}</td>
+                              <td className="py-2"></td>
+                            </tr>
+                          ))}
+                        </>
+                      );
+                    }
+
                     return (
                       <tr key={tx.id} className="hover:bg-slate-50/40 transition-colors border-b border-slate-50">
                         <td className="py-4">
@@ -1621,9 +1743,15 @@ export function CombinedJournal({
                           <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase mt-1">
                             {String(tx.key).toUpperCase()}
                           </span>
+                          {/* Kompakt (C): Notiz nur noch einzeilig gekuerzt.
+                              Der vollstaendige Text steht im Tooltip — vorher
+                              blies er jede Zeile auf mehrere Zeilen auf. */}
                           {tx.notiz && (
-                            <p className="text-[10px] text-slate-500 font-medium italic mt-2 max-w-[200px] whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
-                              <b>Notiz:</b> " {tx.notiz} "
+                            <p
+                              className="text-[10px] text-slate-500 font-medium italic mt-1 max-w-[200px] truncate"
+                              title={tx.notiz}
+                            >
+                              {tx.notiz}
                             </p>
                           )}
                           {tx.gedanken && (
