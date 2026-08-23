@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { initialLivePrices } from "./utils/assetRegistry";
 import { useState, useEffect } from "react";
 import { 
   CloudSun, 
@@ -28,7 +27,7 @@ import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OnboardingScreen from "./components/OnboardingScreen";
-import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem, DailySnapshot, PeriodLearning, getLivePrice } from "./types";
+import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem, DailySnapshot, PeriodLearning } from "./types";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 import BackupSetupModal from "./components/BackupSetupModal";
 import BackupRestoreModal from "./components/BackupRestoreModal";
@@ -49,23 +48,6 @@ export default function App() {
   const initialDate = getTodayDateStr();
   const [routineDate, setRoutineDate] = useState(initialDate);
   const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
-
-  // Hilfe-Fragezeichen: springt in den passenden Handbuch-Abschnitt.
-  // Laeuft ueber ein CustomEvent, damit HilfeLink ueberall einsetzbar ist,
-  // ohne Props durch mehrere Ebenen zu reichen.
-  const [handbuchAbschnitt, setHandbuchAbschnitt] = useState<string | null>(null);
-  useEffect(() => {
-    const handler = (e: Event) => {
-      const detail = (e as CustomEvent).detail as { abschnitt?: string } | undefined;
-      if (!detail?.abschnitt) return;
-      setActiveTab("regelwerk");
-      // Neu setzen erzwingen, auch wenn derselbe Abschnitt nochmal kommt.
-      setHandbuchAbschnitt(null);
-      setTimeout(() => setHandbuchAbschnitt(detail.abschnitt as string), 0);
-    };
-    window.addEventListener("morgenroutine:handbuch", handler);
-    return () => window.removeEventListener("morgenroutine:handbuch", handler);
-  }, []);
   const [helpOpen, setHelpOpen] = useState(false);
   const pwaUpdate = usePWAUpdate();
   const [backupSetupOpen, setBackupSetupOpen] = useState(false);
@@ -177,7 +159,12 @@ export default function App() {
         console.error("Error reading live prices from local storage:", e);
       }
     }
-    return initialLivePrices(initialDate);
+    return {
+      tsla: { price: null, date: initialDate, atr: 0 },
+      now: { price: null, date: initialDate, atr: 0 },
+      baba: { price: null, date: initialDate, atr: 0 },
+      btc: { price: null, date: initialDate, atr: 0 }
+    };
   });
 
   // Portfolio items — completely empty by default. The user either
@@ -465,14 +452,12 @@ export default function App() {
 
   // Auto synchronizes asset dates whenever parent-level routineDate switches
   useEffect(() => {
-    // Generisch über alle vorhandenen Keys — früher vier feste Felder,
-    // wodurch jede weitere Position kein Datum bekam (und beim Zugriff
-    // auf ein fehlendes Feld ein Absturz drohte).
-    setLivePrices((prev) =>
-      Object.fromEntries(
-        Object.entries(prev || {}).map(([k, v]) => [k, { ...v, date: routineDate }])
-      )
-    );
+    setLivePrices((prev) => ({
+      tsla: { ...prev.tsla, date: routineDate },
+      now: { ...prev.now, date: routineDate },
+      baba: { ...prev.baba, date: routineDate },
+      btc: { ...prev.btc, date: routineDate }
+    }));
   }, [routineDate]);
 
   // Excel CSV single line compiler
@@ -486,7 +471,7 @@ export default function App() {
     trancheSize: number,
     currentStop: number
   ) => {
-    const liveData = getLivePrice(livePrices, assetKey);
+    const liveData = livePrices[assetKey as keyof LivePrices];
     const liveVal = liveData ? liveData.price : null;
 
     if (liveVal === null) {
@@ -649,7 +634,6 @@ export default function App() {
               livePrices={livePrices}
               onLivePricesChange={setLivePrices}
               portfolioData={portfolioData}
-              portfolioPurchases={portfolioPurchases}
               watchlist={watchlist}
               onWatchlistChange={setWatchlist}
               routineDate={routineDate}
@@ -727,7 +711,6 @@ export default function App() {
               periodLearnings={periodLearnings}
               onSaveLearning={saveLearning}
               onShowToast={showToast}
-              soldTrades={soldTrades}
             />
           )}
 
@@ -757,7 +740,7 @@ export default function App() {
           )}
 
           {activeTab === "regelwerk" && (
-            <RegelwerkTab routineDate={routineDate} handbuchAbschnitt={handbuchAbschnitt} />
+            <RegelwerkTab routineDate={routineDate} />
           )}
 
           {activeTab === "workspace" && (
@@ -821,7 +804,12 @@ export default function App() {
                 setDepotStartingCash({});
                 setDailyHistory([]);
                 setPeriodLearnings([]);
-                setLivePrices(initialLivePrices(initialDate));
+                setLivePrices({
+                  tsla: { price: null, date: initialDate, atr: 0 },
+                  now: { price: null, date: initialDate, atr: 0 },
+                  baba: { price: null, date: initialDate, atr: 0 },
+                  btc: { price: null, date: initialDate, atr: 0 },
+                });
                 setMarketState({
                   vix: null, vxv: null, vvix: null, spx: null,
                   wti: null, gas: null, distSpx: 0, distNdx: 0,
