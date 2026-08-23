@@ -132,6 +132,37 @@ function buildBackupFilename(iso: string, encrypted: boolean): string {
 }
 
 /** Trigger a browser download of the backup file. */
+/**
+ * localStorage-Schluessel fuer den Zeitpunkt der letzten Sicherung.
+ * Reine Merkhilfe fuer den Erinnerungs-Hinweis — enthaelt keine Daten.
+ */
+export const LAST_BACKUP_KEY = "morgenroutine_last_backup_at";
+
+/** Zeitpunkt der letzten Sicherung merken (ISO-String). */
+export function markiereBackupErstellt() {
+  try {
+    localStorage.setItem(LAST_BACKUP_KEY, new Date().toISOString());
+  } catch {
+    // Speicher voll oder gesperrt — der Hinweis ist dann eben ungenau.
+  }
+}
+
+/**
+ * Tage seit der letzten Sicherung. `null`, wenn noch nie gesichert wurde
+ * (oder der Eintrag fehlt, z.B. nach dem Loeschen der Websitedaten).
+ */
+export function tageSeitBackup(): number | null {
+  try {
+    const roh = localStorage.getItem(LAST_BACKUP_KEY);
+    if (!roh) return null;
+    const dann = new Date(roh).getTime();
+    if (Number.isNaN(dann)) return null;
+    return Math.floor((Date.now() - dann) / 86400000);
+  } catch {
+    return null;
+  }
+}
+
 export function downloadBackup(file: BackupFile, filename?: string) {
   const blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
@@ -142,6 +173,7 @@ export function downloadBackup(file: BackupFile, filename?: string) {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  markiereBackupErstellt();
 }
 
 /** Parse a File object (from <input type="file">) into a BackupFile. */
