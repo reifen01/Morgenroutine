@@ -1,13 +1,17 @@
 /**
- * HILFE-FRAGEZEICHEN
- * ------------------
- * Kleines "?" neben einem Wert oder einer Überschrift. Antippen springt in
- * den passenden Handbuch-Abschnitt — statt den Nutzer selbst suchen zu lassen.
+ * HANDBUCH-BUCH-SYMBOL
+ * --------------------
+ * Gut sichtbarer Buch-Button neben einem Block-Titel oder Wert. Antippen
+ * springt in den passenden Handbuch-Abschnitt — statt den Nutzer selbst
+ * suchen zu lassen.
+ *
+ * Abgrenzung: "?" = Inline-Erklärung direkt an Ort und Stelle.
+ *             Buch = Sprung ins Handbuch (diese Komponente).
  *
  * Die abschnitt-ID muss einer ID aus handbuchInhalt.ts entsprechen.
  * Beispiel: <HilfeLink abschnitt="kaufampel" titel="Warum wird gesperrt?" />
  */
-import { HelpCircle } from "lucide-react";
+import { BookOpen } from "lucide-react";
 
 interface HilfeLinkProps {
   /** ID aus HANDBUCH (siehe utils/handbuchInhalt.ts). */
@@ -39,9 +43,10 @@ export default function HilfeLink({ abschnitt, titel, gross }: HilfeLinkProps) {
       }}
       title={titel || "Im Handbuch nachlesen"}
       aria-label={titel || "Im Handbuch nachlesen"}
-      className="inline-flex items-center justify-center rounded-full text-slate-400 hover:text-slate-800 hover:bg-slate-100 transition-colors align-middle cursor-pointer shrink-0"
+      className="inline-flex items-center justify-center rounded-lg bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:text-blue-900 active:scale-95 transition-all align-middle cursor-pointer shrink-0 shadow-xs"
+      style={{ width: gross ? 30 : 26, height: gross ? 30 : 26 }}
     >
-      <HelpCircle className={gross ? "h-4 w-4" : "h-3.5 w-3.5"} />
+      <BookOpen className={gross ? "h-5 w-5" : "h-4 w-4"} strokeWidth={2.4} />
     </button>
   );
 }

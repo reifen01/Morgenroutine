@@ -19,11 +19,15 @@ import Handbuch from "./Handbuch";
 
 interface RegelwerkTabProps {
   routineDate: string;
-  /** Abschnitt, zu dem ein Hilfe-Fragezeichen springen soll. */
+  /** Abschnitt, zu dem ein Hilfe-Symbol ("?" oder Buch) springen soll. */
   handbuchAbschnitt?: string | null;
+  /** Klartext-Name des Herkunfts-Tabs (z.B. "Depot") für den Zurück-Knopf. */
+  zurueckLabel?: string | null;
+  /** Springt zurück zum Tab, von dem aus das Hilfe-Symbol angetippt wurde. */
+  onZurueck?: () => void;
 }
 
-export default function RegelwerkTab({ routineDate, handbuchAbschnitt }: RegelwerkTabProps) {
+export default function RegelwerkTab({ routineDate, handbuchAbschnitt, zurueckLabel, onZurueck }: RegelwerkTabProps) {
   const [activeSubTab, setActiveSubTab] = useState<"regeln" | "coach">("regeln");
 
   // Bei Sprung aus der App immer auf den Regel-Reiter wechseln.
@@ -63,7 +67,7 @@ export default function RegelwerkTab({ routineDate, handbuchAbschnitt }: Regelwe
 
       {activeSubTab === "regeln" ? (
         <div className="animate-fade-in">
-          <Handbuch springeZu={handbuchAbschnitt} />
+          <Handbuch springeZu={handbuchAbschnitt} zurueckLabel={zurueckLabel} onZurueck={onZurueck} />
         </div>
       ) : (
 

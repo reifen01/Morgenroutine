@@ -6,6 +6,7 @@
 
 import { useMemo, useState } from "react";
 import { CalendarDays, CalendarRange, Sparkles, Save, TrendingUp } from "lucide-react";
+import HilfeLink from "./HilfeLink";
 import type { DailySnapshot, PeriodLearning, SoldTradeItem } from "../types";
 import Ertraegnisaufstellung from "./Ertraegnisaufstellung";
 import { buildPeriods, type PeriodKind, type PeriodStats } from "../utils/periodStats";
@@ -99,6 +100,7 @@ export default function AuswertungTab({ dailyHistory, periodLearnings, onSaveLea
             <h2 className="text-base sm:text-lg font-bold text-slate-900 font-display flex items-center gap-2">
               <TrendingUp className="h-5 w-5 text-slate-800" />
               Routine-Auswertung
+              <HilfeLink abschnitt="disziplin" titel="Disziplin-Quote im Handbuch nachlesen" />
             </h2>
             <p className="text-xs text-slate-500 mt-1">
               Aus deinen täglichen Live-Abrufen entsteht automatisch eine Wochen- und Monatsübersicht.

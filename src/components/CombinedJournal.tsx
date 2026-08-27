@@ -12,6 +12,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem } from "../types";
+import HilfeLink from "./HilfeLink";
 import { formatAccounting, formatToGermanDate } from "../utils/mathUtils";
 import { CORE_ASSETS } from "../utils/assetRegistry";
 import { useStockSearch, symbolToKey } from "../utils/useStockSearch";
@@ -731,6 +732,7 @@ export function CombinedJournal({
             <div>
               <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
                 🔄 Kombiniertes Transaktions-Journal
+                <HilfeLink abschnitt="steuern" titel="Steuermatching im Handbuch nachlesen" />
               </h3>
               <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
                 Kombinierte Buchführung aller Käufe und Verkäufe mit Steuermatching &amp; Tranchenverfolgung

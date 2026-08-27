@@ -23,6 +23,7 @@ import {
   Info
 } from "lucide-react";
 import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot } from "../types";
+import HilfeLink from "./HilfeLink";
 import { computeTrend, TrendArrow, TrendHistory } from "./TrendBarometer";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
@@ -878,6 +879,7 @@ export default function MorgenroutineTab({
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
               📊 Marktstimmung &amp; Kaufschranken
+              <HilfeLink abschnitt="kaufampel" titel="Kaufampel im Handbuch nachlesen" />
             </h3>
             
             <div className="overflow-x-auto">
@@ -1365,6 +1367,7 @@ export default function MorgenroutineTab({
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest pb-3 border-b border-slate-50 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
               Tages-Eingaben
+              <HilfeLink abschnitt="kaufampel" titel="Schwellenwerte im Handbuch nachlesen" />
             </h3>
             
             <div className="space-y-6">
@@ -1490,6 +1493,7 @@ export default function MorgenroutineTab({
                 <div className="flex items-center justify-between">
                   <span className="block text-[10px] font-bold text-slate-450 uppercase tracking-wider flex items-center gap-1.5">
                     Distribution Days (manuell verifizieren)
+                    <HilfeLink abschnitt="dist-quelle" titel="Quellenregel im Handbuch nachlesen" />
                   </span>
                   <button
                     type="button"

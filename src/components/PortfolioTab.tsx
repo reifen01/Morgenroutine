@@ -23,6 +23,7 @@ import {
 import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, MarketState, WatchlistItem } from "../types";
 import { formatAccounting, formatToGermanDate, parseCleanDate, kestAuf } from "../utils/mathUtils";
 import { CombinedJournal } from "./CombinedJournal";
+import HilfeLink from "./HilfeLink";
 import DepotTable from "./DepotTable";
 import { buildAssetRegistry, CORE_ASSETS } from "../utils/assetRegistry";
 import { evaluateMarketHealth } from "../utils/marketHealth";
@@ -1496,6 +1497,7 @@ export default function PortfolioTab({
             <div>
               <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
                 💼 Reale Portfolio-Bestände (Aus Anschaffungen)
+                <HilfeLink abschnitt="steuern" titel="KESt und Verlustausgleich im Handbuch nachlesen" />
               </h3>
               <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
                 Aktive Wertpapiere berechnet aus dem Transaktions-Journal nach Abzug aller realisierten Verkäufe

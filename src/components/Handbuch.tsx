@@ -9,15 +9,20 @@
  * automatisch und scrollt hin — das nutzen die Hilfe-Fragezeichen der App.
  */
 import { useState, useEffect, useRef } from "react";
-import { Search, ChevronDown, ChevronRight, X, BookOpen } from "lucide-react";
+import { Search, ChevronDown, ChevronRight, X, BookOpen, ArrowLeft } from "lucide-react";
 import { HANDBUCH, handbuchSuchen } from "../utils/handbuchInhalt";
 
 interface HandbuchProps {
   /** ID eines Abschnitts, der beim Öffnen direkt angezeigt werden soll. */
   springeZu?: string | null;
+  /** Klartext-Name des Herkunfts-Tabs (z.B. "Depot"). Wenn gesetzt,
+   *  erscheint oben ein immer sichtbarer Zurück-Knopf. */
+  zurueckLabel?: string | null;
+  /** Springt zurück zum Herkunfts-Tab. */
+  onZurueck?: () => void;
 }
 
-export default function Handbuch({ springeZu }: HandbuchProps) {
+export default function Handbuch({ springeZu, zurueckLabel, onZurueck }: HandbuchProps) {
   const [suche, setSuche] = useState("");
   const [offen, setOffen] = useState<Set<string>>(new Set());
   const refs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -55,6 +60,20 @@ export default function Handbuch({ springeZu }: HandbuchProps) {
 
   return (
     <div className="space-y-4">
+      {/* ── Zurück-Knopf (klebt oben, immer sichtbar) ── */}
+      {zurueckLabel && onZurueck && (
+        <div className="sticky top-0 z-20 -mx-1 px-1 py-1.5 bg-[#F4F4F7]/95 backdrop-blur-sm">
+          <button
+            type="button"
+            onClick={onZurueck}
+            className="w-full sm:w-auto inline-flex items-center justify-center gap-2 h-11 px-4 rounded-xl bg-slate-800 text-white text-[13px] font-bold shadow-md hover:bg-slate-700 active:scale-[0.98] transition-all cursor-pointer"
+          >
+            <ArrowLeft className="h-4 w-4" />
+            Zurück zu {zurueckLabel}
+          </button>
+        </div>
+      )}
+
       {/* ── Suchfeld ── */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 pointer-events-none" />

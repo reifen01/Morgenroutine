@@ -13,6 +13,7 @@
  */
 import { useMemo, useState } from "react";
 import { FileText, ChevronDown, ChevronRight } from "lucide-react";
+import HilfeLink from "./HilfeLink";
 import type { SoldTradeItem } from "../types";
 import { formatAccounting, istSteuereinfach } from "../utils/mathUtils";
 
@@ -129,6 +130,7 @@ export default function Ertraegnisaufstellung({ soldTrades }: Props) {
       <div className="flex items-center gap-2">
         <FileText className="h-4 w-4 text-slate-700" />
         <h3 className="text-[13px] font-extrabold text-slate-800">Erträgnisaufstellung (realisiert, pro Jahr &amp; Depot)</h3>
+        <HilfeLink abschnitt="steuern" titel="KESt-Regeln im Handbuch nachlesen" />
       </div>
 
       {jahre.map((y) => {

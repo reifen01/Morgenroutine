@@ -22,6 +22,7 @@ import {
   Search
 } from "lucide-react";
 import { parseCleanFloat, formatAccounting } from "../utils/mathUtils";
+import HilfeLink from "./HilfeLink";
 import { LivePrices, PortfolioItem, WatchlistItem, getLivePrice } from "../types";
 
 interface RechnerTabProps {
@@ -416,6 +417,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
                 <Calculator className="h-5 w-5 text-slate-800" />
                 Aktien-Positionsgrößen &amp; Risiko-Rechner
+                <HilfeLink abschnitt="position-sizing" titel="1%-Regel im Handbuch nachlesen" gross />
               </h2>
               <button
                 onClick={handleResetForm}
@@ -721,6 +723,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
                 <TrendingDown className="h-5 w-5 text-slate-800 animate-pulse" />
                 🖥️ Pine Script ATR Stop-Loss Finder (TradingView Sync)
+                <HilfeLink abschnitt="stop-loss" titel="Stop-Loss-Regel im Handbuch nachlesen" gross />
               </h3>
               <span className="text-[10px] bg-slate-50 text-slate-900 px-2.5 py-1 rounded-xl font-mono font-bold uppercase whitespace-nowrap border border-slate-100 shadow-3xs">
                 m = {atrCalcMult.toFixed(1)}x
