@@ -1884,220 +1884,217 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
           )}
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse text-xs sm:text-sm" style={{ minWidth: "750px" }}>
-            <thead>
-              <tr className="border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-widest">
-                <th className="pb-3 w-1/4">Depot / Position</th>
-                <th className="pb-3 text-right">Harter Anker / Kauflimit</th>
-                <th className="pb-3 text-center animate-pulse">Stop Loss &amp; Depot-Risiko (€)</th>
-                <th className="pb-3 text-right">Tranche (€)</th>
-                <th className="pb-3 text-center">Positionsstatus</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-50">
-              {portfolioData.map((item) => {
-                const liveData = livePrices[item.key];
-                const currentPrice = liveData ? liveData.price : null;
-                const priceDate = liveData ? liveData.date : "";
-                const isDateMatching = priceDate === routineDate;
+        {/* ── Positions-Karten (handyfreundlich, kein Querscrollen) ── */}
+        <div className="space-y-3">
+          {portfolioData.map((item) => {
+            const liveData = livePrices[item.key];
+            const currentPrice = liveData ? liveData.price : null;
+            const priceDate = liveData ? liveData.date : "";
+            const isDateMatching = priceDate === routineDate;
 
-                // Stop calculated using the formula: Stop = max(Harter Anker, Kurs - (atrMultiplier * ATR))
-                let finalCalculatedStop = item.harterAnker;
-                let isTriggered = false;
-                let riskPercentageOfDepot = 0;
-                let potentialLossValue = 0;
+            // Stop calculated using the formula: Stop = max(Harter Anker, Kurs - (atrMultiplier * ATR))
+            let finalCalculatedStop = item.harterAnker;
+            let isTriggered = false;
+            let riskPercentageOfDepot = 0;
+            let potentialLossValue = 0;
 
-                if (currentPrice !== null && item.key !== 'btc' && item.status !== 'sold') {
-                  const atrStop = currentPrice - (atrMultiplier * liveData.atr);
-                  finalCalculatedStop = Math.max(item.harterAnker, atrStop);
-                  
-                  if (currentPrice <= finalCalculatedStop) {
-                    isTriggered = true;
-                    anyStopTriggered = true;
-                  }
+            if (currentPrice !== null && item.key !== 'btc' && item.status !== 'sold') {
+              const atrStop = currentPrice - (atrMultiplier * liveData.atr);
+              finalCalculatedStop = Math.max(item.harterAnker, atrStop);
 
-                  // Risks calculations
-                  const estimatedShares = item.tranchenGroesse / currentPrice;
-                  potentialLossValue = estimatedShares * (currentPrice - finalCalculatedStop);
-                  riskPercentageOfDepot = START_CASH > 0 ? (potentialLossValue / START_CASH) * 100 : 0;
-                }
+              if (currentPrice <= finalCalculatedStop) {
+                isTriggered = true;
+                anyStopTriggered = true;
+              }
 
-                // Apply custom styles matching table
-                let rowBgClass = "";
-                if (item.status === 'sold') {
-                  rowBgClass = "bg-slate-55/40 opacity-55 hover:opacity-100 transition-opacity border-l-4 border-l-slate-400";
-                } else if (isTriggered) {
-                  rowBgClass = "bg-rose-50/20 border-l-4 border-l-rose-500 hover:bg-rose-50/30";
-                } else if (item.status === 'green') {
-                  rowBgClass = "bg-slate-50/10 hover:bg-slate-50/20";
-                } else if (item.status === 'red') {
-                  rowBgClass = "bg-slate-50/50 hover:bg-slate-50/70";
-                }
+              // Risks calculations
+              const estimatedShares = item.tranchenGroesse / currentPrice;
+              potentialLossValue = estimatedShares * (currentPrice - finalCalculatedStop);
+              riskPercentageOfDepot = START_CASH > 0 ? (potentialLossValue / START_CASH) * 100 : 0;
+            }
 
-                return (
-                  <tr key={item.id} className={`${rowBgClass} transition-colors border-b border-slate-100`}>
-                    <td className="py-4 text-slate-900">
-                      <div className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
-                        {item.name}
+            // Apply custom styles matching table
+            let rowBgClass = "bg-white";
+            if (item.status === 'sold') {
+              rowBgClass = "bg-slate-55/40 opacity-55 hover:opacity-100 transition-opacity border-l-4 border-l-slate-400";
+            } else if (isTriggered) {
+              rowBgClass = "bg-rose-50/20 border-l-4 border-l-rose-500 hover:bg-rose-50/30";
+            } else if (item.status === 'green') {
+              rowBgClass = "bg-slate-50/10 hover:bg-slate-50/20";
+            } else if (item.status === 'red') {
+              rowBgClass = "bg-slate-50/50 hover:bg-slate-50/70";
+            }
+
+            return (
+              <div key={item.id} className={`${rowBgClass} border border-slate-200 rounded-xl p-3.5 space-y-3 transition-colors`}>
+
+                {/* Zeile 1: Position & Kennungen */}
+                <div>
+                  <div className="font-bold text-slate-900 text-sm sm:text-base leading-tight">
+                    {item.name}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[10px] text-slate-800 font-extrabold">
+                    <span>{item.ticker ? `Kürzel: ${item.ticker}` : item.key.toUpperCase()}</span>
+                    {item.isin && (
+                      <>
+                        <span className="text-slate-300">•</span>
+                        <span className="text-slate-500 font-semibold font-mono">ISIN: {item.isin}</span>
+                      </>
+                    )}
+                  </div>
+                  <span className="block text-[10px] font-medium text-slate-400 mt-1 leading-snug">
+                    {item.beschreibung}
+                  </span>
+                </div>
+
+                {/* Zeile 2: Anker/Kauflimit + Live-Kurs (links) | Tranche (rechts) */}
+                <div className="flex items-start justify-between gap-3">
+                  <div className="font-mono">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest font-sans">Harter Anker / Kauflimit</span>
+                    <div className="font-semibold text-slate-400">€ {formatAccounting(item.limitPreis)}</div>
+                    {currentPrice !== null ? (
+                      <>
+                        <div className="text-xs text-slate-800 font-bold mt-0.5">Live: € {formatAccounting(currentPrice)}</div>
+                        <div className={`text-[9px] font-bold mt-0.5 ${isDateMatching ? 'text-slate-800' : 'text-rose-600 animate-pulse'}`}>
+                          {isDateMatching ? `Prüfung: OK ✅` : `Alt: ${formatToGermanDate(priceDate)} ⚠️`}
+                        </div>
+                      </>
+                    ) : (
+                      <div className="text-xs text-rose-600 font-bold mt-0.5">Live-Kurs fehlt!</div>
+                    )}
+                  </div>
+                  <div className="text-right">
+                    <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest font-sans mb-1">Tranche (€)</span>
+                    <div className="flex items-center justify-end gap-1 font-mono">
+                      <span className="text-slate-400 font-semibold text-xs">€</span>
+                      <input
+                        type="number"
+                        step="1000"
+                        value={item.tranchenGroesse}
+                        onChange={(e) => handleTrancheChange(item.id, false, e.target.value)}
+                        className="w-24 h-8 bg-white border border-slate-200 focus:border-slate-600 rounded-lg px-2 text-right font-semibold text-xs sm:text-sm text-slate-800 focus:outline-none"
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Zeile 3: Stop-Loss & Depot-Risiko */}
+                <div className="text-center">
+                  {item.status === 'sold' ? (
+                    <div className="flex flex-col items-center gap-1.5 py-1">
+                      <div className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-150 px-3 py-1 bg-emerald-100/30 rounded-xl text-xs font-bold leading-none shadow-xs">
+                        💸 POSITION ERFOLGREICH VERKAUFT / REALISIERT
                       </div>
-                      <div className="flex flex-wrap items-center gap-1.5 mt-1 font-mono text-[10px] text-slate-800 font-extrabold">
-                        <span>{item.ticker ? `Kürzel: ${item.ticker}` : item.key.toUpperCase()}</span>
-                        {item.isin && (
-                          <>
-                            <span className="text-slate-300">•</span>
-                            <span className="text-slate-500 font-semibold font-mono">ISIN: {item.isin}</span>
-                          </>
-                        )}
-                      </div>
-                      <span className="block text-[10px] font-medium text-slate-400 mt-1 leading-snug">
-                        {item.beschreibung}
+                      <span className="text-[10px] text-slate-400 font-semibold font-sans">
+                        Gewinne voll gesichert • Freies Kapital wieder verfügbar!
                       </span>
-                    </td>
-                    
-                    <td className="py-4 text-right font-mono">
-                      <div className="font-semibold text-slate-400">€ {formatAccounting(item.limitPreis)}</div>
-                      {currentPrice !== null ? (
-                        <>
-                          <div className="text-xs text-slate-800 font-bold mt-0.5">Live: € {formatAccounting(currentPrice)}</div>
-                          <div className={`text-[9px] font-bold mt-0.5 ${isDateMatching ? 'text-slate-800' : 'text-rose-600 animate-pulse'}`}>
-                            {isDateMatching ? `Prüfung: OK ✅` : `Alt: ${formatToGermanDate(priceDate)} ⚠️`}
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-xs text-rose-600 font-bold mt-0.5">Live-Kurs fehlt!</div>
-                      )}
-                    </td>
-
-                    <td className="py-4 text-center">
-                      {item.status === 'sold' ? (
-                        <div className="flex flex-col items-center gap-1.5 py-1">
-                          <div className="inline-flex items-center gap-1 bg-emerald-50 text-emerald-800 border border-emerald-150 px-3 py-1 bg-emerald-100/30 rounded-xl text-xs font-bold leading-none shadow-xs">
-                            💸 POSITION ERFOLGREICH VERKAUFT / REALISIERT
-                          </div>
-                          <span className="text-[10px] text-slate-400 font-semibold font-sans">
-                            Gewinne voll gesichert • Freies Kapital wieder verfügbar!
-                          </span>
-                        </div>
-                      ) : item.key === 'btc' ? (
-                        <div className="inline-flex px-2.5 py-1 text-[10px] font-bold text-slate-900 bg-slate-50 border border-slate-100/70 rounded-full uppercase leading-none">
-                          🛡️ HODL SPARPLAN INDEX
-                        </div>
-                      ) : currentPrice === null ? (
-                        <span className="text-[10px] text-rose-600 font-bold animate-pulse">Warten auf Tageskurs</span>
-                      ) : isTriggered ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="inline-block bg-rose-100 text-rose-800 border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-bold animate-pulse leading-none shadow-xs">
-                            🚨 STOP RISK GERISSEN! IMMEDIAT EXIT!
-                          </div>
-                          <button
-                            onClick={() => handlePreFillSale(item)}
-                            className="bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-semibold px-2.5 py-1 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
-                          >
-                            💸 Exit buchen
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex flex-col items-center gap-1">
-                          {/* Single line horizontal element containing stop values */}
-                          <div className="flex flex-row items-center gap-1.5 bg-slate-50 border border-slate-100 p-2 rounded-xl">
-                            <div className="flex items-center gap-0.5 bg-white border border-slate-100 px-2 py-0.5 rounded shadow-xs font-mono text-xs font-bold text-slate-700">
-                              STOP: <span className="text-rose-600 font-bold ml-0.5">€ {finalCalculatedStop.toFixed(2)}</span>
-                            </div>
-                            <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium font-sans">
-                              Abstand: <span className="text-slate-800 font-bold">{(((currentPrice - finalCalculatedStop) / currentPrice) * 100).toFixed(1)}%</span>
-                            </div>
-                            <button
-                              onClick={() => onLoadToCalculator(
-                                item.key, 
-                                item.name, 
-                                item.limitPreis, 
-                                item.tranchenGroesse, 
-                                finalCalculatedStop
-                              )}
-                              className="h-6 px-2 bg-slate-50 hover:bg-slate-100/70 text-slate-900 border border-slate-100/50 rounded-lg text-[9px] font-bold flex items-center gap-0.5 transition-all shadow-xs active:scale-95 cursor-pointer"
-                            >
-                              🎯 Rechnen
-                            </button>
-                            <button
-                              onClick={() => handlePreFillSale(item)}
-                              className="h-6 px-2 bg-rose-50 hover:bg-rose-650 hover:text-white text-rose-700 border border-rose-200 rounded-lg text-[9px] font-bold flex items-center gap-0.5 transition-all shadow-xs active:scale-95 cursor-pointer ml-1"
-                              title="Verkauf dieser Position zur Dokumentation eintragen"
-                            >
-                              💸 Verkauf buchen
-                            </button>
-                          </div>
-                          
-                          <span className="text-[10px] font-medium text-rose-600 block font-mono">
-                            Risiko: € {formatAccounting(potentialLossValue)} ({riskPercentageOfDepot.toFixed(2)}% des Depots)
-                          </span>
-                        </div>
-                      )}
-                    </td>
-
-                    <td className="py-4 text-right">
-                      <div className="flex items-center justify-end gap-1 font-mono">
-                        <span className="text-slate-400 font-semibold text-xs">€</span>
-                        <input
-                          type="number"
-                          step="1000"
-                          value={item.tranchenGroesse}
-                          onChange={(e) => handleTrancheChange(item.id, false, e.target.value)}
-                          className="w-20 sm:w-24 h-8 bg-white border border-slate-200 focus:border-slate-600 rounded-lg px-2 text-right font-semibold text-xs sm:text-sm text-slate-800 focus:outline-none"
-                        />
+                    </div>
+                  ) : item.key === 'btc' ? (
+                    <div className="inline-flex px-2.5 py-1 text-[10px] font-bold text-slate-900 bg-slate-50 border border-slate-100/70 rounded-full uppercase leading-none">
+                      🛡️ HODL SPARPLAN INDEX
+                    </div>
+                  ) : currentPrice === null ? (
+                    <span className="text-[10px] text-rose-600 font-bold animate-pulse">Warten auf Tageskurs</span>
+                  ) : isTriggered ? (
+                    <div className="flex flex-col items-center gap-2">
+                      <div className="inline-block bg-rose-100 text-rose-800 border border-rose-200 px-3 py-1.5 rounded-xl text-xs font-bold animate-pulse leading-none shadow-xs">
+                        🚨 STOP RISK GERISSEN! IMMEDIAT EXIT!
                       </div>
-                    </td>
-
-                    <td className="py-4 text-center">
-                      <div className="inline-flex rounded-xl bg-slate-50 p-1 border border-slate-100 gap-1 sm:gap-1.5">
+                      <button
+                        onClick={() => handlePreFillSale(item)}
+                        className="bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-semibold px-2.5 py-1 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
+                      >
+                        💸 Exit buchen
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-1">
+                      {/* Stop-Werte + Aktionen, umbruchfähig fürs Handy */}
+                      <div className="flex flex-wrap items-center justify-center gap-1.5 bg-slate-50 border border-slate-100 p-2 rounded-xl w-full">
+                        <div className="flex items-center gap-0.5 bg-white border border-slate-100 px-2 py-0.5 rounded shadow-xs font-mono text-xs font-bold text-slate-700">
+                          STOP: <span className="text-rose-600 font-bold ml-0.5">€ {finalCalculatedStop.toFixed(2)}</span>
+                        </div>
+                        <div className="flex items-center gap-1 text-[10px] text-slate-500 font-medium font-sans">
+                          Abstand: <span className="text-slate-800 font-bold">{(((currentPrice - finalCalculatedStop) / currentPrice) * 100).toFixed(1)}%</span>
+                        </div>
                         <button
-                          onClick={() => handlePortfolioStatusChange(item.id, 'green')}
-                          className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                            item.status === 'green' 
-                              ? "bg-slate-800 text-white shadow-xs" 
-                              : "text-slate-600 bg-white hover:bg-slate-100"
-                          }`}
+                          onClick={() => onLoadToCalculator(
+                            item.key, 
+                            item.name, 
+                            item.limitPreis, 
+                            item.tranchenGroesse, 
+                            finalCalculatedStop
+                          )}
+                          className="h-6 px-2 bg-slate-50 hover:bg-slate-100/70 text-slate-900 border border-slate-100/50 rounded-lg text-[9px] font-bold flex items-center gap-0.5 transition-all shadow-xs active:scale-95 cursor-pointer"
                         >
-                          🟢 Reserviert
+                          🎯 Rechnen
                         </button>
                         <button
-                          onClick={() => handlePortfolioStatusChange(item.id, 'yellow')}
-                          className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                            item.status === 'yellow' 
-                              ? "bg-amber-500 text-slate-950 shadow-xs" 
-                              : "text-slate-600 bg-white hover:bg-slate-100"
-                          }`}
+                          onClick={() => handlePreFillSale(item)}
+                          className="h-6 px-2 bg-rose-50 hover:bg-rose-650 hover:text-white text-rose-700 border border-rose-200 rounded-lg text-[9px] font-bold flex items-center gap-0.5 transition-all shadow-xs active:scale-95 cursor-pointer"
+                          title="Verkauf dieser Position zur Dokumentation eintragen"
                         >
-                          🟡 Standby
-                        </button>
-                        <button
-                          onClick={() => handlePortfolioStatusChange(item.id, 'red')}
-                          className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                            item.status === 'red' 
-                              ? "bg-rose-600 text-white shadow-xs" 
-                              : "text-slate-600 bg-white hover:bg-slate-100"
-                          }`}
-                        >
-                          🔴 Halt
-                        </button>
-                        <button
-                          onClick={() => handlePortfolioStatusChange(item.id, 'sold')}
-                          className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
-                            item.status === 'sold' 
-                              ? "bg-emerald-600 text-white shadow-xs" 
-                              : "text-slate-600 bg-white hover:bg-slate-100"
-                          }`}
-                          title="Position als Verkauft verbuchen"
-                        >
-                          ⚫ Verkauft
+                          💸 Verkauf buchen
                         </button>
                       </div>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                      
+                      <span className="text-[10px] font-medium text-rose-600 block font-mono">
+                        Risiko: € {formatAccounting(potentialLossValue)} ({riskPercentageOfDepot.toFixed(2)}% des Depots)
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Zeile 4: Positionsstatus */}
+                <div className="flex justify-center">
+                  <div className="inline-flex flex-wrap justify-center rounded-xl bg-slate-50 p-1 border border-slate-100 gap-1 sm:gap-1.5">
+                    <button
+                      onClick={() => handlePortfolioStatusChange(item.id, 'green')}
+                      className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        item.status === 'green' 
+                          ? "bg-slate-800 text-white shadow-xs" 
+                          : "text-slate-600 bg-white hover:bg-slate-100"
+                      }`}
+                    >
+                      🟢 Reserviert
+                    </button>
+                    <button
+                      onClick={() => handlePortfolioStatusChange(item.id, 'yellow')}
+                      className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        item.status === 'yellow' 
+                          ? "bg-amber-500 text-slate-950 shadow-xs" 
+                          : "text-slate-600 bg-white hover:bg-slate-100"
+                      }`}
+                    >
+                      🟡 Standby
+                    </button>
+                    <button
+                      onClick={() => handlePortfolioStatusChange(item.id, 'red')}
+                      className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        item.status === 'red' 
+                          ? "bg-rose-600 text-white shadow-xs" 
+                          : "text-slate-600 bg-white hover:bg-slate-100"
+                      }`}
+                    >
+                      🔴 Halt
+                    </button>
+                    <button
+                      onClick={() => handlePortfolioStatusChange(item.id, 'sold')}
+                      className={`h-7 px-2 sm:px-3 rounded-lg text-[10px] font-bold transition-all cursor-pointer ${
+                        item.status === 'sold' 
+                          ? "bg-emerald-600 text-white shadow-xs" 
+                          : "text-slate-600 bg-white hover:bg-slate-100"
+                      }`}
+                      title="Position als Verkauft verbuchen"
+                    >
+                      ⚫ Verkauft
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            );
+          })}
         </div>
       </div>
 
