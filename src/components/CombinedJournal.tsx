@@ -1620,116 +1620,113 @@ export function CombinedJournal({
         
         {/* TAB 1: COMBINED SYSTEM */}
         {journalTab === 'combined' && (
-          <div className="overflow-x-auto pt-1 h-auto text-xs sm:text-sm">
+          <div className="pt-1 text-xs sm:text-sm">
             <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">
               🔄 Kombinierte Chronologie des Steuer-Portfolios
             </h4>
-            <table className="w-full text-left border-collapse text-xs sm:text-sm" style={{ minWidth: "950px" }}>
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-widest select-none">
-                  <th onClick={() => handleSortCombined('datum')} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1">
-                      <span>Datum / Typ</span>
-                      <span className="text-[8px] text-slate-400">{txSortField === 'datum' ? (txSortAsc ? '▲' : '▼') : '↕'}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortCombined('name')} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1">
-                      <span>Wertpapier / Asset</span>
-                      <span className="text-[8px] text-slate-400">{txSortField === 'name' ? (txSortAsc ? '▲' : '▼') : '↕'}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortCombined('depot')} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1">
-                      <span>Depot &amp; Besitzer</span>
-                      <span className="text-[8px] text-slate-400">{txSortField === 'depot' ? (txSortAsc ? '▲' : '▼') : '↕'}</span>
-                    </div>
-                  </th>
-                  <th className="pb-3 text-right">Stückzahl</th>
-                  <th className="pb-3 text-right">Einstand / Kurs</th>
-                  <th onClick={() => handleSortCombined('volumen')} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Volumen / Wert</span>
-                      <span className="text-[8px] text-slate-400">{txSortField === 'volumen' ? (txSortAsc ? '▲' : '▼') : '↕'}</span>
-                    </div>
-                  </th>
-                  <th className="pb-3 pl-8 text-left w-[300px]">Steuer-Heuristik &amp; Tranchenergebnis</th>
-                  <th className="pb-3 text-center">Aktion</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium text-slate-700">
-                {gruppierteTransaktionen.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-8 text-center text-slate-400 font-semibold font-sans">
-                      Keine Transaktionen gefunden, die dem Filter entsprechen.
-                    </td>
-                  </tr>
-                ) : (
-                  gruppierteTransaktionen.map((tx: any) => {
-                    const isBuy = tx.type === 'buy';
-                    const isProfit = !isBuy && (tx.gewinnVerlust || 0) >= 0;
 
-                    // ── Sparplan-Sammelzeile (aufklappbar) ──
-                    if (tx.istGruppe) {
-                      const offen = offeneGruppen.has(tx.id);
-                      return (
-                        <>
-                          <tr
-                            key={tx.id}
-                            onClick={() => toggleGruppe(tx.id)}
-                            className="hover:bg-slate-50/40 transition-colors border-b border-slate-50 cursor-pointer bg-slate-50/30"
-                          >
-                            <td className="py-3">
-                              <span className="flex items-center gap-1.5">
-                                <span className={`inline-flex items-center justify-center h-4 w-4 rounded border text-[9px] font-extrabold shrink-0 ${offen ? "border-slate-800 text-slate-900" : "border-slate-300 text-slate-500"}`}>
-                                  {offen ? "▾" : "▸"}
-                                </span>
-                                <span className="font-semibold text-slate-400 font-mono text-[9px] uppercase whitespace-nowrap">
-                                  {formatToGermanDate(tx.datumVon)} – {formatToGermanDate(tx.datumBis)}
-                                </span>
-                              </span>
-                              <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase mt-1 bg-sky-50 text-sky-700 border border-sky-100">
-                                🔁 SPARPLAN · {tx.anzahlKaeufe} KÄUFE
-                              </span>
-                            </td>
-                            <td className="py-3">
-                              <span className="block font-bold text-slate-900 text-sm sm:text-base">{tx.name}</span>
-                              <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase mt-1">
-                                {String(tx.key).toUpperCase()}
-                              </span>
-                            </td>
-                            <td className="py-3">
-                              <span className="block font-mono text-[10px] font-bold text-slate-700">{tx.depot}</span>
-                              <span className="block font-mono text-[10px] text-slate-500">{tx.besitzerName}</span>
-                            </td>
-                            <td className="py-3 text-right font-mono font-bold">{Number(tx.anzahl).toFixed(8)}</td>
-                            <td className="py-3 text-right font-mono text-slate-500">Ø € {formatAccounting(tx.kurs)}</td>
-                            <td className="py-3 text-right font-mono font-bold text-slate-900">€ {formatAccounting(tx.volumen)}</td>
-                            <td className="py-3 pl-8 text-[10px] text-slate-500 font-semibold">
-                              Sammelzeile — antippen für alle {tx.anzahlKaeufe} Einzelkäufe
-                            </td>
-                            <td className="py-3"></td>
-                          </tr>
-                          {offen && tx.kinder.map((k: any) => (
-                            <tr key={k.id} className="bg-slate-50/60 border-b border-slate-50 text-[11px]">
-                              <td className="py-2 pl-6 font-mono text-slate-500 whitespace-nowrap">{formatToGermanDate(k.datum)}</td>
-                              <td className="py-2 font-semibold text-slate-600">{String(k.key).toUpperCase()}</td>
-                              <td className="py-2 font-mono text-slate-500">{k.depot}</td>
-                              <td className="py-2 text-right font-mono">{Number(k.anzahl).toFixed(8)}</td>
-                              <td className="py-2 text-right font-mono">€ {formatAccounting(k.kurs)}</td>
-                              <td className="py-2 text-right font-mono font-bold">€ {formatAccounting(k.volumen)}</td>
-                              <td className="py-2 pl-8 text-[10px] text-slate-400 italic truncate max-w-[260px]">{k.notiz}</td>
-                              <td className="py-2"></td>
-                            </tr>
-                          ))}
-                        </>
-                      );
-                    }
+            {/* Sortier-Leiste (ersetzt die klickbaren Spaltenköpfe der Tabelle) */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sortieren</span>
+              <select
+                value={txSortField}
+                onChange={(e) => handleSortCombined(e.target.value as 'datum' | 'name' | 'depot' | 'besitzer' | 'volumen')}
+                className="h-8 bg-white border border-slate-200 rounded-lg px-2 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-slate-400"
+              >
+                <option value="datum">Datum</option>
+                <option value="name">Wertpapier</option>
+                <option value="depot">Depot</option>
+                <option value="volumen">Volumen</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => handleSortCombined(txSortField)}
+                className="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                title="Sortierrichtung umdrehen"
+              >
+                {txSortAsc ? "▲ aufsteigend" : "▼ absteigend"}
+              </button>
+            </div>
 
+            <div className="space-y-3">
+              {gruppierteTransaktionen.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
+                  Keine Transaktionen gefunden, die dem Filter entsprechen.
+                </div>
+              ) : (
+                gruppierteTransaktionen.map((tx: any) => {
+                  const isBuy = tx.type === 'buy';
+                  const isProfit = !isBuy && (tx.gewinnVerlust || 0) >= 0;
+
+                  // ── Sparplan-Sammelkarte (aufklappbar) ──
+                  if (tx.istGruppe) {
+                    const offen = offeneGruppen.has(tx.id);
                     return (
-                      <tr key={tx.id} className="hover:bg-slate-50/40 transition-colors border-b border-slate-50">
-                        <td className="py-4">
-                          <span className="block font-semibold text-slate-400 font-mono text-[9px] uppercase whitespace-nowrap">
+                      <div key={tx.id} className="bg-slate-50/30 border border-slate-200 rounded-xl overflow-hidden">
+                        <button
+                          type="button"
+                          onClick={() => toggleGruppe(tx.id)}
+                          className="w-full text-left p-3.5 cursor-pointer hover:bg-slate-50/60 transition-colors space-y-2"
+                        >
+                          <span className="flex items-center gap-1.5">
+                            <span className={`inline-flex items-center justify-center h-4 w-4 rounded border text-[9px] font-extrabold shrink-0 ${offen ? "border-slate-800 text-slate-900" : "border-slate-300 text-slate-500"}`}>
+                              {offen ? "▾" : "▸"}
+                            </span>
+                            <span className="font-semibold text-slate-400 font-mono text-[9px] uppercase">
+                              {formatToGermanDate(tx.datumVon)} – {formatToGermanDate(tx.datumBis)}
+                            </span>
+                          </span>
+                          <div className="flex flex-wrap items-center gap-1.5">
+                            <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-sky-50 text-sky-700 border border-sky-100">
+                              🔁 SPARPLAN · {tx.anzahlKaeufe} KÄUFE
+                            </span>
+                            <span className="font-bold text-slate-900 text-sm sm:text-base">{tx.name}</span>
+                            <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase">
+                              {String(tx.key).toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px]">
+                            <span className="font-bold text-slate-700">{tx.depot}</span>
+                            <span className="text-slate-500">{tx.besitzerName}</span>
+                          </div>
+                          <div className="flex flex-wrap items-end justify-between gap-2 font-mono tabular-nums">
+                            <span className="font-bold text-slate-800">{Number(tx.anzahl).toFixed(8)} Stk.</span>
+                            <span className="text-slate-500">Ø € {formatAccounting(tx.kurs)}</span>
+                            <span className="font-bold text-slate-900">€ {formatAccounting(tx.volumen)}</span>
+                          </div>
+                          <span className="block text-[10px] text-slate-500 font-semibold">
+                            Sammelzeile — antippen für alle {tx.anzahlKaeufe} Einzelkäufe
+                          </span>
+                        </button>
+                        {offen && (
+                          <div className="border-t border-slate-100 divide-y divide-slate-100">
+                            {tx.kinder.map((k: any) => (
+                              <div key={k.id} className="px-3.5 py-2 bg-slate-50/60 text-[11px] font-mono">
+                                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
+                                  <span className="text-slate-500">{formatToGermanDate(k.datum)}</span>
+                                  <span className="font-semibold text-slate-600">{String(k.key).toUpperCase()}</span>
+                                  <span>{Number(k.anzahl).toFixed(8)}</span>
+                                  <span>€ {formatAccounting(k.kurs)}</span>
+                                  <span className="font-bold">€ {formatAccounting(k.volumen)}</span>
+                                </div>
+                                {k.notiz && (
+                                  <div className="text-[10px] text-slate-400 italic mt-0.5 font-sans truncate" title={k.notiz}>{k.notiz}</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div key={tx.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+
+                      {/* Zeile 1: Datum + Typ (links), Aktionen (rechts) */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <span className="block font-semibold text-slate-400 font-mono text-[9px] uppercase">
                             🗓️ {formatToGermanDate(tx.datum)}
                           </span>
                           <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase mt-1 ${
@@ -1739,246 +1736,235 @@ export function CombinedJournal({
                           }`}>
                             {isBuy ? '📥 KAUF' : '💸 VERKAUF'}
                           </span>
-                        </td>
-                        <td className="py-4">
-                          <span className="block font-bold text-slate-900 text-sm sm:text-base">{tx.name}</span>
-                          <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase mt-1">
-                            {String(tx.key).toUpperCase()}
-                          </span>
-                          {/* Kompakt (C): Notiz nur noch einzeilig gekuerzt.
-                              Der vollstaendige Text steht im Tooltip — vorher
-                              blies er jede Zeile auf mehrere Zeilen auf. */}
-                          {tx.notiz && (
-                            <p
-                              className="text-[10px] text-slate-500 font-medium italic mt-1 max-w-[200px] truncate"
-                              title={tx.notiz}
-                            >
-                              {tx.notiz}
-                            </p>
+                        </div>
+                        <div className="flex items-center gap-1 shrink-0">
+                          {isBuy ? (
+                            <>
+                              <button
+                                onClick={() => handleStartEditPurchase(tx.originalItem)}
+                                className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+                                title="Kauf bearbeiten"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Möchtest du diesen Kauf von ${tx.name} für € ${formatAccounting(tx.volumen)} wirklich unwiderruflich löschen?`)) {
+                                    handleDeletePurchase(tx.rawId);
+                                  }
+                                }}
+                                className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                                title="Kauf löschen"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </>
+                          ) : (
+                            <>
+                              <button
+                                onClick={() => handleStartEditSale(tx.originalItem)}
+                                className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
+                                title="Verkauf bearbeiten"
+                              >
+                                <Edit className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => handleUndoSale(tx.originalItem)}
+                                className="p-1.5 hover:bg-amber-50/70 rounded-lg text-slate-400 hover:text-amber-600 transition-colors cursor-pointer"
+                                title="Verkauf rückgängig machen (Vollständig stornieren & Depot-Bestände wiederherstellen)"
+                              >
+                                <RotateCcw className="h-3.5 w-3.5" />
+                              </button>
+                              <button
+                                onClick={() => {
+                                  if (confirm(`Möchtest du diesen Verkaufseintrag für ${tx.name} wirklich unwiderruflich aus der Historie löschen?`)) {
+                                    handleDeleteSale(tx.rawId);
+                                  }
+                                }}
+                                className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                                title="Verkauf löschen"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </>
                           )}
-                          {tx.gedanken && (
-                            <p className="text-[10px] text-slate-600 font-medium italic mt-1.5 max-w-[200px] whitespace-normal leading-tight border-l-2 border-emerald-500 pl-2">
-                              <b>Gedanken:</b> " {tx.gedanken} "
-                            </p>
-                          )}
-                          {tx.ziele && (
-                            <p className="text-[10px] text-slate-700 font-medium italic mt-1.5 max-w-[200px] whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
-                              <b>Ziele:</b> " {tx.ziele} "
-                            </p>
-                          )}
-                        </td>
-                        <td className="py-4">
-                          <span className="block px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[9.5px] font-bold border border-slate-200 max-w-max whitespace-nowrap">
-                            🏢 {tx.depot}
-                          </span>
-                          <span className="block px-2 py-0.5 rounded bg-slate-50 text-slate-900 font-mono text-[9.5px] font-bold border border-slate-100 max-w-max mt-1 whitespace-nowrap">
-                            👤 {tx.besitzerName}
-                          </span>
-                        </td>
-                        <td className="py-4 text-right font-mono tabular-nums">
-                          <span className={isBuy ? "text-emerald-600 font-bold" : "text-rose-600 font-bold"}>
+                        </div>
+                      </div>
+
+                      {/* Zeile 2: Wertpapier + Notizen */}
+                      <div>
+                        <span className="font-bold text-slate-900 text-sm sm:text-base mr-1.5">{tx.name}</span>
+                        <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase align-middle">
+                          {String(tx.key).toUpperCase()}
+                        </span>
+                        {tx.notiz && (
+                          <p
+                            className="text-[10px] text-slate-500 font-medium italic mt-1 truncate"
+                            title={tx.notiz}
+                          >
+                            {tx.notiz}
+                          </p>
+                        )}
+                        {tx.gedanken && (
+                          <p className="text-[10px] text-slate-600 font-medium italic mt-1.5 whitespace-normal leading-tight border-l-2 border-emerald-500 pl-2">
+                            <b>Gedanken:</b> " {tx.gedanken} "
+                          </p>
+                        )}
+                        {tx.ziele && (
+                          <p className="text-[10px] text-slate-700 font-medium italic mt-1.5 whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
+                            <b>Ziele:</b> " {tx.ziele} "
+                          </p>
+                        )}
+                      </div>
+
+                      {/* Zeile 3: Depot & Besitzer */}
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[9.5px] font-bold border border-slate-200">
+                          🏢 {tx.depot}
+                        </span>
+                        <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-900 font-mono text-[9.5px] font-bold border border-slate-100">
+                          👤 {tx.besitzerName}
+                        </span>
+                      </div>
+
+                      {/* Zeile 4: Zahlen */}
+                      <div className="grid grid-cols-3 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
+                        <div>
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Stückzahl</span>
+                          <span className={`font-mono tabular-nums font-bold ${isBuy ? "text-emerald-600" : "text-rose-600"}`}>
                             {isBuy ? "+" : "-"}{tx.anzahlAktien} Stk.
                           </span>
-                        </td>
-                        <td className="py-4 text-right font-mono tabular-nums text-slate-600">
-                          € {formatAccounting(tx.kaufKurs || tx.verkaufsKurs || 0)}
-                        </td>
-                        <td className="py-4 text-right font-mono tabular-nums font-bold text-slate-800">
-                          € {formatAccounting(tx.volumen)}
-                        </td>
-                        <td className="py-4 pl-8 text-left max-w-[300px]">
-                          {isBuy ? (
-                            <div>
-                              <div className="flex items-center gap-1.5 font-sans font-semibold">
-                                <span className={`px-1.5 py-0.5 rounded font-mono text-[8.5px] font-extrabold ${
-                                  tx.verbleibendeAnzahlAktien === tx.anzahlAktien 
-                                    ? 'bg-emerald-50 text-emerald-700' 
-                                    : tx.verbleibendeAnzahlAktien === 0 
-                                      ? 'bg-slate-100 text-slate-400 italic' 
-                                      : 'bg-amber-50 text-amber-700 border-amber-200/50 border'
-                                }`}>
-                                  {tx.verbleibendeAnzahlAktien === tx.anzahlAktien 
-                                    ? '🟢 Aktiv' 
-                                    : tx.verbleibendeAnzahlAktien === 0 
-                                      ? '⚪ Aufgebraucht' 
-                                      : '🟡 Angeschnitten'}
-                                </span>
-                                <span className="text-[11px] font-mono text-slate-700">
-                                  {tx.verbleibendeAnzahlAktien?.toFixed(4)} verbleibend
-                                </span>
-                              </div>
-                              
-                              {/* Remaining bar */}
-                              <div className="w-40 bg-slate-100 h-1 rounded-full mt-1.5 overflow-hidden">
-                                <div 
-                                  className="bg-emerald-500 h-full rounded-full transition-all"
-                                  style={{ width: `${((tx.verbleibendeAnzahlAktien || 0) / tx.anzahlAktien) * 100}%` }}
-                                />
-                              </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Einstand / Kurs</span>
+                          <span className="font-mono tabular-nums text-slate-600">€ {formatAccounting(tx.kaufKurs || tx.verkaufsKurs || 0)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Volumen</span>
+                          <span className="font-mono tabular-nums font-bold text-slate-800">€ {formatAccounting(tx.volumen)}</span>
+                        </div>
+                      </div>
 
-                              {/* Bidirectional matching details */}
-                              {renderPurchaseSalesMatches(tx.rawId)}
+                      {/* Zeile 5: Steuer-Heuristik & Tranchenergebnis */}
+                      <div>
+                        {isBuy ? (
+                          <div>
+                            <div className="flex items-center gap-1.5 font-sans font-semibold">
+                              <span className={`px-1.5 py-0.5 rounded font-mono text-[8.5px] font-extrabold ${
+                                tx.verbleibendeAnzahlAktien === tx.anzahlAktien 
+                                  ? 'bg-emerald-50 text-emerald-700' 
+                                  : tx.verbleibendeAnzahlAktien === 0 
+                                    ? 'bg-slate-100 text-slate-400 italic' 
+                                    : 'bg-amber-50 text-amber-700 border-amber-200/50 border'
+                              }`}>
+                                {tx.verbleibendeAnzahlAktien === tx.anzahlAktien 
+                                  ? '🟢 Aktiv' 
+                                  : tx.verbleibendeAnzahlAktien === 0 
+                                    ? '⚪ Aufgebraucht' 
+                                    : '🟡 Angeschnitten'}
+                              </span>
+                              <span className="text-[11px] font-mono text-slate-700">
+                                {tx.verbleibendeAnzahlAktien?.toFixed(4)} verbleibend
+                              </span>
                             </div>
-                          ) : (
-                            <div className="space-y-1">
-                              {/* taxMethod badge */}
-                              <div className="flex items-center gap-1.5 font-bold">
-                                <span className={`px-1.5 py-0.5 rounded-md font-mono text-[8px] tracking-wide border ${
-                                  tx.taxMethod === 'FIFO'
-                                    ? 'bg-amber-100/40 text-amber-800 border-amber-200/40'
-                                    : 'bg-slate-50 text-slate-900 border border-slate-200'
-                                }`}>
-                                  {tx.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
-                                </span>
-                                <span className={isProfit ? "text-emerald-600" : "text-rose-600"}>
-                                  Ergebnis: {isProfit ? "+" : ""}{formatAccounting(tx.gewinnVerlust || 0)} €
-                                </span>
-                              </div>
-
-                              {/* Details: Gross, tax, net */}
-                              <div className="text-[10px] text-slate-500 font-medium">
-                                <span className="block">KESt (27,5%): € {formatAccounting(tx.kestBetrag || 0)}</span>
-                                <span className={`block font-semibold ${isProfit ? "text-emerald-700" : "text-rose-700"}`}>
-                                  Netto: € {formatAccounting(tx.nettoGewinn || 0)}
-                                </span>
-                              </div>
-
-                              {/* Consumed Purchases list */}
-                              {renderLotsDetails(tx)}
+                            
+                            {/* Remaining bar */}
+                            <div className="w-full bg-slate-100 h-1 rounded-full mt-1.5 overflow-hidden">
+                              <div 
+                                className="bg-emerald-500 h-full rounded-full transition-all"
+                                style={{ width: `${((tx.verbleibendeAnzahlAktien || 0) / tx.anzahlAktien) * 100}%` }}
+                              />
                             </div>
-                          )}
-                        </td>
-                        <td className="py-4 text-center">
-                          <div className="flex items-center justify-center gap-1">
-                            {isBuy ? (
-                              <>
-                                <button
-                                  onClick={() => handleStartEditPurchase(tx.originalItem)}
-                                  className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
-                                  title="Kauf bearbeiten"
-                                >
-                                  <Edit className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (confirm(`Möchtest du diesen Kauf von ${tx.name} für € ${formatAccounting(tx.volumen)} wirklich unwiderruflich löschen?`)) {
-                                      handleDeletePurchase(tx.rawId);
-                                    }
-                                  }}
-                                  className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                                  title="Kauf löschen"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </>
-                            ) : (
-                              <>
-                                <button
-                                  onClick={() => handleStartEditSale(tx.originalItem)}
-                                  className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
-                                  title="Verkauf bearbeiten"
-                                >
-                                  <Edit className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => handleUndoSale(tx.originalItem)}
-                                  className="p-1.5 hover:bg-amber-50/70 rounded-lg text-slate-400 hover:text-amber-600 transition-colors cursor-pointer"
-                                  title="Verkauf rückgängig machen (Vollständig stornieren & Depot-Bestände wiederherstellen)"
-                                >
-                                  <RotateCcw className="h-3.5 w-3.5" />
-                                </button>
-                                <button
-                                  onClick={() => {
-                                    if (confirm(`Möchtest du diesen Verkaufseintrag für ${tx.name} wirklich unwiderruflich aus der Historie löschen?`)) {
-                                      handleDeleteSale(tx.rawId);
-                                    }
-                                  }}
-                                  className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                                  title="Verkauf löschen"
-                                >
-                                  <Trash2 className="h-3.5 w-3.5" />
-                                </button>
-                              </>
-                            )}
+
+                            {/* Bidirectional matching details */}
+                            {renderPurchaseSalesMatches(tx.rawId)}
                           </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                        ) : (
+                          <div className="space-y-1">
+                            {/* taxMethod badge */}
+                            <div className="flex items-center gap-1.5 font-bold">
+                              <span className={`px-1.5 py-0.5 rounded-md font-mono text-[8px] tracking-wide border ${
+                                tx.taxMethod === 'FIFO'
+                                  ? 'bg-amber-100/40 text-amber-800 border-amber-200/40'
+                                  : 'bg-slate-50 text-slate-900 border border-slate-200'
+                              }`}>
+                                {tx.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
+                              </span>
+                              <span className={isProfit ? "text-emerald-600" : "text-rose-600"}>
+                                Ergebnis: {isProfit ? "+" : ""}{formatAccounting(tx.gewinnVerlust || 0)} €
+                              </span>
+                            </div>
+
+                            {/* Details: Gross, tax, net */}
+                            <div className="text-[10px] text-slate-500 font-medium">
+                              <span className="block">KESt (27,5%): € {formatAccounting(tx.kestBetrag || 0)}</span>
+                              <span className={`block font-semibold ${isProfit ? "text-emerald-700" : "text-rose-700"}`}>
+                                Netto: € {formatAccounting(tx.nettoGewinn || 0)}
+                              </span>
+                            </div>
+
+                            {/* Consumed Purchases list */}
+                            {renderLotsDetails(tx)}
+                          </div>
+                        )}
+                      </div>
+
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
 
         {/* TAB 2: INDIVIDUAL PURCHASES (ORIGINAL) */}
         {journalTab === 'purchases' && (
-          <div className="overflow-x-auto pt-1 text-xs sm:text-sm">
+          <div className="pt-1 text-xs sm:text-sm">
             <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">
               📥 Anschaffungs-Journal (Einzahlungen/Tranchen)
             </h4>
-            <table className="w-full text-left border-collapse text-xs sm:text-sm" style={{ minWidth: "950px" }}>
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-widest select-none">
-                  <th onClick={() => handleSortPurchasesClick("kaufDatum")} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors col-span-2">
-                    <div className="flex items-center gap-1">
-                      <span>Datum / Asset</span>
-                      <span className="text-[8px] text-slate-400">{purchaseSortField === "kaufDatum" ? (purchaseSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortPurchasesClick("depot")} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1">
-                      <span>Depot</span>
-                      <span className="text-[8px] text-slate-400">{purchaseSortField === "depot" ? (purchaseSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortPurchasesClick("besitzerName")} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1">
-                      <span>Besitzer</span>
-                      <span className="text-[8px] text-slate-400">{purchaseSortField === "besitzerName" ? (purchaseSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortPurchasesClick("anzahlAktien")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Kauf-Menge</span>
-                      <span className="text-[8px] text-slate-400">{purchaseSortField === "anzahlAktien" ? (purchaseSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortPurchasesClick("verbleibendeAnzahlAktien")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Verbleibende Stk. (Aktiv)</span>
-                      <span className="text-[8px] text-slate-400">{purchaseSortField === "verbleibendeAnzahlAktien" ? (purchaseSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortPurchasesClick("kaufKurs")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Kaufkurs</span>
-                      <span className="text-[8px] text-slate-400">{purchaseSortField === "kaufKurs" ? (purchaseSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortPurchasesClick("tatsaechlicheKosten")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Anschaffungswert</span>
-                      <span className="text-[8px] text-slate-400">{purchaseSortField === "tatsaechlicheKosten" ? (purchaseSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th className="pb-3 text-center">Aktion</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
-                {sortedPurchases.length === 0 ? (
-                  <tr>
-                    <td colSpan={8} className="py-8 text-center text-slate-400 font-semibold font-sans">
-                      Es sind noch keine Anschaffungseinträge im Journal vorhanden. Buche einen Kauf oben!
-                    </td>
-                  </tr>
-                ) : (
-                  sortedPurchases.map((purchase) => {
-                    const isActive = purchase.verbleibendeAnzahlAktien > 0;
-                    
-                    return (
-                      <tr key={purchase.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100">
-                        <td className="py-4">
+
+            {/* Sortier-Leiste (ersetzt die klickbaren Spaltenköpfe der Tabelle) */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sortieren</span>
+              <select
+                value={purchaseSortField}
+                onChange={(e) => handleSortPurchasesClick(e.target.value)}
+                className="h-8 bg-white border border-slate-200 rounded-lg px-2 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-slate-400"
+              >
+                <option value="kaufDatum">Datum</option>
+                <option value="depot">Depot</option>
+                <option value="besitzerName">Besitzer</option>
+                <option value="anzahlAktien">Kauf-Menge</option>
+                <option value="verbleibendeAnzahlAktien">Verbleibende Stk.</option>
+                <option value="kaufKurs">Kaufkurs</option>
+                <option value="tatsaechlicheKosten">Anschaffungswert</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => handleSortPurchasesClick(purchaseSortField)}
+                className="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                title="Sortierrichtung umdrehen"
+              >
+                {purchaseSortAsc ? "▲ aufsteigend" : "▼ absteigend"}
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {sortedPurchases.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
+                  Es sind noch keine Anschaffungseinträge im Journal vorhanden. Buche einen Kauf oben!
+                </div>
+              ) : (
+                sortedPurchases.map((purchase) => {
+                  const isActive = purchase.verbleibendeAnzahlAktien > 0;
+                  
+                  return (
+                    <div key={purchase.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+
+                      {/* Zeile 1: Asset + Datum (links), Aktionen (rechts) */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
                           <span className="block font-bold text-slate-900 text-sm sm:text-base">{purchase.name}</span>
                           <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                             <span className="block text-[9px] font-semibold text-slate-400 font-mono uppercase">
@@ -1988,150 +1974,137 @@ export function CombinedJournal({
                               {String(purchase.key).toUpperCase()}
                             </span>
                           </div>
-                          {purchase.notiz && (
-                            <p className="text-[10px] text-slate-500 font-medium italic mt-2.5 max-w-[245px] whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
-                              <b>Notiz:</b> " {purchase.notiz} "
-                            </p>
-                          )}
-                          {purchase.gedanken && (
-                            <p className="text-[10px] text-slate-600 font-medium italic mt-1.5 max-w-[245px] whitespace-normal leading-tight border-l-2 border-emerald-500 pl-2">
-                              <b>Gedanken:</b> " {purchase.gedanken} "
-                            </p>
-                          )}
-                          {purchase.ziele && (
-                            <p className="text-[10px] text-slate-700 font-medium italic mt-1.5 max-w-[245px] whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
-                              <b>Ziele:</b> " {purchase.ziele} "
-                            </p>
-                          )}
-                        </td>
-                        <td className="py-4">
-                          <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200 whitespace-nowrap">
-                            {purchase.depot || "Standard Depot"}
-                          </span>
-                        </td>
-                        <td className="py-4">
-                          <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200 whitespace-nowrap">
-                            {purchase.besitzerName || "Standard Besitzer"}
-                          </span>
-                        </td>
-                        <td className="py-4 text-right font-mono tabular-nums text-slate-500">{purchase.anzahlAktien} Stk.</td>
-                        <td className="py-4 text-right font-mono tabular-nums">
-                          <span className={`font-bold px-1.5 py-0.5 rounded-md ${isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400 italic font-medium'}`}>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => handleStartEditPurchase(purchase)}
+                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
+                            title="Anschaffung ändern / bearbeiten"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              if (confirm(`Möchtest du diesen Anschaffungseintrag für ${purchase.name} wirklich unwiderruflich aus dem Journal löschen?`)) {
+                                handleDeletePurchase(purchase.id);
+                              }
+                            }}
+                            className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-450 hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Anschaffung löschen"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Notizen */}
+                      {purchase.notiz && (
+                        <p className="text-[10px] text-slate-500 font-medium italic whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
+                          <b>Notiz:</b> " {purchase.notiz} "
+                        </p>
+                      )}
+                      {purchase.gedanken && (
+                        <p className="text-[10px] text-slate-600 font-medium italic whitespace-normal leading-tight border-l-2 border-emerald-500 pl-2">
+                          <b>Gedanken:</b> " {purchase.gedanken} "
+                        </p>
+                      )}
+                      {purchase.ziele && (
+                        <p className="text-[10px] text-slate-700 font-medium italic whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
+                          <b>Ziele:</b> " {purchase.ziele} "
+                        </p>
+                      )}
+
+                      {/* Depot & Besitzer */}
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">
+                          {purchase.depot || "Standard Depot"}
+                        </span>
+                        <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200">
+                          {purchase.besitzerName || "Standard Besitzer"}
+                        </span>
+                      </div>
+
+                      {/* Zahlen */}
+                      <div className="grid grid-cols-2 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
+                        <div>
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Kauf-Menge</span>
+                          <span className="font-mono tabular-nums text-slate-500">{purchase.anzahlAktien} Stk.</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Verbleibend (Aktiv)</span>
+                          <span className={`font-mono tabular-nums font-bold px-1.5 py-0.5 rounded-md ${isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400 italic font-medium'}`}>
                             {purchase.verbleibendeAnzahlAktien.toFixed(4)} {isActive ? "Stk. aktiv" : "vollständig realisiert"}
                           </span>
-                        </td>
-                        <td className="py-4 text-right font-mono tabular-nums text-slate-600">€ {formatAccounting(purchase.kaufKurs)}</td>
-                        <td className="py-4 text-right font-mono tabular-nums font-bold text-slate-800">€ {formatAccounting(purchase.tatsaechlicheKosten)}</td>
-                        
-                        <td className="py-4 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              onClick={() => handleStartEditPurchase(purchase)}
-                              className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
-                              title="Anschaffung ändern / bearbeiten"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </button>
-                            
-                            <button
-                              onClick={() => {
-                                if (confirm(`Möchtest du diesen Anschaffungseintrag für ${purchase.name} wirklich unwiderruflich aus dem Journal löschen?`)) {
-                                  handleDeletePurchase(purchase.id);
-                                }
-                              }}
-                              className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-450 hover:text-rose-600 transition-colors cursor-pointer"
-                              title="Anschaffung löschen"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                        </div>
+                        <div>
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Kaufkurs</span>
+                          <span className="font-mono tabular-nums text-slate-600">€ {formatAccounting(purchase.kaufKurs)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Anschaffungswert</span>
+                          <span className="font-mono tabular-nums font-bold text-slate-800">€ {formatAccounting(purchase.tatsaechlicheKosten)}</span>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
 
         {/* TAB 3: INDIVIDUAL SALES (ORIGINAL) */}
         {journalTab === 'sales' && (
-          <div className="overflow-x-auto pt-1 text-xs sm:text-sm">
+          <div className="pt-1 text-xs sm:text-sm">
             <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-widest mb-3">
               📈 Trade-Historie (Realisierte Verkäufe)
             </h4>
-            <table className="w-full text-left border-collapse text-xs sm:text-sm" style={{ minWidth: "950px" }}>
-              <thead>
-                <tr className="border-b border-slate-100 text-slate-400 font-bold text-[10px] uppercase tracking-widest select-none">
-                  <th onClick={() => handleSortSalesClick("verkaufsDatum")} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1">
-                      <span>Datum / Asset</span>
-                      <span className="text-[8px] text-slate-400">{saleSortField === "verkaufsDatum" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortSalesClick("depot")} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1">
-                      <span>Depot</span>
-                      <span className="text-[8px] text-slate-400">{saleSortField === "depot" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortSalesClick("besitzerName")} className="pb-3 cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1">
-                      <span>Besitzer</span>
-                      <span className="text-[8px] text-slate-400">{saleSortField === "besitzerName" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortSalesClick("anzahlAktien")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Verkauft</span>
-                      <span className="text-[8px] text-slate-400">{saleSortField === "anzahlAktien" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortSalesClick("kaufKurs")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Einstandkurs</span>
-                      <span className="text-[8px] text-slate-400">{saleSortField === "kaufKurs" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th onClick={() => handleSortSalesClick("verkaufsKurs")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Verkaufskurs</span>
-                      <span className="text-[8px] text-slate-400">{saleSortField === "verkaufsKurs" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th className="pb-3 text-right">Erlös-Volumen</th>
-                  <th onClick={() => handleSortSalesClick("gewinnVerlust")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Ertrag (Brutto)</span>
-                      <span className="text-[8px] text-slate-400">{saleSortField === "gewinnVerlust" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th className="pb-3 text-right text-rose-500">KESt (27.5%)</th>
-                  <th onClick={() => handleSortSalesClick("nettoGewinn")} className="pb-3 text-right cursor-pointer hover:bg-slate-100 transition-colors">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span>Netto-Ertrag (P&amp;L)</span>
-                      <span className="text-[8px] text-slate-400">{saleSortField === "nettoGewinn" ? (saleSortAsc ? "▲" : "▼") : "↕"}</span>
-                    </div>
-                  </th>
-                  <th className="pb-3 text-center">Aktion</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 font-medium">
-                {sortedSales.length === 0 ? (
-                  <tr>
-                    <td colSpan={11} className="py-8 text-center text-slate-400 font-semibold font-sans">
-                      Es sind noch keine geschlossenen Verkäufe dokumentiert.
-                    </td>
-                  </tr>
-                ) : (
-                  sortedSales.map((trade) => {
-                    const volume = trade.verkaufsKurs * trade.anzahlAktien;
-                    const isProfit = trade.gewinnVerlust >= 0;
-                    
-                    return (
-                      <tr key={trade.id} className="hover:bg-slate-50/50 transition-colors border-b border-slate-100">
-                        <td className="py-4">
+
+            {/* Sortier-Leiste (ersetzt die klickbaren Spaltenköpfe der Tabelle) */}
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Sortieren</span>
+              <select
+                value={saleSortField}
+                onChange={(e) => handleSortSalesClick(e.target.value)}
+                className="h-8 bg-white border border-slate-200 rounded-lg px-2 text-[11px] font-bold text-slate-800 focus:outline-none focus:border-slate-400"
+              >
+                <option value="verkaufsDatum">Datum</option>
+                <option value="depot">Depot</option>
+                <option value="besitzerName">Besitzer</option>
+                <option value="anzahlAktien">Verkauft (Stk.)</option>
+                <option value="kaufKurs">Einstandkurs</option>
+                <option value="verkaufsKurs">Verkaufskurs</option>
+                <option value="gewinnVerlust">Ertrag (Brutto)</option>
+                <option value="nettoGewinn">Netto-Ertrag</option>
+              </select>
+              <button
+                type="button"
+                onClick={() => handleSortSalesClick(saleSortField)}
+                className="h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 hover:bg-slate-50 transition-colors cursor-pointer"
+                title="Sortierrichtung umdrehen"
+              >
+                {saleSortAsc ? "▲ aufsteigend" : "▼ absteigend"}
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {sortedSales.length === 0 ? (
+                <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
+                  Es sind noch keine geschlossenen Verkäufe dokumentiert.
+                </div>
+              ) : (
+                sortedSales.map((trade) => {
+                  const volume = trade.verkaufsKurs * trade.anzahlAktien;
+                  const isProfit = trade.gewinnVerlust >= 0;
+                  
+                  return (
+                    <div key={trade.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+
+                      {/* Zeile 1: Asset + Datum + Methode (links), Aktionen (rechts) */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
                           <span className="block font-bold text-slate-900 text-sm sm:text-base">{trade.name}</span>
                           <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
                             <span className="block text-[9px] font-semibold text-slate-400 uppercase font-mono">
@@ -2145,80 +2118,101 @@ export function CombinedJournal({
                               {trade.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
                             </span>
                           </div>
-                          {trade.notiz && (
-                            <p className="text-[10px] text-slate-500 font-medium italic mt-2.5 max-w-[240px] whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
-                              " {trade.notiz} "
-                            </p>
-                          )}
-                        </td>
-                        <td className="py-4">
-                          <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200 whitespace-nowrap">
-                            {trade.depot || "Standard Depot"}
-                          </span>
-                        </td>
-                        <td className="py-4">
-                          <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200 whitespace-nowrap">
-                            {trade.besitzerName || "Standard Besitzer"}
-                          </span>
-                        </td>
-                        <td className="py-4 text-right font-mono tabular-nums font-semibold">{trade.anzahlAktien}</td>
-                        <td className="py-4 text-right font-mono tabular-nums text-slate-450">€ {formatAccounting(trade.kaufKurs)}</td>
-                        <td className="py-4 text-right font-mono tabular-nums text-slate-700">€ {formatAccounting(trade.verkaufsKurs)}</td>
-                        <td className="py-4 text-right font-mono tabular-nums font-semibold">€ {formatAccounting(volume)}</td>
-                        
-                        <td className="py-4 text-right font-mono font-bold tabular-nums">
-                          <span className={isProfit ? "text-emerald-600" : "text-rose-600"}>
+                        </div>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            onClick={() => handleStartEditSale(trade)}
+                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
+                            title="Eintrag ändern / bearbeiten"
+                          >
+                            <Edit className="h-3.5 w-3.5" />
+                          </button>
+                          
+                          <button
+                            onClick={() => handleUndoSale(trade)}
+                            className="p-1.5 hover:bg-amber-50/70 rounded-lg text-slate-450 hover:text-amber-600 transition-colors cursor-pointer"
+                            title="Verkauf rückgängig machen (Vollständig stornieren & Depot-Reservierung aktivieren)"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => handleDeleteSale(trade.id)}
+                            className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
+                            title="Eintrag aus Journal löschen"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </div>
+                      </div>
+
+                      {trade.notiz && (
+                        <p className="text-[10px] text-slate-500 font-medium italic whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
+                          " {trade.notiz} "
+                        </p>
+                      )}
+
+                      {/* Depot & Besitzer */}
+                      <div className="flex flex-wrap gap-1.5">
+                        <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">
+                          {trade.depot || "Standard Depot"}
+                        </span>
+                        <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200">
+                          {trade.besitzerName || "Standard Besitzer"}
+                        </span>
+                      </div>
+
+                      {/* Zahlen: Mengen & Kurse */}
+                      <div className="grid grid-cols-2 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
+                        <div>
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Verkauft</span>
+                          <span className="font-mono tabular-nums font-semibold">{trade.anzahlAktien} Stk.</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Einstandkurs</span>
+                          <span className="font-mono tabular-nums text-slate-450">€ {formatAccounting(trade.kaufKurs)}</span>
+                        </div>
+                        <div>
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Verkaufskurs</span>
+                          <span className="font-mono tabular-nums text-slate-700">€ {formatAccounting(trade.verkaufsKurs)}</span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Erlös-Volumen</span>
+                          <span className="font-mono tabular-nums font-semibold">€ {formatAccounting(volume)}</span>
+                        </div>
+                      </div>
+
+                      {/* Ergebnis: Brutto, KESt, Netto */}
+                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border border-slate-100 rounded-lg p-2">
+                        <div>
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Ertrag (Brutto)</span>
+                          <span className={`font-mono font-bold tabular-nums ${isProfit ? "text-emerald-600" : "text-rose-600"}`}>
                             {isProfit ? "+" : ""}{formatAccounting(trade.gewinnVerlust)} €
                           </span>
-                        </td>
-   
-                        <td className="py-4 text-right font-mono tabular-nums text-rose-500 text-xs">
-                          {trade.kestBetrag > 0 ? (
-                            <span>-{formatAccounting(trade.kestBetrag)} €</span>
-                          ) : (
-                            <span className="text-slate-400">0,00 €</span>
-                          )}
-                        </td>
-   
-                        <td className="py-4 text-right font-mono font-bold tabular-nums text-sm sm:text-base">
-                          <span className={trade.nettoGewinn >= 0 ? "text-emerald-600 animate-pulse font-extrabold" : "text-rose-600"}>
+                        </div>
+                        <div>
+                          <span className="block text-[9px] font-bold text-rose-500 uppercase tracking-wider">KESt (27,5%)</span>
+                          <span className="font-mono tabular-nums text-rose-500 text-xs">
+                            {trade.kestBetrag > 0 ? (
+                              <span>-{formatAccounting(trade.kestBetrag)} €</span>
+                            ) : (
+                              <span className="text-slate-400">0,00 €</span>
+                            )}
+                          </span>
+                        </div>
+                        <div className="text-right">
+                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Netto-Ertrag (P&amp;L)</span>
+                          <span className={`font-mono font-bold tabular-nums text-sm sm:text-base ${trade.nettoGewinn >= 0 ? "text-emerald-600 animate-pulse font-extrabold" : "text-rose-600"}`}>
                             {trade.nettoGewinn >= 0 ? "+" : ""}{formatAccounting(trade.nettoGewinn)} €
                           </span>
-                        </td>
-   
-                        <td className="py-4 text-center">
-                          <div className="flex items-center justify-center gap-1.5">
-                            <button
-                              onClick={() => handleStartEditSale(trade)}
-                              className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
-                              title="Eintrag ändern / bearbeiten"
-                            >
-                              <Edit className="h-3.5 w-3.5" />
-                            </button>
-                            
-                            <button
-                              onClick={() => handleUndoSale(trade)}
-                              className="p-1.5 hover:bg-amber-50/70 rounded-lg text-slate-450 hover:text-amber-600 transition-colors cursor-pointer"
-                              title="Verkauf rückgängig machen (Vollständig stornieren & Depot-Reservierung aktivieren)"
-                            >
-                              <RotateCcw className="h-3.5 w-3.5" />
-                            </button>
-  
-                            <button
-                              onClick={() => handleDeleteSale(trade.id)}
-                              className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                              title="Eintrag aus Journal löschen"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
-              </tbody>
-            </table>
+                        </div>
+                      </div>
+
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </div>
         )}
 

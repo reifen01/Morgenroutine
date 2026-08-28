@@ -982,7 +982,7 @@ export default function MorgenroutineTab({
               <div className="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
                 <div className="flex items-center justify-between gap-2">
                   <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <span>VXV (3-Monats VIX)</span>
+                    <span>VIX/VXV-Verhältnis (Contango)</span>
                     <button
                       type="button"
                       onClick={() => toggleHelp('vxv')}
@@ -1014,8 +1014,11 @@ export default function MorgenroutineTab({
                       <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Backwardation</span>
                     )}
                   </div>
-                  <div className="text-right font-mono font-bold tabular-nums text-base text-slate-800">
-                    {vxv ? vxv.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
+                  <div className={`text-right font-mono font-bold tabular-nums text-base ${ratio !== null && !isContango ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
+                    {ratio !== null ? ratio.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
+                    <div className="mt-0.5 text-[10px] font-medium text-slate-500 leading-none">
+                      VIX {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"} · VXV {vxv ? vxv.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                    </div>
                     <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥1,00</span></div>
                   </div>
                 </div>
