@@ -24,7 +24,7 @@ import {
 } from "lucide-react";
 import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot } from "../types";
 import HilfeLink from "./HilfeLink";
-import { computeTrend, TrendArrow, TrendHistory } from "./TrendBarometer";
+import { computeTrend, TrendArrow, TrendHistory, TrendKey } from "./TrendBarometer";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
   parseCleanFloat, 
@@ -68,6 +68,7 @@ function DecimalInput({ value, onChange, placeholder, className, disabled }: Dec
       onChange(null);
     }
   };
+
 
   return (
     <input
@@ -628,6 +629,41 @@ export default function MorgenroutineTab({
   const gas = marketState.gas;
 
   const isContango = ratio !== null ? ratio < 1.0 : false;
+
+  /**
+   * Rechter Kopfbereich jeder Indikator-Karte: zwei fingertaugliche
+   * Buttons mit Beschriftung und Trennlinie. Pfeil UND ⓘ öffnen beide
+   * den Tageswerte-Verlauf — der Pfeil sah antippbar aus, war es aber
+   * nicht; jetzt ist er es.
+   */
+  const renderTrendVerlauf = (trendKey: TrendKey, histId: string) => (
+    <div className="flex items-stretch shrink-0">
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide leading-none">Trend</span>
+        <button
+          type="button"
+          onClick={() => toggleHelp(histId)}
+          className="cursor-pointer active:scale-95 transition-transform"
+          title="Trend — antippen zeigt die gesammelten Tageswerte"
+        >
+          <TrendArrow result={computeTrend(dailyHistory, trendKey)} />
+        </button>
+      </div>
+      <div className="w-px bg-slate-200 mx-2.5 my-0.5"></div>
+      <div className="flex flex-col items-center gap-1">
+        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide leading-none">Verlauf</span>
+        <button
+          type="button"
+          onClick={() => toggleHelp(histId)}
+          className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
+          title="Gesammelte Tageswerte anzeigen"
+        >
+          <Info className="h-4 w-4" />
+        </button>
+      </div>
+    </div>
+  );
+
   const livesFilled = vix !== null && vxv !== null && marketState.vvix !== null && wti !== null && gas !== null;
   
   // Strict System check logic
@@ -937,17 +973,7 @@ export default function MorgenroutineTab({
                       <HelpCircle className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <TrendArrow result={computeTrend(dailyHistory, "vix")} />
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('hist-vix')}
-                      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
-                      title="Gesammelte Tageswerte anzeigen"
-                    >
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </div>
+                  {renderTrendVerlauf("vix", "hist-vix")}
                 </div>
                 <div className="flex items-end justify-between gap-2">
                   <div>
@@ -992,17 +1018,7 @@ export default function MorgenroutineTab({
                       <HelpCircle className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <TrendArrow result={computeTrend(dailyHistory, "ratio")} />
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('hist-ratio')}
-                      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
-                      title="Gesammelte Tageswerte anzeigen"
-                    >
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </div>
+                  {renderTrendVerlauf("ratio", "hist-ratio")}
                 </div>
                 <div className="flex items-end justify-between gap-2">
                   <div>
@@ -1050,17 +1066,7 @@ export default function MorgenroutineTab({
                       <HelpCircle className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <TrendArrow result={computeTrend(dailyHistory, "vvix")} />
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('hist-vvix')}
-                      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
-                      title="Gesammelte Tageswerte anzeigen"
-                    >
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </div>
+                  {renderTrendVerlauf("vvix", "hist-vvix")}
                 </div>
                 <div className="flex items-end justify-between gap-2">
                   <div>
@@ -1108,17 +1114,7 @@ export default function MorgenroutineTab({
                       <HelpCircle className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <TrendArrow result={computeTrend(dailyHistory, "wti")} />
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('hist-wti')}
-                      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
-                      title="Gesammelte Tageswerte anzeigen"
-                    >
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </div>
+                  {renderTrendVerlauf("wti", "hist-wti")}
                 </div>
                 <div className="flex items-end justify-between gap-2">
                   <div>
@@ -1162,17 +1158,7 @@ export default function MorgenroutineTab({
                       <HelpCircle className="h-3.5 w-3.5" />
                     </button>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <TrendArrow result={computeTrend(dailyHistory, "gas")} />
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('hist-gas')}
-                      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
-                      title="Gesammelte Tageswerte anzeigen"
-                    >
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </div>
+                  {renderTrendVerlauf("gas", "hist-gas")}
                 </div>
                 <div className="flex items-end justify-between gap-2">
                   <div>
@@ -1227,17 +1213,7 @@ export default function MorgenroutineTab({
                       ) : null}
                     </div>
                   </div>
-                  <div className="flex items-center gap-1 shrink-0">
-                    <TrendArrow result={computeTrend(dailyHistory, "dist")} />
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('hist-dist')}
-                      className="inline-flex items-center justify-center w-4 h-4 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all cursor-pointer shrink-0"
-                      title="Gesammelte Tageswerte anzeigen"
-                    >
-                      <Info className="h-3 w-3" />
-                    </button>
-                  </div>
+                  {renderTrendVerlauf("dist", "hist-dist")}
                 </div>
                 <div className="flex items-end justify-between gap-2">
                   <div>
