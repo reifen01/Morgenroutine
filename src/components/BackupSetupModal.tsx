@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { X, Lock, Download, AlertTriangle, KeyRound, Hash } from "lucide-react";
+import SecretInput from "./SecretInput";
 import { createBackup, downloadBackup, type BackupPayload } from "../utils/backupFile";
 
 interface Props {
@@ -128,26 +129,22 @@ export default function BackupSetupModal({ isOpen, onClose, collectPayload, onSu
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">
               {mode === "pin" ? "PIN (4+ Ziffern)" : "Passwort (min. 8 Zeichen)"}
             </label>
-            <input
-              type={mode === "pin" ? "tel" : "password"}
-              inputMode={mode === "pin" ? "numeric" : "text"}
-              autoComplete="new-password"
+            <SecretInput
               value={secret}
-              onChange={(e) => setSecret(e.target.value)}
+              onChange={setSecret}
+              numeric={mode === "pin"}
               placeholder={mode === "pin" ? "z.B. 1234" : "z.B. ein-langes-passwort-2026"}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+              autoComplete="new-password"
             />
           </div>
 
           <div className="space-y-2">
             <label className="block text-xs font-bold text-slate-700 uppercase tracking-wide">Wiederholen</label>
-            <input
-              type={mode === "pin" ? "tel" : "password"}
-              inputMode={mode === "pin" ? "numeric" : "text"}
-              autoComplete="new-password"
+            <SecretInput
               value={confirm}
-              onChange={(e) => setConfirm(e.target.value)}
-              className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
+              onChange={setConfirm}
+              numeric={mode === "pin"}
+              autoComplete="new-password"
             />
             {confirm && !matches && (
               <p className="text-xs text-rose-600">Die Eingaben stimmen nicht überein.</p>

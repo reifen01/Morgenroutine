@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { X, KeyRound, Upload, AlertTriangle, Lock, FileText, FileUp } from "lucide-react";
+import SecretInput from "./SecretInput";
 import { parseAnyBackup, decryptBackup, type BackupPayload, type BackupSummary, type ParsedBackup } from "../utils/backupFile";
 
 interface Props {
@@ -227,15 +228,13 @@ export default function BackupRestoreModal({
                 <Lock className="w-3.5 h-3.5" />
                 2. {parsed.file.mode === "pin" ? "PIN eingeben" : "Passwort eingeben"}
               </label>
-              <input
-                type={parsed.file.mode === "pin" ? "tel" : "password"}
-                inputMode={parsed.file.mode === "pin" ? "numeric" : "text"}
-                autoComplete="current-password"
+              <SecretInput
                 value={secret}
-                onChange={(e) => setSecret(e.target.value)}
+                onChange={setSecret}
+                numeric={parsed.file.mode === "pin"}
                 placeholder={parsed.file.mode === "pin" ? "Ziffern" : "Passwort"}
-                className="w-full px-3 py-2.5 border border-slate-300 rounded-xl text-sm font-mono focus:outline-none focus:ring-2 focus:ring-slate-400"
-                onKeyDown={(e) => e.key === "Enter" && handleRestore()}
+                autoComplete="current-password"
+                onEnter={handleRestore}
               />
             </div>
           )}

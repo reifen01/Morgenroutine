@@ -632,22 +632,15 @@ export default function MorgenroutineTab({
 
   /**
    * Rechter Kopfbereich jeder Indikator-Karte: zwei fingertaugliche
-   * Buttons mit Beschriftung und Trennlinie. Pfeil UND ⓘ öffnen beide
-   * den Tageswerte-Verlauf — der Pfeil sah antippbar aus, war es aber
-   * nicht; jetzt ist er es.
+   * Elemente mit Beschriftung und Trennlinie: "Trend" ist eine reine
+   * ANZEIGE (kein Knopf), "Verlauf" (ⓘ) ist der Button, der die
+   * gesammelten Tageswerte öffnet.
    */
   const renderTrendVerlauf = (trendKey: TrendKey, histId: string) => (
     <div className="flex items-stretch shrink-0">
       <div className="flex flex-col items-center gap-1">
         <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide leading-none">Trend</span>
-        <button
-          type="button"
-          onClick={() => toggleHelp(histId)}
-          className="cursor-pointer active:scale-95 transition-transform"
-          title="Trend — antippen zeigt die gesammelten Tageswerte"
-        >
-          <TrendArrow result={computeTrend(dailyHistory, trendKey)} />
-        </button>
+        <TrendArrow result={computeTrend(dailyHistory, trendKey)} />
       </div>
       <div className="w-px bg-slate-200 mx-2.5 my-0.5"></div>
       <div className="flex flex-col items-center gap-1">
