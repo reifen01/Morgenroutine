@@ -239,13 +239,18 @@ export function CombinedJournal({
         continue;
       }
       const s = sig(key, kaufDatum, kaufKurs, anzahlAktien);
-      if (vorhanden.has(s)) {
+      // Teilausführungen: gleicher Tag, gleicher Kurs, gleiche Menge sind
+      // legitim. Wer eine eigene, noch nicht vergebene id mitgibt, wird
+      // übernommen — Zeilen ohne id bleiben durch die Signatur geschützt.
+      const eigeneId = String(r?.id ?? "").trim();
+      const eigeneIdNeu = eigeneId !== "" && !belegteIds.has(eigeneId);
+      if (vorhanden.has(s) && !eigeneIdNeu) {
         uebersprungen++;
         continue;
       }
       vorhanden.add(s);
 
-      let id = String(r?.id ?? "").trim();
+      let id = eigeneId;
       if (!id || belegteIds.has(id)) {
         id = `imp_${key}_${kaufDatum.replace(/-/g, "")}_${Math.random().toString(36).slice(2, 8)}`;
       }
@@ -797,7 +802,7 @@ export function CombinedJournal({
               <h4 className="text-[13px] font-extrabold text-slate-800">📥 Käufe aus JSON anhängen</h4>
               <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
                 Fügt Käufe zu deinem Journal hinzu — <strong>ohne</strong> bestehende Daten zu verändern.
-                Bereits vorhandene Käufe (gleiches Asset, Datum, Kurs, Menge) werden automatisch übersprungen.
+                Bereits vorhandene Käufe (gleiches Asset, Datum, Kurs, Menge) werden automatisch übersprungen — außer die Zeile bringt eine eigene, neue <code>id</code> mit (für Teilausführungen).
               </p>
             </div>
             <textarea
