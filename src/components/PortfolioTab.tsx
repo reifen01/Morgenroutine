@@ -21,7 +21,7 @@ import {
   RotateCcw
 } from "lucide-react";
 import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, MarketState, WatchlistItem } from "../types";
-import { formatAccounting, formatToGermanDate, parseCleanDate, kestAuf } from "../utils/mathUtils";
+import { anteiligVerbrauchen, formatAccounting, formatToGermanDate, parseCleanDate, kestAuf } from "../utils/mathUtils";
 import { CombinedJournal } from "./CombinedJournal";
 import HilfeLink from "./HilfeLink";
 import DepotTable from "./DepotTable";
@@ -1082,20 +1082,16 @@ export default function PortfolioTab({
       const averageKaufKurs = totalRemainingCost / totalAvailableShares;
       const totalPurchaseCost = sharesToSell * averageKaufKurs;
 
-      let remainingToMatch = sharesToSell;
-      const matchedLots: { purchaseId: string; date: string; sharesFromLot: number; kaufKurs: number }[] = [];
-      
-      for (const lot of activeWithShares) {
-        if (remainingToMatch <= 0) break;
-        const take = Math.min(remainingToMatch, lot.verbleibendeAnzahlAktien);
-        matchedLots.push({
-          purchaseId: lot.id,
-          date: lot.kaufDatum,
-          sharesFromLot: take,
-          kaufKurs: lot.kaufKurs
-        });
-        remainingToMatch -= take;
-      }
+      // Anteilig aus ALLEN Lots (nicht älteste zuerst), damit der Ø-Einstand
+      // der verbleibenden Stücke stabil bleibt — siehe anteiligVerbrauchen().
+      const verteilung = anteiligVerbrauchen(activeWithShares, sharesToSell);
+      const matchedLots = verteilung.map(({ lot, take }) => ({
+        purchaseId: lot.id,
+        date: lot.kaufDatum,
+        sharesFromLot: take,
+        kaufKurs: lot.kaufKurs
+      }));
+      const remainingToMatch = Math.max(0, sharesToSell - verteilung.reduce((s, v) => s + v.take, 0));
 
       return {
         method: 'durchschnitt',
@@ -1280,13 +1276,9 @@ export default function PortfolioTab({
         
         finalKaufKurs = averageKaufKurs;
 
-        for (const lot of activePurchases) {
-          if (remainingToMatch <= 0) break;
-          const take = Math.min(remainingToMatch, lot.verbleibendeAnzahlAktien);
-          matchedLots.push({
-            purchaseId: lot.id,
-            sharesFromLot: take
-          });
+        // Anteilig aus ALLEN Lots verbrauchen (siehe anteiligVerbrauchen).
+        for (const { lot, take } of anteiligVerbrauchen(activePurchases, anzahl)) {
+          if (take > 0) matchedLots.push({ purchaseId: lot.id, sharesFromLot: take });
           remainingToMatch -= take;
         }
       }
