@@ -22,7 +22,7 @@ import {
   Sparkles,
   Info
 } from "lucide-react";
-import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot } from "../types";
+import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot, PortfolioPurchase, emptyLivePrice } from "../types";
 import HilfeLink from "./HilfeLink";
 import { statusFuerSnapshot } from "../utils/historyBackfill";
 import { computeTrend, TrendArrow, TrendHistory, TrendKey } from "./TrendBarometer";
@@ -85,6 +85,9 @@ function DecimalInput({ value, onChange, placeholder, className, disabled }: Dec
 }
 
 interface MorgenroutineTabProps {
+  /** Alle Käufe aus dem Journal — Kurse werden für JEDE gehaltene Position
+   *  geholt, nicht nur für die im Handels-Wächter angelegten. */
+  portfolioPurchases?: PortfolioPurchase[];
   marketState: MarketState;
   onMarketStateChange: (state: MarketState) => void;
   livePrices: LivePrices;
@@ -100,6 +103,7 @@ interface MorgenroutineTabProps {
 }
 
 export default function MorgenroutineTab({
+  portfolioPurchases = [],
   marketState,
   onMarketStateChange,
   livePrices,
@@ -248,11 +252,26 @@ export default function MorgenroutineTab({
   // returns no data for the primary listing (e.g. BABA.DE went stale).
   // SPY is always pulled as a surrogate for ^GSPC (Yahoo flakes on the
   // bare index quote — see SPX_SURROGATE_SYMBOL in yahooMapping).
+  // Gehaltene Positionen aus dem Journal (verbleibende Stück > 0), je Key einmal.
+  // Damit bekommen auch Werte einen Kurs, die nur im Journal stehen und nicht
+  // im Handels-Wächter angelegt sind (z.B. Alphabet) — vorher blieb dort der
+  // Stern "kein Live-Kurs".
+  const journalHoldings = (): { key: string; name: string }[] => {
+    const seen = new Map<string, string>();
+    for (const p of portfolioPurchases) {
+      if (!(p.verbleibendeAnzahlAktien > 0)) continue;
+      const k = String(p.key || "").trim().toLowerCase();
+      if (k && !seen.has(k)) seen.set(k, p.name);
+    }
+    return Array.from(seen, ([key, name]) => ({ key, name }));
+  };
+
   const collectLiveSymbols = () => {
     const marketSyms = Object.values(MARKET_SYMBOLS);
     const portfolioSyms = portfolioData.flatMap(p => yahooCandidatesForPortfolio(p));
+    const journalSyms = journalHoldings().flatMap(h => yahooCandidatesForPortfolio(h));
     const watchlistSyms = watchlist.flatMap(w => yahooCandidatesForWatchlist(w));
-    return Array.from(new Set([...marketSyms, SPX_SURROGATE_SYMBOL, ...portfolioSyms, ...watchlistSyms]));
+    return Array.from(new Set([...marketSyms, SPX_SURROGATE_SYMBOL, ...portfolioSyms, ...journalSyms, ...watchlistSyms]));
   };
 
   const handleFetchLivePrices = async () => {
@@ -347,12 +366,10 @@ export default function MorgenroutineTab({
       }
 
       // 2. Update livePrices for every portfolio item
-      const newLive: LivePrices = {
-        tsla: { ...livePrices.tsla },
-        now: { ...livePrices.now },
-        baba: { ...livePrices.baba },
-        btc: { ...livePrices.btc }
-      };
+      // Offenes Record: ALLE vorhandenen Kurse übernehmen (kein festes Set von
+      // Keys — sonst verlieren neue Positionen still ihren Kurs).
+      const newLive: LivePrices = {};
+      for (const [k, v] of Object.entries(livePrices)) newLive[k] = { ...v };
       // Walk through each item's candidate symbols, take the first that
       // actually came back with a numeric price (so BABA.DE → BABA.F
       // fallbacks resolve transparently).
@@ -364,19 +381,27 @@ export default function MorgenroutineTab({
         return null;
       };
 
-      for (const item of portfolioData) {
+      // Handels-Wächter-Positionen UND Journal-Holdings versorgen; fehlende
+      // Kurs-Einträge werden angelegt statt übersprungen.
+      const zuVersorgen: { key: string; name?: string; ticker?: string }[] = [
+        ...portfolioData.map(p => ({ key: String(p.key), name: p.name, ticker: p.ticker })),
+        ...journalHoldings(),
+      ];
+      const versorgt = new Set<string>();
+      for (const item of zuVersorgen) {
+        const key = String(item.key || "").trim().toLowerCase();
+        if (!key || versorgt.has(key)) continue;
         const candidates = yahooCandidatesForPortfolio(item);
         const entry = firstEntryWithPrice(candidates);
         if (!entry) continue;
-        const key = item.key as keyof LivePrices;
-        if (newLive[key]) {
-          newLive[key].price = entry.price as number;
-          newLive[key].date = routineDate;
-          updatedCount++;
-          if (typeof entry.atr === "number" && entry.atr > 0) {
-            newLive[key].atr = entry.atr;
-          }
+        if (!newLive[key]) newLive[key] = emptyLivePrice(routineDate);
+        newLive[key].price = entry.price as number;
+        newLive[key].date = routineDate;
+        if (typeof entry.atr === "number" && entry.atr > 0) {
+          newLive[key].atr = entry.atr;
         }
+        versorgt.add(key);
+        updatedCount++;
       }
       onLivePricesChange(newLive);
 

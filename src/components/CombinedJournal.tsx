@@ -16,6 +16,7 @@ import HilfeLink from "./HilfeLink";
 import { formatAccounting, formatToGermanDate } from "../utils/mathUtils";
 import { CORE_ASSETS } from "../utils/assetRegistry";
 import { useStockSearch, symbolToKey } from "../utils/useStockSearch";
+import { parseTabelle, importId } from "../utils/importParser";
 import AICoachTab from "./AICoachTab";
 
 interface CombinedJournalProps {
@@ -204,52 +205,77 @@ export function CombinedJournal({
   // ── Sicherer JSON-Anhäng-Import (z.B. Coinfinity-Sparplan) ──
   // Hängt Käufe NUR AN, ersetzt nie bestehende Daten, und überspringt
   // Duplikate. Ideal für wiederkehrende Broker-Exporte.
+  // Auswahlliste fuer das Kauf-Dropdown: Kern-Assets aus dem Register plus
+  // alle tatsaechlich im Depot vorhandenen Positionen, ohne Duplikate.
+  const kaufAssetOptionen = useMemo(() => {
+    const map = new Map<string, { key: string; name: string }>();
+    CORE_ASSETS.forEach((c) => map.set(c.key, { key: c.key, name: c.name }));
+    (portfolioData || []).forEach((item) => {
+      const k = String(item.key).trim().toLowerCase();
+      if (k) map.set(k, { key: k, name: item.name });
+    });
+    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "de"));
+  }, [portfolioData]);
+
   const [showImporter, setShowImporter] = useState(false);
+  const [importModus, setImportModus] = useState<'tabelle' | 'json'>('tabelle');
   const [importText, setImportText] = useState("");
+  // Auswahl für den Tabellen-Import — Excel liefert weder Asset noch Depot.
+  const [importAssetKey, setImportAssetKey] = useState("");
+  const [importDepot, setImportDepot] = useState("");
+  const [importBesitzer, setImportBesitzer] = useState("");
 
-  const handleAppendPurchases = () => {
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(importText);
-    } catch {
-      onShowToast("Import fehlgeschlagen", "Der Text ist kein gültiges JSON.", "error");
-      return;
-    }
-    const rows = Array.isArray(parsed) ? parsed : [parsed];
+  type ImportBewertung = {
+    neue: PortfolioPurchase[];
+    uebersprungen: number;
+    ungueltig: number;
+    /** Status je eingegebener Zeile (gleiche Reihenfolge wie rows). */
+    status: ('neu' | 'duplikat' | 'ungueltig')[];
+  };
 
-    // Signatur bestehender Käufe für Duplikat-Schutz
+  /**
+   * Bewertet Kauf-Zeilen gegen das bestehende Journal — REIN, ändert nichts.
+   * Genutzt von Vorschau (Tabelle) und beiden Anhängen-Pfaden.
+   * Duplikat = gleiches Asset, Datum, Kurs, Menge — außer die Zeile bringt
+   * eine eigene, noch nicht vergebene id mit (Teilausführungen).
+   */
+  const bewerteImport = (rows: any[]): ImportBewertung => {
     const sig = (k: unknown, d: unknown, kurs: unknown, anz: unknown) =>
       `${String(k).trim().toLowerCase()}|${String(d).slice(0, 10)}|${Number(kurs)}|${Number(anz)}`;
-    const vorhanden = new Set(
-      portfolioPurchases.map((p) => sig(p.key, p.kaufDatum, p.kaufKurs, p.anzahlAktien))
-    );
+    // Zählende Duplikat-Prüfung: Wie oft steht eine inhaltsgleiche Zeile
+    // schon im Journal? Zeile Nr. n dieses Einfügens wird nur übernommen,
+    // wenn n > vorhandene Anzahl. So ist ein zweites Einfügen derselben
+    // Tabelle immer "0 neu" (unabhängig von IDs), eine echte zusätzliche
+    // Teilausführung (gleicher Tag/Kurs/Stück) wird trotzdem übernommen.
+    const vorhandenAnzahl = new Map<string, number>();
+    for (const p of portfolioPurchases) {
+      const k = sig(p.key, p.kaufDatum, p.kaufKurs, p.anzahlAktien);
+      vorhandenAnzahl.set(k, (vorhandenAnzahl.get(k) ?? 0) + 1);
+    }
+    const gesehenAnzahl = new Map<string, number>();
     const belegteIds = new Set(portfolioPurchases.map((p) => p.id));
 
     const neue: PortfolioPurchase[] = [];
+    const status: ImportBewertung['status'] = [];
     let uebersprungen = 0;
     let ungueltig = 0;
 
-    for (const r of rows as any[]) {
+    for (const r of rows) {
       const key = String(r?.key ?? "").trim().toLowerCase();
       const kaufDatum = String(r?.kaufDatum ?? "").slice(0, 10);
       const kaufKurs = Number(r?.kaufKurs);
       const anzahlAktien = Number(r?.anzahlAktien);
       if (!key || !kaufDatum || !(kaufKurs > 0) || !(anzahlAktien > 0)) {
-        ungueltig++;
-        continue;
+        ungueltig++; status.push('ungueltig'); continue;
       }
       const s = sig(key, kaufDatum, kaufKurs, anzahlAktien);
-      // Teilausführungen: gleicher Tag, gleicher Kurs, gleiche Menge sind
-      // legitim. Wer eine eigene, noch nicht vergebene id mitgibt, wird
-      // übernommen — Zeilen ohne id bleiben durch die Signatur geschützt.
-      const eigeneId = String(r?.id ?? "").trim();
-      const eigeneIdNeu = eigeneId !== "" && !belegteIds.has(eigeneId);
-      if (vorhanden.has(s) && !eigeneIdNeu) {
-        uebersprungen++;
-        continue;
+      const n = (gesehenAnzahl.get(s) ?? 0) + 1;
+      gesehenAnzahl.set(s, n);
+      if (n <= (vorhandenAnzahl.get(s) ?? 0)) {
+        uebersprungen++; status.push('duplikat'); continue;
       }
-      vorhanden.add(s);
 
+      const eigeneId = String(r?.id ?? "").trim();
       let id = eigeneId;
       if (!id || belegteIds.has(id)) {
         id = `imp_${key}_${kaufDatum.replace(/-/g, "")}_${Math.random().toString(36).slice(2, 8)}`;
@@ -271,40 +297,76 @@ export function CombinedJournal({
         depot: r?.depot ? String(r.depot) : undefined,
         besitzerName: r?.besitzerName ? String(r.besitzerName) : undefined,
       });
+      status.push('neu');
     }
+    return { neue, uebersprungen, ungueltig, status };
+  };
 
-    if (neue.length === 0) {
-      onShowToast(
-        "Nichts angehängt",
-        `Keine neuen Käufe. ${uebersprungen} Duplikate, ${ungueltig} ungültig.`,
-        "warning"
-      );
+  /** Hängt bewertete Käufe an — NUR ANHÄNGEN, bestehende bleiben unangetastet. */
+  const commitImport = (b: ImportBewertung) => {
+    if (b.neue.length === 0) {
+      onShowToast("Nichts angehängt", `Keine neuen Käufe. ${b.uebersprungen} bereits vorhanden, ${b.ungueltig} ungültig.`, "warning");
       return;
     }
-
-    // NUR ANHÄNGEN — bestehende Käufe bleiben unangetastet.
-    onPortfolioPurchasesChange([...portfolioPurchases, ...neue]);
+    onPortfolioPurchasesChange([...portfolioPurchases, ...b.neue]);
     setImportText("");
     setShowImporter(false);
     onShowToast(
       "Käufe angehängt",
-      `${neue.length} neu · ${uebersprungen} Duplikate übersprungen${ungueltig ? ` · ${ungueltig} ungültig` : ""}.`,
+      `${b.neue.length} neu · ${b.uebersprungen} bereits vorhanden${b.ungueltig ? ` · ${b.ungueltig} ungültig` : ""}.`,
       "success"
     );
   };
 
+  // ── Weg A: JSON (bestehender Weg, z.B. Coinfinity-Sparplan) ──
+  const handleAppendPurchases = () => {
+    let parsed: unknown;
+    try {
+      parsed = JSON.parse(importText);
+    } catch {
+      onShowToast("Import fehlgeschlagen", "Der Text ist kein gültiges JSON.", "error");
+      return;
+    }
+    commitImport(bewerteImport(Array.isArray(parsed) ? parsed : [parsed]));
+  };
 
-  // Auswahlliste fuer das Kauf-Dropdown: Kern-Assets aus dem Register plus
-  // alle tatsaechlich im Depot vorhandenen Positionen, ohne Duplikate.
-  const kaufAssetOptionen = useMemo(() => {
-    const map = new Map<string, { key: string; name: string }>();
-    CORE_ASSETS.forEach((c) => map.set(c.key, { key: c.key, name: c.name }));
-    (portfolioData || []).forEach((item) => {
-      const k = String(item.key).trim().toLowerCase();
-      if (k) map.set(k, { key: k, name: item.name });
+  // ── Weg B: Tabelle aus Excel — Vorschau wird live berechnet ──
+  const tabellenVorschau = useMemo(() => {
+    if (importModus !== 'tabelle' || !importText.trim()) return null;
+    const erg = parseTabelle(importText);
+    const assetName = kaufAssetOptionen.find((o) => o.key === importAssetKey)?.name ?? importAssetKey.toUpperCase();
+    const auswahlOk = !!importAssetKey && !!importDepot && !!importBesitzer;
+
+    // Feste IDs mit Laufnummer je identischer Zeile (Teilausführungen #1, #2 …)
+    const laufNr = new Map<string, number>();
+    const rows = erg.gueltig.map((z) => {
+      const basis = `${z.datum}|${z.kurs}|${z.stueck}`;
+      const n = (laufNr.get(basis) ?? 0) + 1;
+      laufNr.set(basis, n);
+      const brutto = (z.stueck as number) * (z.kurs as number);
+      return {
+        id: auswahlOk ? importId(importAssetKey, importDepot, importBesitzer, z.datum as string, z.kurs as number, z.stueck as number, n) : "",
+        key: importAssetKey,
+        name: assetName,
+        kaufDatum: z.datum,
+        kaufKurs: z.kurs,
+        anzahlAktien: z.stueck,
+        tatsaechlicheKosten: brutto + (z.gebuehren ?? 0),
+        depot: importDepot,
+        besitzerName: importBesitzer,
+        notiz: z.gebuehren ? `Gebühren ${formatAccounting(z.gebuehren)} €` : undefined,
+        _nr: z.nr,
+        _gebuehren: z.gebuehren,
+      };
     });
-    return Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name, "de"));
-  }, [portfolioData]);
+    const bewertung = auswahlOk ? bewerteImport(rows) : null;
+    return { erg, rows, bewertung, auswahlOk };
+  }, [importModus, importText, importAssetKey, importDepot, importBesitzer, portfolioPurchases]);
+
+  const handleAppendTabelle = () => {
+    if (!tabellenVorschau?.bewertung) return;
+    commitImport(tabellenVorschau.bewertung);
+  };
 
   // Aktiensuche fuer das Kauf-Formular — nutzt denselben Hook wie der Rechner.
   const kaufSuche = useStockSearch(500);
@@ -788,47 +850,185 @@ export function CombinedJournal({
             <button
               onClick={() => { setShowImporter(!showImporter); setShowAddPurchaseForm(false); setShowAddSaleForm(false); }}
               className="h-9 px-3.5 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 shadow-sm active:scale-95 cursor-pointer"
-              title="Käufe aus JSON anhängen (z.B. Coinfinity-Sparplan) — hängt nur an, ersetzt nichts"
+              title="Käufe aus Excel-Tabelle oder JSON anhängen — hängt nur an, ersetzt nichts"
             >
-              <Plus className="h-4 w-4" /> {showImporter ? "Import schließen" : "📥 Sparplan-Import"}
+              <Plus className="h-4 w-4" /> {showImporter ? "Import schließen" : "📥 Import"}
             </button>
           </div>
         </div>
 
-        {/* ── JSON-ANHÄNG-IMPORT (append-only, mit Duplikat-Schutz) ── */}
+        {/* ── IMPORT (append-only, mit Duplikat-Schutz): Tabelle aus Excel oder JSON ── */}
         {showImporter && (
           <div className="bg-white border border-slate-200 rounded-2xl p-4 space-y-3">
             <div>
-              <h4 className="text-[13px] font-extrabold text-slate-800">📥 Käufe aus JSON anhängen</h4>
+              <h4 className="text-[13px] font-extrabold text-slate-800">📥 Käufe importieren</h4>
               <p className="text-[11px] text-slate-500 font-semibold mt-0.5">
-                Fügt Käufe zu deinem Journal hinzu — <strong>ohne</strong> bestehende Daten zu verändern.
-                Bereits vorhandene Käufe (gleiches Asset, Datum, Kurs, Menge) werden automatisch übersprungen — außer die Zeile bringt eine eigene, neue <code>id</code> mit (für Teilausführungen).
+                Hängt Käufe an dein Journal an — <strong>ohne</strong> bestehende Daten zu verändern.
+                Dieselbe Tabelle zweimal einfügen legt nichts doppelt an; echte Teilausführungen (gleicher Tag, Kurs, Stück) bleiben erhalten.
               </p>
             </div>
-            <textarea
-              value={importText}
-              onChange={(e) => setImportText(e.target.value)}
-              placeholder='[ { "key": "btc", "name": "Bitcoin", "kaufDatum": "2025-07-14", "kaufKurs": 95000, "anzahlAktien": 0.0021, "depot": "Coinfinity", "besitzerName": "Reinhard" } ]'
-              className="w-full h-40 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-[11px] text-slate-800 focus:outline-none focus:border-slate-400"
-            />
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={handleAppendPurchases}
-                disabled={!importText.trim()}
-                className="h-9 px-4 bg-slate-800 hover:bg-slate-900 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
-              >
-                Käufe anhängen
+
+            {/* Reiter */}
+            <div className="inline-flex rounded-xl bg-slate-50 p-1 border border-slate-100 gap-1">
+              <button type="button" onClick={() => setImportModus('tabelle')}
+                className={`h-8 px-3 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${importModus === 'tabelle' ? "bg-slate-800 text-white shadow-xs" : "text-slate-600 bg-white hover:bg-slate-100"}`}>
+                📋 Tabelle (Excel)
               </button>
-              <button
-                onClick={() => { setImportText(""); setShowImporter(false); }}
-                className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
-              >
-                Abbrechen
+              <button type="button" onClick={() => setImportModus('json')}
+                className={`h-8 px-3 rounded-lg text-[11px] font-bold transition-all cursor-pointer ${importModus === 'json' ? "bg-slate-800 text-white shadow-xs" : "text-slate-600 bg-white hover:bg-slate-100"}`}>
+                {"{ }"} JSON
               </button>
-              <span className="text-[10px] text-slate-400 font-semibold">
-                Erwartet ein JSON-Array. Pflichtfelder: key, kaufDatum, kaufKurs, anzahlAktien.
-              </span>
             </div>
+
+            {importModus === 'tabelle' ? (
+              <>
+                {/* Auswahl: was Excel nicht liefert */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Wertpapier *</label>
+                    <select value={importAssetKey} onChange={(e) => setImportAssetKey(e.target.value)}
+                      className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:outline-none cursor-pointer">
+                      <option value="">Bitte wählen…</option>
+                      {kaufAssetOptionen.map((opt) => (
+                        <option key={opt.key} value={opt.key}>{opt.name} ({opt.key.toUpperCase()})</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Depot / Broker *</label>
+                    <select value={importDepot} onChange={(e) => setImportDepot(e.target.value)}
+                      className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:outline-none cursor-pointer">
+                      <option value="">Bitte wählen…</option>
+                      {customDepots.map((d) => (<option key={d} value={d}>{d}</option>))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Besitzer *</label>
+                    <select value={importBesitzer} onChange={(e) => setImportBesitzer(e.target.value)}
+                      className="w-full h-10 bg-white border border-slate-200 rounded-xl px-3 font-semibold text-slate-850 focus:outline-none cursor-pointer">
+                      <option value="">Bitte wählen…</option>
+                      {customBesitzer.map((b) => (<option key={b} value={b}>{b}</option>))}
+                    </select>
+                  </div>
+                </div>
+
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder={"Zeilen aus Excel hier einfügen — z.B.\n5\t21/2/2023\t200\t193,46\n6\t22/2/2023\t155\t186,36\n\nPro Zeile: Datum, dann Stück, dann Kurs in €. Andere Spalten werden ignoriert."}
+                  className="w-full h-40 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-[11px] text-slate-800 focus:outline-none focus:border-slate-400"
+                />
+
+                {/* Vorschau */}
+                {tabellenVorschau && (
+                  <div className="space-y-2">
+                    {!tabellenVorschau.auswahlOk && (
+                      <div className="text-[11px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded-xl px-3 py-2">
+                        Bitte oben Wertpapier, Depot und Besitzer wählen — erst dann wird geprüft, was schon vorhanden ist.
+                      </div>
+                    )}
+                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] font-bold">
+                      <span className="text-slate-500 uppercase tracking-wide">Vorschau</span>
+                      {tabellenVorschau.bewertung ? (
+                        <>
+                          <span className="text-emerald-700">{tabellenVorschau.bewertung.neue.length} neu</span>
+                          <span className="text-slate-400">·</span>
+                          <span className="text-slate-500">{tabellenVorschau.bewertung.uebersprungen} bereits vorhanden</span>
+                        </>
+                      ) : (
+                        <span className="text-slate-700">{tabellenVorschau.erg.gueltig.length} gültige Zeilen</span>
+                      )}
+                      <span className="text-slate-400">·</span>
+                      <span className="text-slate-500">{tabellenVorschau.erg.zeilen.length - tabellenVorschau.erg.gueltig.length} übersprungen</span>
+                      {tabellenVorschau.erg.gebuehrenSpalte !== null && (
+                        <><span className="text-slate-400">·</span><span className="text-sky-700">Gebührenspalte erkannt</span></>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5 max-h-72 overflow-y-auto pr-0.5">
+                      {tabellenVorschau.erg.zeilen.map((z, i) => {
+                        const gIdx = tabellenVorschau.erg.gueltig.indexOf(z);
+                        const st = z.fehler ? null : (tabellenVorschau.bewertung?.status[gIdx] ?? null);
+                        const farbe = z.fehler
+                          ? "border-slate-200 bg-slate-50 text-slate-400"
+                          : st === 'duplikat'
+                            ? "border-slate-200 bg-slate-50 text-slate-500"
+                            : "border-emerald-200 bg-emerald-50/40 text-slate-800";
+                        return (
+                          <div key={i} className={`border rounded-lg px-3 py-1.5 text-[11px] font-mono flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5 ${farbe}`}>
+                            <span className="text-slate-400 w-7 shrink-0">#{z.nr}</span>
+                            {z.fehler ? (
+                              <span className="flex-1 italic font-sans truncate" title={z.roh}>{z.fehler}: „{z.roh.trim().slice(0, 40)}"</span>
+                            ) : (
+                              <>
+                                <span className="font-semibold">{formatToGermanDate(z.datum as string)}</span>
+                                <span>{z.stueck} Stk.</span>
+                                <span>€ {formatAccounting(z.kurs as number)}</span>
+                                <span className="font-bold">€ {formatAccounting((z.stueck as number) * (z.kurs as number) + (z.gebuehren ?? 0))}</span>
+                                {z.gebuehren ? <span className="text-sky-700">+{formatAccounting(z.gebuehren)} Geb.</span> : null}
+                                <span className={`font-sans font-bold uppercase text-[9px] px-1.5 py-0.5 rounded ${st === 'duplikat' ? "bg-slate-200 text-slate-600" : "bg-emerald-100 text-emerald-800"}`}>
+                                  {st === 'duplikat' ? "vorhanden" : st === 'neu' ? "neu" : "gültig"}
+                                </span>
+                              </>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {tabellenVorschau.bewertung && tabellenVorschau.bewertung.neue.length > 0 && (
+                      <div className="text-[11px] font-mono font-bold text-slate-800 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 flex flex-wrap justify-between gap-x-3">
+                        <span>Summe neu: {tabellenVorschau.bewertung.neue.reduce((a, r) => a + r.anzahlAktien, 0)} Stk.</span>
+                        <span>Anschaffungswert: € {formatAccounting(tabellenVorschau.bewertung.neue.reduce((a, r) => a + r.tatsaechlicheKosten, 0))}</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleAppendTabelle}
+                    disabled={!tabellenVorschau?.bewertung || tabellenVorschau.bewertung.neue.length === 0}
+                    className="h-9 px-4 bg-slate-800 hover:bg-slate-900 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                  >
+                    {tabellenVorschau?.bewertung ? `${tabellenVorschau.bewertung.neue.length} Käufe anhängen` : "Käufe anhängen"}
+                  </button>
+                  <button
+                    onClick={() => { setImportText(""); setShowImporter(false); }}
+                    className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                  >
+                    Abbrechen
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <textarea
+                  value={importText}
+                  onChange={(e) => setImportText(e.target.value)}
+                  placeholder='[ { "key": "btc", "name": "Bitcoin", "kaufDatum": "2025-07-14", "kaufKurs": 95000, "anzahlAktien": 0.0021, "depot": "Coinfinity", "besitzerName": "Reinhard" } ]'
+                  className="w-full h-40 bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 font-mono text-[11px] text-slate-800 focus:outline-none focus:border-slate-400"
+                />
+                <div className="flex flex-wrap items-center gap-2">
+                  <button
+                    onClick={handleAppendPurchases}
+                    disabled={!importText.trim()}
+                    className="h-9 px-4 bg-slate-800 hover:bg-slate-900 disabled:opacity-40 text-white rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                  >
+                    Käufe anhängen
+                  </button>
+                  <button
+                    onClick={() => { setImportText(""); setShowImporter(false); }}
+                    className="h-9 px-4 bg-white hover:bg-slate-50 text-slate-600 border border-slate-200 rounded-xl text-xs font-bold transition-all active:scale-95 cursor-pointer"
+                  >
+                    Abbrechen
+                  </button>
+                  <span className="text-[10px] text-slate-400 font-semibold">
+                    JSON-Array. Pflichtfelder: key, kaufDatum, kaufKurs, anzahlAktien.
+                  </span>
+                </div>
+              </>
+            )}
           </div>
         )}
 

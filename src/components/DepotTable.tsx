@@ -232,7 +232,8 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
           Die 11-spaltige Tabelle darunter erzwang seitwärts scrollen;
           hier passt alles in die Breite.
           ═══════════════════════════════════════════════════════════ */}
-      <div className="sm:hidden space-y-1.5">
+      {/* Karten auf allen Bildschirmgrößen — am Desktop mehrspaltig, kein Querscrollen */}
+      <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 xl:grid-cols-3 items-start">
         {rows.length === 0 ? (
           <div className="py-10 text-center text-slate-400 font-semibold text-[13px] bg-white border border-slate-100 rounded-xl">
             Keine aktiven Bestände. Buche unten im Journal einen Kauf ein!
@@ -272,7 +273,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                     </span>
                     <span className="font-mono text-[15px] font-extrabold text-slate-900 whitespace-nowrap shrink-0">
                       {formatAccounting(r.livePrice)}
-                      {!hasLivePrice && <span className="text-amber-600 ml-0.5">*</span>}
+                      {!hasLivePrice && <span className="text-amber-600 ml-0.5" title="Kein Live-Kurs — der Ø-Kaufkurs wird als Kurs eingesetzt">*</span>}
                     </span>
                   </div>
 
@@ -301,7 +302,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                     <div className="mt-1.5">
                       {!hasLivePrice ? (
                         <span className="text-[10px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 border border-amber-200 rounded">
-                          Kurs fehlt — Ø-Kaufkurs eingesetzt
+                          * Kein Live-Kurs — Ø-Kaufkurs eingesetzt. Morgen-Tab → „Marktwerte holen"; bleibt es, aufklappen und Kurs-Symbol prüfen.
                         </span>
                       ) : r.livePrice <= r.limit && marketHealth.blocked ? (
                         <span className="text-[10px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 border border-rose-200 rounded">
@@ -399,241 +400,11 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
       </div>
 
       {/* ═══ TABELLE — ab 640px Breite ═══ */}
-      <div className="hidden sm:block overflow-x-auto rounded-xl border border-slate-100">
-        <table className="w-full border-collapse text-xs sm:text-sm">
-          <thead>
-            <tr className="bg-slate-50 border-b border-slate-100 text-[10px] font-bold uppercase tracking-wider text-slate-500 font-sans">
-              <th className="py-2.5 px-2 w-6"></th>
-              <Th f="name">Asset</Th>
-              <Th f="depot">Depot</Th>
-              <Th f="besitzer">Besitzer</Th>
-              <Th f="shares" right>Menge</Th>
-              <Th f="avg" right>Ø Kauf</Th>
-              <Th f="price" right>Kurs</Th>
-              <Th f="value" right>Marktwert</Th>
-              <Th f="pl" right>+/- (brutto)</Th>
-              <th className="py-2.5 px-3 text-center whitespace-nowrap">Limit / Signal</th>
-              <th className="py-2.5 px-3 text-center whitespace-nowrap">Aktion</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-slate-50 text-slate-700 text-xs font-semibold">
-            {rows.length === 0 ? (
-              <tr>
-                <td colSpan={11} className="py-10 text-center text-slate-400 font-semibold font-sans">
-                  Keine aktiven Bestände. Buche unten im Journal einen Kauf ein!
-                </td>
-              </tr>
-            ) : (
-              rows.map((r, idx) => {
-                const isProfit = r.pl >= 0;
-                const hasLivePrice = !!getLivePrice(livePrices, canonicalAssetKey(r.key, r.name))?.price;
-                const id = rowId(r);
-                const istOffen = offeneRows.has(id);
-                const sd = stammdaten(r.key, r.name, { isin: r.isin, wkn: r.wkn });
-                const meineKaeufe = purchases.filter(
-                  (p) =>
-                    String(p.key).toLowerCase() === r.key.toLowerCase() &&
-                    (p.depot || "") === r.depot &&
-                    (p.besitzerName || "") === r.besitzerName
-                );
-                const kestPos = kestAuf(r.pl);
-                return (
-                  <>
-                  {/* ── Hauptzeile: bewusst EINZEILIG für geringe Höhe ── */}
-                  <tr
-                    key={`${r.key}-${r.depot}-${r.besitzerName}-${idx}`}
-                    className={`transition-colors cursor-pointer ${istOffen ? "bg-slate-50" : "hover:bg-slate-50/50"}`}
-                    onClick={() => toggleRow(id)}
-                    title="Antippen für Kaufdaten & Steuer zu dieser Position"
-                  >
-                    {/* Aufklapp-Pfeil — eigene Spalte, klar sichtbar */}
-                    <td className="py-2.5 pl-3 pr-1 align-middle">
-                      <span
-                        className={`inline-flex items-center justify-center h-5 w-5 rounded-md border transition-colors bg-white ${
-                          istOffen
-                            ? "border-slate-800 text-slate-900"
-                            : "border-slate-300 text-slate-600"
-                        }`}
-                      >
-                        {istOffen
-                          ? <ChevronDown className="h-3.5 w-3.5" strokeWidth={3} />
-                          : <ChevronRight className="h-3.5 w-3.5" strokeWidth={3} />}
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <span className="font-mono text-[10px] font-extrabold text-slate-800 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 mr-2 align-middle">
-                        {r.key.toUpperCase()}
-                      </span>
-                      <span className="font-bold text-slate-900 align-middle">{r.name}</span>
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">{r.depot}</span>
-                    </td>
-                    <td className="py-2.5 px-3 whitespace-nowrap">
-                      <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200">{r.besitzerName}</span>
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold whitespace-nowrap">{r.totalShares.toFixed(2)}</td>
-                    <td className="py-2.5 px-3 text-right font-mono text-slate-500 whitespace-nowrap">€ {formatAccounting(r.averageKaufkurs)}</td>
-                    <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap">
-                      € {formatAccounting(r.livePrice)}
-                      {!hasLivePrice && (
-                        <span className="text-amber-600 font-bold ml-0.5" title="Kein Live-Kurs — Ø-Kaufkurs eingesetzt">*</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono text-slate-900 font-bold whitespace-nowrap">€ {formatAccounting(r.mktVal)}</td>
-                    <td className="py-2.5 px-3 text-right font-mono whitespace-nowrap">
-                      <span className={`font-bold ${isProfit ? "text-emerald-600" : "text-rose-600"}`}>
-                        {isProfit ? "+" : ""}{formatAccounting(r.pl)} €
-                      </span>
-                      <span className={`text-[10px] font-extrabold ml-1 ${isProfit ? "text-emerald-500/90" : "text-rose-500/90"}`}>
-                        ({isProfit ? "+" : ""}{r.plPct.toFixed(1)} %)
-                      </span>
-                    </td>
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      {r.limit <= 0 ? (
-                        <span className="text-[9px] font-bold text-slate-400 bg-slate-50 px-1.5 py-0.5 border border-slate-200/60 rounded">— kein Limit</span>
-                      ) : !hasLivePrice ? (
-                        <span className="text-[9px] font-bold text-amber-600 bg-amber-50 px-1.5 py-0.5 border border-amber-200/60 rounded">Kurs fehlt</span>
-                      ) : r.livePrice <= r.limit && marketHealth.blocked ? (
-                        <span className="text-[9px] font-bold text-rose-700 bg-rose-50 px-1.5 py-0.5 border border-rose-200 rounded" title={marketHealth.reason}>🔴 Marktsperre</span>
-                      ) : r.livePrice <= r.limit ? (
-                        <span className="text-[9px] font-bold text-white bg-emerald-600 px-1.5 py-0.5 border border-emerald-600 rounded animate-pulse">✓ Kaufsignal ≤ {formatAccounting(r.limit)} €</span>
-                      ) : (
-                        <span className="text-[9px] font-bold text-slate-500 bg-slate-50 px-1.5 py-0.5 border border-slate-200/80 rounded">Aktiv &gt; {formatAccounting(r.limit)} €</span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 text-center whitespace-nowrap">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onExit(r, r.livePrice); }}
-                        className="px-2.5 py-1 text-[10px] font-bold bg-rose-50 hover:bg-rose-600 text-rose-700 hover:text-white rounded-lg border border-rose-200 transition-all cursor-pointer active:scale-95"
-                        title="Verkauf für diese Position einbuchen"
-                      >
-                        💸 Exit
-                      </button>
-                    </td>
-                  </tr>
-
-                  {/* ── Aufklappbereich: Stammdaten · Steuer · Käufe ── */}
-                  {istOffen && (
-                    <tr key={`${id}-detail`} className="bg-slate-50/70">
-                      <td colSpan={11} className="px-4 py-4 border-l-4 border-slate-800">
-
-                        {/* Stammdaten + Steuer-Matching nebeneinander */}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <div className="flex-1 min-w-[200px] bg-white rounded-xl border border-slate-200 px-3 py-2">
-                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">Stammdaten</div>
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono text-slate-700">
-                              <span>ISIN: <strong className="text-slate-900">{sd.isin || "—"}</strong></span>
-                              <span>WKN: <strong className="text-slate-900">{sd.wkn || "—"}</strong></span>
-                              <span>Kürzel: <strong className="text-slate-900">{r.key.toUpperCase()}</strong></span>
-                            </div>
-                          </div>
-                          <div className="flex-1 min-w-[200px] bg-white rounded-xl border border-slate-200 px-3 py-2">
-                            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wide mb-1">
-                              Steuer-Matching (KESt {(KEST_SATZ * 100).toLocaleString("de-DE")} %)
-                            </div>
-                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] font-mono">
-                              <span className="text-slate-700">Buchergebnis:{" "}
-                                <strong className={r.pl >= 0 ? "text-emerald-600" : "text-rose-600"}>
-                                  {r.pl >= 0 ? "+" : ""}€ {formatAccounting(r.pl)}
-                                </strong>
-                              </span>
-                              <span className="text-slate-700">KESt bei Verkauf:{" "}
-                                <strong className="text-slate-900">− € {formatAccounting(kestPos)}</strong>
-                              </span>
-                              <span className="text-slate-700">Netto:{" "}
-                                <strong className="text-slate-900">€ {formatAccounting(r.mktVal - kestPos)}</strong>
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-
-                        <div className="text-[11px] font-bold text-slate-700 uppercase tracking-wide mb-2">
-                          📥 Käufe zu dieser Position ({meineKaeufe.length})
-                        </div>
-
-                        {meineKaeufe.length === 0 ? (
-                          <div className="text-[11px] text-slate-500 font-semibold">
-                            Keine Einzelkäufe gefunden — der Bestand stammt aus einer älteren Buchung.
-                          </div>
-                        ) : (
-                          <div className="space-y-1.5">
-                            {[...meineKaeufe]
-                              .sort((a, b) => String(b.kaufDatum).localeCompare(String(a.kaufDatum)))
-                              .map((p) => (
-                                <div
-                                  key={p.id}
-                                  className="flex flex-wrap items-center gap-x-3 gap-y-1 bg-white rounded-xl border border-slate-200 px-3 py-2"
-                                >
-                                  <span className="font-mono text-[11px] font-bold text-slate-800 whitespace-nowrap">
-                                    {formatToGermanDate(String(p.kaufDatum))}
-                                  </span>
-                                  <span className="font-mono text-[11px] text-slate-600 whitespace-nowrap">
-                                    {Number(p.anzahlAktien).toFixed(2)} × € {formatAccounting(Number(p.kaufKurs))}
-                                  </span>
-                                  {Number(p.verbleibendeAnzahlAktien) !== Number(p.anzahlAktien) && (
-                                    <span className="font-mono text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5 whitespace-nowrap">
-                                      noch {Number(p.verbleibendeAnzahlAktien).toFixed(2)}
-                                    </span>
-                                  )}
-                                  <span className="font-mono text-[11px] font-bold text-slate-900 whitespace-nowrap">
-                                    = € {formatAccounting(Number(p.tatsaechlicheKosten) || Number(p.anzahlAktien) * Number(p.kaufKurs))}
-                                  </span>
-                                  {p.notiz && (
-                                    <span className="text-[10px] text-slate-500 font-semibold italic truncate max-w-[180px]">
-                                      {p.notiz}
-                                    </span>
-                                  )}
-                                  <span className="flex-1" />
-                                  {onEditPurchase && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); onEditPurchase(p); }}
-                                      className="p-1.5 rounded-lg text-slate-500 hover:text-slate-900 hover:bg-slate-100 transition-colors"
-                                      title="Diesen Kauf bearbeiten"
-                                    >
-                                      <Pencil className="h-3.5 w-3.5" />
-                                    </button>
-                                  )}
-                                  {onDeletePurchase && (
-                                    <button
-                                      onClick={(e) => { e.stopPropagation(); onDeletePurchase(p.id); }}
-                                      className="p-1.5 rounded-lg text-rose-500 hover:text-white hover:bg-rose-600 transition-colors"
-                                      title="Diesen Kauf löschen"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </button>
-                                  )}
-                                </div>
-                              ))}
-                          </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-2 mt-3 pt-3 border-t border-slate-200">
-                          <button
-                            onClick={(e) => { e.stopPropagation(); onExit(r, r.livePrice); }}
-                            className="px-3 py-1.5 text-[11px] font-bold bg-rose-600 hover:bg-rose-700 text-white rounded-lg transition-all active:scale-95"
-                          >
-                            💸 Position verkaufen
-                          </button>
-                          <span className="text-[10px] text-slate-500 font-semibold self-center">
-                            Ø Kauf € {formatAccounting(r.averageKaufkurs)} · Einstand € {formatAccounting(r.totalCost)}
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                  </>
-                );
-              })
-            )}
-          </tbody>
-        </table>
-      </div>
 
       {rows.length > 0 && (
         <p className="mt-2 text-[10px] text-slate-400 font-semibold">
           Steuer-Matching ist eine Schätzung nach österr. KESt ({(KEST_SATZ * 100).toLocaleString("de-DE")} %) mit Verlustausgleich — keine Steuerberatung.
-          {" "}Ein <span className="text-amber-600 font-bold">*</span> beim Kurs bedeutet: kein Live-Kurs, Ø-Kaufkurs eingesetzt.
+          {" "}<span className="text-amber-600 font-bold">*</span> beim Kurs = kein Live-Kurs, Ø-Kaufkurs eingesetzt (Erklärung steht in der Karte).
         </p>
       )}
     </div>
