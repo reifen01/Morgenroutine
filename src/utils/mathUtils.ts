@@ -105,3 +105,34 @@ export function istSteuereinfach(depot?: string): boolean {
   if (!d) return true;
   return !NICHT_STEUEREINFACHE_DEPOTS.some((x) => d.includes(x));
 }
+
+/**
+ * GLEITENDER DURCHSCHNITT — anteiliger Lot-Verbrauch
+ * ---------------------------------------------------
+ * Bei der österreichischen Durchschnittsmethode gehört ein Verkauf zu ALLEN
+ * Lots anteilig, nicht zu den ältesten zuerst (das wäre FIFO). Nur so bleibt
+ * der Ø-Einstand der verbleibenden Stücke stabil — genau wie beim Broker.
+ *
+ * Verteilt `stueck` proportional zum verbleibenden Bestand jedes Lots.
+ * Übersteigt `stueck` den Gesamtbestand, werden alle Lots vollständig
+ * verbraucht; der Rest bleibt ungedeckt (Warnung im Aufrufer).
+ * Rundungsdifferenzen landen im letzten Lot, damit die Summe exakt stimmt.
+ */
+export function anteiligVerbrauchen<T extends { verbleibendeAnzahlAktien: number }>(
+  lots: T[],
+  stueck: number
+): { lot: T; take: number }[] {
+  const gesamt = lots.reduce((s, l) => s + l.verbleibendeAnzahlAktien, 0);
+  if (gesamt <= 0 || stueck <= 0) return [];
+  if (stueck >= gesamt) return lots.map((lot) => ({ lot, take: lot.verbleibendeAnzahlAktien }));
+
+  const quote = stueck / gesamt;
+  const erg = lots.map((lot) => ({ lot, take: lot.verbleibendeAnzahlAktien * quote }));
+  const summe = erg.reduce((s, e) => s + e.take, 0);
+  const diff = stueck - summe;
+  if (erg.length > 0 && Math.abs(diff) > 0) {
+    const letzt = erg[erg.length - 1];
+    letzt.take = Math.min(letzt.lot.verbleibendeAnzahlAktien, Math.max(0, letzt.take + diff));
+  }
+  return erg;
+}
