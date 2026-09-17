@@ -30,6 +30,7 @@ import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OnboardingScreen from "./components/OnboardingScreen";
 import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem, DailySnapshot, PeriodLearning, getLivePrice } from "./types";
+import { mergeBackfill, BackfillRow } from "./utils/historyBackfill";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 import BackupSetupModal from "./components/BackupSetupModal";
 import BackupRestoreModal from "./components/BackupRestoreModal";
@@ -126,6 +127,44 @@ export default function App() {
       return [...without, snap].sort((a, b) => a.date.localeCompare(b.date));
     });
   };
+
+  // Verlauf lückenlos halten: Beim Öffnen die letzten 60 Handelstage vom
+  // Server holen und fehlende Tage/Felder ergänzen. Marktdaten sind nicht
+  // persönlich — das darf die App ohne Zutun pflegen. Vorhandene Werte
+  // werden nie überschrieben (Regeln in utils/historyBackfill.ts).
+  useEffect(() => {
+    let abgebrochen = false;
+    (async () => {
+      try {
+        const r = await fetch("/api/market-history", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ days: 60 }),
+        });
+        if (!r.ok) return;
+        const data = await r.json();
+        const geholt = (data?.history ?? {}) as Record<string, BackfillRow>;
+        if (abgebrochen || Object.keys(geholt).length === 0) return;
+        const heute = new Date().toISOString().slice(0, 10);
+        setDailyHistory((prev) => {
+          const erg = mergeBackfill(prev, geholt, heute);
+          if (erg.neuAngelegt + erg.ergaenzt > 0) {
+            setTimeout(() => showToast(
+              "Verlauf ergänzt",
+              `${erg.neuAngelegt} Tage neu, ${erg.ergaenzt} Tage vervollständigt (Yahoo-Tagesschlüsse).`,
+              "success"
+            ), 0);
+            return erg.merged;
+          }
+          return prev;
+        });
+      } catch {
+        // Kein Netz / Server nicht erreichbar: Verlauf bleibt wie er ist.
+      }
+    })();
+    return () => { abgebrochen = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const saveLearning = (learning: PeriodLearning) => {
     setPeriodLearnings((prev) => {
