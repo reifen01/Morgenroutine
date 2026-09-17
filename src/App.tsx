@@ -709,6 +709,7 @@ export default function App() {
               livePrices={livePrices}
               onLivePricesChange={setLivePrices}
               portfolioData={portfolioData}
+              portfolioPurchases={portfolioPurchases}
               watchlist={watchlist}
               onWatchlistChange={setWatchlist}
               routineDate={routineDate}
