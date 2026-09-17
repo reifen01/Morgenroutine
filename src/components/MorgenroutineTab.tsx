@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot } from "../types";
 import HilfeLink from "./HilfeLink";
+import { statusFuerSnapshot } from "../utils/historyBackfill";
 import { computeTrend, TrendArrow, TrendHistory, TrendKey } from "./TrendBarometer";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
 import { 
@@ -324,15 +325,12 @@ export default function MorgenroutineTab({
       onMarketStateChange(newMarket);
 
       // Record today's snapshot for the weekly/monthly Auswertung.
+      // Status kommt aus der zentralen Ampel-Logik (evaluateMarketHealth) —
+      // keine zweite Regel-Kopie; distSource wird mitgeloggt, damit die
+      // Wochenanalyse Schätzwerte von echten Zahlen unterscheiden kann.
       if (onRecordDailySnapshot) {
         const ratio = newMarket.vix && newMarket.vxv ? newMarket.vix / newMarket.vxv : null;
-        const isGreen =
-          newMarket.vix != null && newMarket.vix < 25 &&
-          ratio != null && ratio < 1.0 &&
-          (newMarket.vvix == null || newMarket.vvix <= 130) &&
-          (newMarket.wti == null || newMarket.wti < 100) &&
-          (newMarket.gas == null || newMarket.gas < 4.5);
-        onRecordDailySnapshot({
+        const basis = {
           date: routineDate,
           vix: newMarket.vix,
           vxv: newMarket.vxv,
@@ -342,9 +340,10 @@ export default function MorgenroutineTab({
           gas: newMarket.gas,
           distSpx: newMarket.distSpx,
           distNdx: newMarket.distNdx,
+          distSource: newMarket.distSource ?? null,
           ratio,
-          status: isGreen ? "GREEN" : "RED",
-        });
+        };
+        onRecordDailySnapshot({ ...basis, status: statusFuerSnapshot(basis) });
       }
 
       // 2. Update livePrices for every portfolio item
