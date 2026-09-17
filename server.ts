@@ -830,10 +830,10 @@ interface DistResult {
   identifiedDays: { dateStr: string; close: number; priorClose: number; changePct: string; volUp: boolean }[];
 }
 
-async function fetchYahooData(symbol: string): Promise<TradingDay[]> {
+async function fetchYahooData(symbol: string, range: string = "45d"): Promise<TradingDay[]> {
   const urls = [
-    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=45d`,
-    `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=45d`
+    `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=${range}`,
+    `https://query2.finance.yahoo.com/v8/finance/chart/${symbol}?interval=1d&range=${range}`
   ];
   
   let lastError: any = null;
@@ -936,6 +936,85 @@ function calculateDistributionDays(days: TradingDay[], len: number = 25): DistRe
     identifiedDays
   };
 }
+
+// ── MARKT-HISTORIE (Verlauf lückenlos nachfüllen) ──────────────────────
+// Liefert für die letzten N Handelstage die Tagesschlusskurse der sechs
+// Ampel-Indikatoren plus die je Tag rückwirkend berechneten Distribution
+// Days (gleiche Rechnung wie /api/calculate-distribution-days, nur für
+// jeden Tag einzeln). Marktdaten sind nicht persönlich — die App füllt
+// damit Lücken im Tagesverlauf, wenn der Nutzer nicht täglich drin war.
+const MARKET_HISTORY_SYMBOLS: Record<string, string> = {
+  vix: "^VIX", vxv: "^VIX3M", vvix: "^VVIX", spx: "^GSPC", wti: "CL=F", gas: "NG=F",
+};
+let marketHistoryCache: { ts: number; days: number; data: any } | null = null;
+const MARKET_HISTORY_TTL = 60 * 60 * 1000; // 1 Stunde
+
+app.post("/api/market-history", async (req, res) => {
+  try {
+    const days = Math.min(Math.max(Number((req.body as any)?.days) || 60, 5), 120);
+    if (marketHistoryCache && marketHistoryCache.days === days && Date.now() - marketHistoryCache.ts < MARKET_HISTORY_TTL) {
+      return res.json({ ...marketHistoryCache.data, cached: true });
+    }
+
+    // Tagesschlüsse der Indikatoren (6 Monate reichen für 120 Tage + Puffer)
+    const closesFor = async (symbol: string): Promise<Record<string, number>> => {
+      const out: Record<string, number> = {};
+      const days = await fetchYahooData(symbol, "6mo").catch(() => [] as TradingDay[]);
+      for (const d of days) out[d.dateStr] = d.close;
+      return out;
+    };
+    const keys = Object.keys(MARKET_HISTORY_SYMBOLS);
+    const series = await Promise.all(keys.map((k) => closesFor(MARKET_HISTORY_SYMBOLS[k])));
+    const byKey: Record<string, Record<string, number>> = {};
+    keys.forEach((k, i) => { byKey[k] = series[i]; });
+
+    // ^GSPC fällt bei Yahoo gelegentlich aus → SPY × 10 als Ersatz (wie im Client)
+    if (Object.keys(byKey.spx).length === 0) {
+      const spy = await closesFor("SPY");
+      for (const [d, c] of Object.entries(spy)) byKey.spx[d] = c * 10;
+    }
+
+    // Distribution Days je Tag rückwirkend: für jeden Tag die Rechnung über
+    // die Tage bis einschließlich diesem Tag ausführen.
+    const distSeries = async (symbol: string): Promise<Record<string, number>> => {
+      const out: Record<string, number> = {};
+      const all = await fetchYahooData(symbol, "6mo").catch(() => [] as TradingDay[]);
+      for (let i = 26; i < all.length; i++) {
+        out[all[i].dateStr] = calculateDistributionDays(all.slice(0, i + 1), 25).count;
+      }
+      return out;
+    };
+    const [distSpx, distNdx] = await Promise.all([distSeries("SPY"), distSeries("QQQ")]);
+
+    // Zusammenführen: nur Tage innerhalb des Fensters, an denen mindestens
+    // VIX oder SPX vorliegt (= Handelstag). Der heutige Tag wird ausgelassen,
+    // weil sein Schlusskurs erst nach Börsenschluss feststeht.
+    const cutoff = new Date(Date.now() - days * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    const today = new Date().toISOString().slice(0, 10);
+    const dates = new Set<string>([...Object.keys(byKey.vix), ...Object.keys(byKey.spx)]);
+    const history: Record<string, any> = {};
+    for (const d of Array.from(dates).sort()) {
+      if (d < cutoff || d >= today) continue;
+      history[d] = {
+        vix: byKey.vix[d] ?? null,
+        vxv: byKey.vxv[d] ?? null,
+        vvix: byKey.vvix[d] ?? null,
+        spx: byKey.spx[d] ?? null,
+        wti: byKey.wti[d] ?? null,
+        gas: byKey.gas[d] ?? null,
+        distSpx: distSpx[d] ?? null,
+        distNdx: distNdx[d] ?? null,
+      };
+    }
+
+    const data = { history, source: "yahoo", generatedAt: new Date().toISOString(), days };
+    marketHistoryCache = { ts: Date.now(), days, data };
+    res.json(data);
+  } catch (err: any) {
+    console.error("[market-history] failed:", err?.message || err);
+    res.status(500).json({ error: "Markt-Historie konnte nicht geladen werden.", message: err?.message || String(err) });
+  }
+});
 
 // Endpoint to calculate the distribution days dynamically using Gemini Search Grounding
 app.post("/api/calculate-distribution-days", async (req, res) => {
