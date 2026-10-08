@@ -14,8 +14,7 @@ import {
   AlertTriangle,
   Info,
   CheckCircle2,
-  TrendingUp,
-  ScanSearch
+  TrendingUp
 } from "lucide-react";
 import CompactHeader from "./components/CompactHeader";
 import HelpModal from "./components/HelpModal";
@@ -179,7 +178,7 @@ export default function App() {
   // see HelpModal's parseSections + startsWith logic).
   const helpSectionForTab: Record<typeof activeTab, string> = {
     morgenroutine: "live-abruf",
-    screener: "live-abruf",
+    screener: "stop-loss-berechnung",
     rechner: "stop-loss-berechnung",
     journal: "steuern",
     auswertung: "tagesablauf",
@@ -688,17 +687,6 @@ export default function App() {
             <span className="text-[10px] sm:text-xs font-semibold mt-1">Morgen</span>
           </button>
 
-          <button
-            onClick={() => setActiveTab("screener")}
-            className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "screener"
-                ? "text-slate-800 font-bold border-b-2 border-slate-800"
-                : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
-            }`}
-          >
-            <ScanSearch className="h-5 w-5" />
-            <span className="text-[10px] sm:text-xs font-semibold mt-1">Aktien</span>
-          </button>
 
           <button
             onClick={() => setActiveTab("journal")}
@@ -715,7 +703,7 @@ export default function App() {
           <button
             onClick={() => setActiveTab("rechner")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "rechner" || activeTab === "auswertung"
+              activeTab === "rechner" || activeTab === "auswertung" || activeTab === "screener"
                 ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
@@ -760,10 +748,8 @@ export default function App() {
             />
           )}
 
-          {activeTab === "screener" && <AktienScreenerTab watchlist={watchlist} portfolio={portfolioData} />}
-
-          {(activeTab === "rechner" || activeTab === "auswertung") && (
-            <div className="flex gap-2 mb-4">
+          {(activeTab === "rechner" || activeTab === "auswertung" || activeTab === "screener") && (
+            <div className="flex flex-wrap gap-2 mb-4">
               <button
                 onClick={() => setActiveTab("rechner")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
@@ -784,8 +770,20 @@ export default function App() {
               >
                 📊 Auswertung
               </button>
+              <button
+                onClick={() => setActiveTab("screener")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "screener"
+                    ? "bg-slate-800 text-white shadow"
+                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
+                }`}
+              >
+                🔎 Aktien-Screener
+              </button>
             </div>
           )}
+
+          {activeTab === "screener" && <AktienScreenerTab watchlist={watchlist} portfolio={portfolioData} />}
 
           {activeTab === "rechner" && (
             <RechnerTab
