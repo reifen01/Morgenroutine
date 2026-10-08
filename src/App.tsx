@@ -760,7 +760,7 @@ export default function App() {
             />
           )}
 
-          {activeTab === "screener" && <AktienScreenerTab watchlist={watchlist} />}
+          {activeTab === "screener" && <AktienScreenerTab watchlist={watchlist} portfolio={portfolioData} />}
 
           {(activeTab === "rechner" || activeTab === "auswertung") && (
             <div className="flex gap-2 mb-4">
