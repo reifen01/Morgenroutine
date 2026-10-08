@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "zycck-mods": {
+      "source": {
+        "source": "github",
+        "repo": "zycck/claude-mods"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "plan-progress@zycck-mods": true
+  }
+}
