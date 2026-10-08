@@ -14,7 +14,8 @@ import {
   AlertTriangle,
   Info,
   CheckCircle2,
-  TrendingUp
+  TrendingUp,
+  ScanSearch
 } from "lucide-react";
 import CompactHeader from "./components/CompactHeader";
 import HelpModal from "./components/HelpModal";
@@ -26,6 +27,7 @@ import AuswertungTab from "./components/AuswertungTab";
 import AICoachTab from "./components/AICoachTab";
 import RegelwerkTab from "./components/RegelwerkTab";
 import WorkspaceSyncTab from "./components/WorkspaceSyncTab";
+import AktienScreenerTab, { SCREENER_ORIGINS } from "./components/AktienScreenerTab";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import PWAUpdatePrompt from "./components/PWAUpdatePrompt";
 import OnboardingScreen from "./components/OnboardingScreen";
@@ -50,7 +52,7 @@ export default function App() {
   // Shared global state variables
   const initialDate = getTodayDateStr();
   const [routineDate, setRoutineDate] = useState(initialDate);
-  const [activeTab, setActiveTab] = useState<"morgenroutine" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
+  const [activeTab, setActiveTab] = useState<"morgenroutine" | "screener" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
 
   // Hilfe-Fragezeichen: springt in den passenden Handbuch-Abschnitt.
   // Laeuft ueber ein CustomEvent, damit HilfeLink ueberall einsetzbar ist,
@@ -177,6 +179,7 @@ export default function App() {
   // see HelpModal's parseSections + startsWith logic).
   const helpSectionForTab: Record<typeof activeTab, string> = {
     morgenroutine: "live-abruf",
+    screener: "live-abruf",
     rechner: "stop-loss-berechnung",
     journal: "steuern",
     auswertung: "tagesablauf",
@@ -429,6 +432,31 @@ export default function App() {
     localStorage.setItem("morgenroutine_watchlist", JSON.stringify(watchlist));
   }, [watchlist]);
 
+  // Brücke vom eingebetteten Aktien-Screener: „In Watchlist + MR“ ergänzt
+  // fehlende Ticker in der Morgenroutine-Watchlist (nur von bekannten Origins).
+  useEffect(() => {
+    const onMsg = (e: MessageEvent) => {
+      if (!SCREENER_ORIGINS.includes(e.origin)) return;
+      const d = e.data as { type?: string; symbols?: unknown };
+      if (d?.type !== "aks-watchlist-add" || !Array.isArray(d.symbols)) return;
+      const syms = d.symbols
+        .map((x) => String(x).trim().toUpperCase())
+        .filter((x) => /^[A-Z0-9.\-^=]{1,12}$/.test(x));
+      setWatchlist((prev) => {
+        const vorhanden = new Set(prev.map((w) => w.symbol.toUpperCase()));
+        const neu = syms.filter((x) => !vorhanden.has(x));
+        setTimeout(() => showToast(
+          neu.length ? "Watchlist ergänzt" : "Schon vorhanden",
+          neu.length ? `${neu.join(", ")} in die Morgenroutine-Watchlist übernommen.` : "Alle Ticker sind bereits in der Watchlist.",
+          "success"
+        ), 0);
+        return neu.length ? [...prev, ...neu.map((symbol) => ({ symbol, name: "", atr: "", price: "" }))] : prev;
+      });
+    };
+    window.addEventListener("message", onMsg);
+    return () => window.removeEventListener("message", onMsg);
+  }, []);
+
   useEffect(() => {
     localStorage.setItem("morgenroutine_custom_depots", JSON.stringify(customDepots));
   }, [customDepots]);
@@ -661,6 +689,18 @@ export default function App() {
           </button>
 
           <button
+            onClick={() => setActiveTab("screener")}
+            className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
+              activeTab === "screener"
+                ? "text-slate-800 font-bold border-b-2 border-slate-800"
+                : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
+            }`}
+          >
+            <ScanSearch className="h-5 w-5" />
+            <span className="text-[10px] sm:text-xs font-semibold mt-1">Aktien</span>
+          </button>
+
+          <button
             onClick={() => setActiveTab("journal")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
               activeTab === "journal"
@@ -719,6 +759,8 @@ export default function App() {
               dailyHistory={dailyHistory}
             />
           )}
+
+          {activeTab === "screener" && <AktienScreenerTab watchlist={watchlist} />}
 
           {(activeTab === "rechner" || activeTab === "auswertung") && (
             <div className="flex gap-2 mb-4">
