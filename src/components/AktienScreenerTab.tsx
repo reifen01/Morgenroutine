@@ -1,8 +1,8 @@
 /**
- * AKTIEN-SCREENER (Tab)
- * ---------------------
+ * AKTIEN-SCREENER (Unter-Tab von „Analyse“)
+ * -----------------------------------------
  * Bindet den eigenständigen Aktien-Screener (aktien-screener-at.vercel.app)
- * als Tab ein. Eine Codebasis für beide Apps: Änderungen am Screener sind
+ * unter Analyse neben „Rechner & Checks“ und „Auswertung“ ein. Eine Codebasis für beide Apps: Änderungen am Screener sind
  * hier sofort sichtbar, ohne die Morgenroutine neu zu bauen.
  *
  * Brücke zur Morgenroutine:
@@ -58,7 +58,7 @@ export default function AktienScreenerTab({ watchlist, portfolio }: Props) {
   });
 
   return (
-    <div className="-mx-4 -mt-4 sm:mx-0 sm:mt-0 flex flex-col" style={{ height: "calc(100dvh - 9.5rem)" }}>
+    <div className="-mx-4 sm:mx-0 flex flex-col" style={{ height: "calc(100dvh - 12.5rem)" }}>
       <div className="flex items-center justify-between px-4 sm:px-0 py-2 text-xs text-slate-500">
         <span className="font-semibold text-slate-700">Aktien-Screener · Kriterien nach Jens Rabe</span>
         <a
