@@ -17,9 +17,16 @@
         "source": "github",
         "repo": "zycck/claude-mods"
       }
+    },
+    "reifen01-mods": {
+      "source": {
+        "source": "github",
+        "repo": "reifen01/claude-mods"
+      }
     }
   },
   "enabledPlugins": {
-    "plan-progress@zycck-mods": true
+    "plan-progress@zycck-mods": true,
+    "token-weather@reifen01-mods": true
   }
 }
