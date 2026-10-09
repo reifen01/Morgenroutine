@@ -51,7 +51,7 @@ export default function App() {
   // Shared global state variables
   const initialDate = getTodayDateStr();
   const [routineDate, setRoutineDate] = useState(initialDate);
-  const [activeTab, setActiveTab] = useState<"morgenroutine" | "screener" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
+  const [activeTab, setActiveTab] = useState<"morgenroutine" | "screener" | "watchlist" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
 
   // Hilfe-Fragezeichen: springt in den passenden Handbuch-Abschnitt.
   // Laeuft ueber ein CustomEvent, damit HilfeLink ueberall einsetzbar ist,
@@ -179,6 +179,7 @@ export default function App() {
   const helpSectionForTab: Record<typeof activeTab, string> = {
     morgenroutine: "live-abruf",
     screener: "stop-loss-berechnung",
+    watchlist: "stop-loss-berechnung",
     rechner: "stop-loss-berechnung",
     journal: "steuern",
     auswertung: "tagesablauf",
@@ -703,7 +704,7 @@ export default function App() {
           <button
             onClick={() => setActiveTab("rechner")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "rechner" || activeTab === "auswertung" || activeTab === "screener"
+              activeTab === "rechner" || activeTab === "auswertung" || activeTab === "screener" || activeTab === "watchlist"
                 ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
@@ -748,7 +749,7 @@ export default function App() {
             />
           )}
 
-          {(activeTab === "rechner" || activeTab === "auswertung" || activeTab === "screener") && (
+          {(activeTab === "rechner" || activeTab === "auswertung" || activeTab === "screener" || activeTab === "watchlist") && (
             <div className="flex flex-wrap gap-2 mb-4">
               <button
                 onClick={() => setActiveTab("rechner")}
@@ -761,14 +762,14 @@ export default function App() {
                 🧮 Rechner &amp; Checks
               </button>
               <button
-                onClick={() => setActiveTab("auswertung")}
+                onClick={() => setActiveTab("watchlist")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === "auswertung"
+                  activeTab === "watchlist"
                     ? "bg-slate-800 text-white shadow"
                     : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
                 }`}
               >
-                📊 Auswertung
+                ⭐ Watchlist
               </button>
               <button
                 onClick={() => setActiveTab("screener")}
@@ -780,13 +781,25 @@ export default function App() {
               >
                 🔎 Aktien-Screener
               </button>
+              <button
+                onClick={() => setActiveTab("auswertung")}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                  activeTab === "auswertung"
+                    ? "bg-slate-800 text-white shadow"
+                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
+                }`}
+              >
+                📊 Auswertung
+              </button>
             </div>
           )}
 
           {activeTab === "screener" && <AktienScreenerTab watchlist={watchlist} portfolio={portfolioData} />}
 
-          {activeTab === "rechner" && (
+          {(activeTab === "rechner" || activeTab === "watchlist") && (
             <RechnerTab
+              ansicht={activeTab === "watchlist" ? "watchlist" : "rechner"}
+              onZumRechner={() => setActiveTab("rechner")}
               routineDate={routineDate}
               livePrices={livePrices}
               portfolioData={portfolioData}

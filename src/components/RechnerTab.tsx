@@ -31,10 +31,14 @@ interface RechnerTabProps {
   portfolioData?: PortfolioItem[];
   watchlist: WatchlistItem[];
   onWatchlistChange: (next: WatchlistItem[]) => void;
+  /** "rechner" = Positionsrechner, Checks, ATR-Stop; "watchlist" = nur die Watchlist-Karte */
+  ansicht?: "rechner" | "watchlist";
+  /** Wechselt nach „In Rechner laden“ aus der Watchlist-Ansicht zum Rechner. */
+  onZumRechner?: () => void;
   onShowToast?: (title: string, msg: string, type: "success" | "warning" | "error") => void;
 }
 
-export default function RechnerTab({ routineDate, livePrices, portfolioData, watchlist, onWatchlistChange, onShowToast }: RechnerTabProps) {
+export default function RechnerTab({ routineDate, livePrices, portfolioData, watchlist, onWatchlistChange, onShowToast, ansicht = "rechner", onZumRechner }: RechnerTabProps) {
   // Input states — start blank so the user fills in their own numbers.
   const [depotCapital, setDepotCapital] = useState("");
   const [calcMode, setCalcMode] = useState<"shares" | "stop">("shares");
@@ -406,11 +410,12 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
   return (
     <div className="space-y-6 text-slate-900">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className={`grid grid-cols-1 gap-6 ${ansicht === "rechner" ? "lg:grid-cols-3" : "max-w-3xl"}`}>
         
         {/* Left Columns: Inputs form & mental checks */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className={`${ansicht === "rechner" ? "lg:col-span-2" : ""} space-y-6`}>
           
+          {ansicht === "rechner" && (<>
           {/* CALCULATOR CARD */}
           <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-50 pb-4">
@@ -945,7 +950,10 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
             </div>
           </div>
 
+          </>)}
+
           {/* WATCHLIST & FAVORITEN CARD */}
+          {ansicht === "watchlist" && (
           <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-50 pb-4">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
@@ -1021,6 +1029,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                           `'${item.symbol}' wurde erfolgreich in alle Rechner-Formulare geladen!`,
                           "success"
                         );
+                        if (ansicht === "watchlist") onZumRechner?.();
                       }}
                       className="w-full py-1.5 px-3 bg-white hover:bg-slate-800 border border-slate-200 hover:border-slate-800 text-slate-700 hover:text-white font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-[11px]"
                     >
@@ -1183,10 +1192,12 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
               </button>
             </div>
           </div>
+          )}
 
         </div>
 
         {/* Right Column: Dynamic Outputs */}
+        {ansicht === "rechner" && (
         <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6 h-fit lg:sticky lg:top-8 animate-fade-in">
           <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-widest border-b border-slate-50 pb-3 font-display">
             Mathematische Risikoanalyse
@@ -1264,6 +1275,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           </div>
 
         </div>
+        )}
 
       </div>
     </div>
