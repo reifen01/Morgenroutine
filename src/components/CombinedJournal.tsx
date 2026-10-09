@@ -9,7 +9,9 @@ import {
   HelpCircle,
   Percent,
   Brain,
-  Sparkles
+  Sparkles,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, PortfolioPurchase, WatchlistItem } from "../types";
 import HilfeLink from "./HilfeLink";
@@ -389,6 +391,8 @@ export function CombinedJournal({
   const [purchaseSortField, setPurchaseSortField] = useState<string>("kaufDatum");
   const [purchaseSortAsc, setPurchaseSortAsc] = useState<boolean>(false);
   const [saleSortField, setSaleSortField] = useState<string>("verkaufsDatum");
+  /** Aufgeklappte Verkaufs-Zeilen (Trade-IDs). */
+  const [saleOffen, setSaleOffen] = useState<Set<string>>(new Set());
   const [saleSortAsc, setSaleSortAsc] = useState<boolean>(false);
 
   // Computed Combined Transactions List
@@ -1787,7 +1791,7 @@ export function CombinedJournal({
 
         {/* JOURNAL TAB PILOTS */}
         <div className="border-b border-slate-200">
-          <nav className="flex gap-4 sm:gap-6 -mb-px">
+          <nav className="grid grid-cols-3 sm:flex gap-2 sm:gap-6 -mb-px">
             <button
               onClick={() => setJournalTab('combined')}
               className={`pb-4 text-xs sm:text-sm font-bold uppercase tracking-wider relative transition-all cursor-pointer ${
@@ -1796,7 +1800,7 @@ export function CombinedJournal({
                   : 'text-slate-400 hover:text-slate-600 border-b-2 border-transparent'
               }`}
             >
-              🔄 Kombiniertes Steuermatching (Trade-Auflösung)
+              🔄 <span className="sm:hidden">Alle</span><span className="hidden sm:inline">Kombiniertes Steuermatching (Trade-Auflösung)</span>
             </button>
             <button
               onClick={() => setJournalTab('purchases')}
@@ -1806,7 +1810,7 @@ export function CombinedJournal({
                   : 'text-slate-400 hover:text-slate-600 border-b-2 border-transparent'
               }`}
             >
-              📥 Nur Käufe (Anschaffungs-Journal)
+              📥 <span className="sm:hidden">Käufe</span><span className="hidden sm:inline">Nur Käufe (Anschaffungs-Journal)</span>
             </button>
             <button
               onClick={() => setJournalTab('sales')}
@@ -1816,7 +1820,7 @@ export function CombinedJournal({
                   : 'text-slate-400 hover:text-slate-600 border-b-2 border-transparent'
               }`}
             >
-              💸 Nur Verkäufe (Realisierungen)
+              💸 <span className="sm:hidden">Verkäufe</span><span className="hidden sm:inline">Nur Verkäufe (Realisierungen)</span>
             </button>
           </nav>
         </div>
@@ -2292,132 +2296,141 @@ export function CombinedJournal({
               >
                 {saleSortAsc ? "▲ aufsteigend" : "▼ absteigend"}
               </button>
+              {sortedSales.length > 0 && (() => {
+                const alleOffen = sortedSales.every((t) => saleOffen.has(t.id));
+                return (
+                  <button
+                    type="button"
+                    onClick={() => setSaleOffen(alleOffen ? new Set() : new Set(sortedSales.map((t) => t.id)))}
+                    className="ml-auto inline-flex items-center gap-1 h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                    title={alleOffen ? "Alle Zeilen zuklappen" : "Alle Zeilen aufklappen"}
+                  >
+                    {alleOffen ? <><ChevronUp className="h-3.5 w-3.5" /> Alle zu</> : <><ChevronDown className="h-3.5 w-3.5" /> Alle auf</>}
+                  </button>
+                );
+              })()}
             </div>
 
-            <div className="space-y-3">
-              {sortedSales.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
-                  Es sind noch keine geschlossenen Verkäufe dokumentiert.
-                </div>
-              ) : (
-                sortedSales.map((trade) => {
+            {sortedSales.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
+                Es sind noch keine geschlossenen Verkäufe dokumentiert.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-200 border-t border-b border-slate-200">
+                {sortedSales.map((trade) => {
                   const volume = trade.verkaufsKurs * trade.anzahlAktien;
                   const isProfit = trade.gewinnVerlust >= 0;
-                  
-                  return (
-                    <div key={trade.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                  const nettoPlus = trade.nettoGewinn >= 0;
+                  const einsatz = trade.kaufKurs * trade.anzahlAktien;
+                  const pct = einsatz > 0 ? (trade.gewinnVerlust / einsatz) * 100 : null;
+                  const offen = saleOffen.has(trade.id);
+                  const toggle = () =>
+                    setSaleOffen((prev) => { const n = new Set(prev); if (n.has(trade.id)) n.delete(trade.id); else n.add(trade.id); return n; });
 
-                      {/* Zeile 1: Asset + Datum + Methode (links), Aktionen (rechts) */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span className="block font-bold text-slate-900 text-sm sm:text-base">{trade.name}</span>
-                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                            <span className="block text-[9px] font-semibold text-slate-400 uppercase font-mono">
-                              🗓️ {formatToGermanDate(trade.verkaufsDatum)}
-                            </span>
-                            <span className={`inline-flex items-center gap-0.5 text-[9px] font-extrabold px-1.5 py-0.5 rounded-md ${
-                              trade.taxMethod === 'FIFO'
-                                ? "bg-amber-100/40 text-amber-800 border border-amber-200/40"
-                                : "bg-slate-50 text-slate-900 border border-slate-200"
-                            }`} title={trade.taxMethod === 'FIFO' ? 'First-In, First-Out steuerliche Veräußerung' : 'Erfassung über den gleitenden Durchschnittspreis'}>
-                              {trade.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
-                            </span>
+                  return (
+                    <div key={trade.id} className="py-2.5">
+                      {/* Zeile (Vorbild TradingView): Name + Datum/Depot | Netto groß, Brutto + % darunter */}
+                      <button
+                        type="button"
+                        onClick={toggle}
+                        className="w-full flex items-center gap-2.5 text-left cursor-pointer active:bg-slate-50 rounded-lg -mx-1 px-1"
+                        title={offen ? "Details zuklappen" : "Details aufklappen"}
+                      >
+                        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${nettoPlus ? "bg-emerald-500" : "bg-rose-500"}`}></span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-slate-900 text-[15px] leading-tight truncate">{trade.name}</div>
+                          <div className="text-[12px] text-slate-500 leading-tight truncate">
+                            {formatToGermanDate(trade.verkaufsDatum)} · {trade.depot || "Standard Depot"} · {trade.besitzerName || "Standard Besitzer"}
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            onClick={() => handleStartEditSale(trade)}
-                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
-                            title="Eintrag ändern / bearbeiten"
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </button>
-                          
-                          <button
-                            onClick={() => handleUndoSale(trade)}
-                            className="p-1.5 hover:bg-amber-50/70 rounded-lg text-slate-450 hover:text-amber-600 transition-colors cursor-pointer"
-                            title="Verkauf rückgängig machen (Vollständig stornieren & Depot-Reservierung aktivieren)"
-                          >
-                            <RotateCcw className="h-3.5 w-3.5" />
-                          </button>
-
-                          <button
-                            onClick={() => handleDeleteSale(trade.id)}
-                            className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                            title="Eintrag aus Journal löschen"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                        <div className="text-right shrink-0">
+                          <div className={`font-mono font-bold tabular-nums text-[16px] leading-tight ${nettoPlus ? "text-emerald-600" : "text-rose-600"}`} title="Netto nach KESt">
+                            {nettoPlus ? "+" : ""}{formatAccounting(trade.nettoGewinn)} €
+                          </div>
+                          <div className={`mt-0.5 flex items-center justify-end gap-2 text-[12px] font-mono font-semibold tabular-nums leading-none ${isProfit ? "text-emerald-600" : "text-rose-600"}`} title="Rendite brutto auf den Einstand">
+                            {pct !== null ? <span>{isProfit ? "+" : ""}{pct.toLocaleString("de-DE", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} %</span> : <span>—</span>}
+                          </div>
                         </div>
-                      </div>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${offen ? "rotate-180" : ""}`} />
+                      </button>
 
-                      {trade.notiz && (
-                        <p className="text-[10px] text-slate-500 font-medium italic whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
-                          " {trade.notiz} "
-                        </p>
+                      {offen && (
+                        <div className="mt-2.5 ml-5 space-y-2.5 animate-fade-in">
+                          {trade.notiz && (
+                            <p className="text-[11px] text-slate-500 font-medium italic whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
+                              " {trade.notiz} "
+                            </p>
+                          )}
+
+                          <div className="grid grid-cols-2 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
+                            <div>
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verkauft</span>
+                              <span className="font-mono tabular-nums font-semibold">{trade.anzahlAktien} Stk.</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Einstandkurs</span>
+                              <span className="font-mono tabular-nums text-slate-700">€ {formatAccounting(trade.kaufKurs)}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Verkaufskurs</span>
+                              <span className="font-mono tabular-nums text-slate-700">€ {formatAccounting(trade.verkaufsKurs)}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Erlös-Volumen</span>
+                              <span className="font-mono tabular-nums font-semibold">€ {formatAccounting(volume)}</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Ertrag (Brutto)</span>
+                              <span className={`font-mono tabular-nums font-bold ${isProfit ? "text-emerald-600" : "text-rose-600"}`}>{isProfit ? "+" : ""}{formatAccounting(trade.gewinnVerlust)} €</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Netto (P&amp;L)</span>
+                              <span className={`font-mono tabular-nums font-bold ${nettoPlus ? "text-emerald-600" : "text-rose-600"}`}>{nettoPlus ? "+" : ""}{formatAccounting(trade.nettoGewinn)} €</span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] font-bold text-rose-500 uppercase tracking-wider">KESt (27,5%)</span>
+                              <span className="font-mono tabular-nums text-rose-600">
+                                {trade.kestBetrag > 0 ? `-${formatAccounting(trade.kestBetrag)} €` : <span className="text-slate-500">0,00 €</span>}
+                              </span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-slate-400 uppercase tracking-wider">Methode</span>
+                              <span className="font-semibold text-slate-700" title={trade.taxMethod === 'FIFO' ? 'First-In, First-Out steuerliche Veräußerung' : 'Erfassung über den gleitenden Durchschnittspreis'}>
+                                {trade.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleStartEditSale(trade)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                              title="Eintrag ändern / bearbeiten"
+                            >
+                              <Edit className="h-3.5 w-3.5" /> Bearbeiten
+                            </button>
+                            <button
+                              onClick={() => handleUndoSale(trade)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 bg-white border border-amber-200 rounded-xl text-[11px] font-bold text-amber-700 hover:bg-amber-50 cursor-pointer"
+                              title="Verkauf rückgängig machen (Vollständig stornieren & Depot-Reservierung aktivieren)"
+                            >
+                              <RotateCcw className="h-3.5 w-3.5" /> Stornieren
+                            </button>
+                            <button
+                              onClick={() => handleDeleteSale(trade.id)}
+                              className="p-2 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 hover:bg-rose-100 cursor-pointer"
+                              title="Eintrag aus Journal löschen"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          </div>
+                        </div>
                       )}
-
-                      {/* Depot & Besitzer */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">
-                          {trade.depot || "Standard Depot"}
-                        </span>
-                        <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200">
-                          {trade.besitzerName || "Standard Besitzer"}
-                        </span>
-                      </div>
-
-                      {/* Zahlen: Mengen & Kurse */}
-                      <div className="grid grid-cols-2 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Verkauft</span>
-                          <span className="font-mono tabular-nums font-semibold">{trade.anzahlAktien} Stk.</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Einstandkurs</span>
-                          <span className="font-mono tabular-nums text-slate-450">€ {formatAccounting(trade.kaufKurs)}</span>
-                        </div>
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Verkaufskurs</span>
-                          <span className="font-mono tabular-nums text-slate-700">€ {formatAccounting(trade.verkaufsKurs)}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Erlös-Volumen</span>
-                          <span className="font-mono tabular-nums font-semibold">€ {formatAccounting(volume)}</span>
-                        </div>
-                      </div>
-
-                      {/* Ergebnis: Brutto, KESt, Netto */}
-                      <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 border border-slate-100 rounded-lg p-2">
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Ertrag (Brutto)</span>
-                          <span className={`font-mono font-bold tabular-nums ${isProfit ? "text-emerald-600" : "text-rose-600"}`}>
-                            {isProfit ? "+" : ""}{formatAccounting(trade.gewinnVerlust)} €
-                          </span>
-                        </div>
-                        <div>
-                          <span className="block text-[9px] font-bold text-rose-500 uppercase tracking-wider">KESt (27,5%)</span>
-                          <span className="font-mono tabular-nums text-rose-500 text-xs">
-                            {trade.kestBetrag > 0 ? (
-                              <span>-{formatAccounting(trade.kestBetrag)} €</span>
-                            ) : (
-                              <span className="text-slate-400">0,00 €</span>
-                            )}
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Netto-Ertrag (P&amp;L)</span>
-                          <span className={`font-mono font-bold tabular-nums text-sm sm:text-base ${trade.nettoGewinn >= 0 ? "text-emerald-600 animate-pulse font-extrabold" : "text-rose-600"}`}>
-                            {trade.nettoGewinn >= 0 ? "+" : ""}{formatAccounting(trade.nettoGewinn)} €
-                          </span>
-                        </div>
-                      </div>
-
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         )}
 

@@ -119,8 +119,18 @@ export default function MorgenroutineTab({
 }: MorgenroutineTabProps) {
    // Help tooltips visibility state
   const [helpId, setHelpId] = useState<string | null>(null);
-  /** Welche Watchlist-Zeile gerade aufgeklappt ist (null = keine). */
-  const [zeileOffen, setZeileOffen] = useState<string | null>(null);
+  /** Aufgeklappte Watchlist-Zeilen (IDs). */
+  const [zeilenOffen, setZeilenOffen] = useState<Set<string>>(new Set());
+  const ZEILEN_IDS = ["vix", "vxv", "vvix", "wti", "gas", "distDays"];
+  const alleZeilenOffen = ZEILEN_IDS.every((id) => zeilenOffen.has(id));
+  const toggleZeile = (id: string) =>
+    setZeilenOffen((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  const alleZeilenToggle = () =>
+    setZeilenOffen(alleZeilenOffen ? new Set() : new Set(ZEILEN_IDS));
   const [copiedPineScript, setCopiedPineScript] = useState(false);
   const [calculatingDistDays, setCalculatingDistDays] = useState(false);
   const [distDaysReasoning, setDistDaysReasoning] = useState<string | null>(null);
@@ -421,6 +431,8 @@ export default function MorgenroutineTab({
         if (!entry) return w;
         const next = { ...w };
         next.price = entry.price.toFixed(2);
+        next.changePct = entry.changePct;
+        next.quelle = entry.quelle;
         updatedCount++;
         watchlistChanged = true;
         if (typeof entry.atr === "number" && entry.atr > 0) {
@@ -721,13 +733,13 @@ export default function MorgenroutineTab({
   }
 
   const renderZeile = (z: ZeileCfg) => {
-    const offen = zeileOffen === z.id;
+    const offen = zeilenOffen.has(z.id);
     const histId = `hist-${z.id}`;
     return (
       <div key={z.id} className="py-2.5">
         <button
           type="button"
-          onClick={() => setZeileOffen(offen ? null : z.id)}
+          onClick={() => toggleZeile(z.id)}
           className="w-full flex items-center gap-2.5 text-left cursor-pointer active:bg-slate-50 rounded-lg -mx-1 px-1"
           title={offen ? "Details zuklappen" : "Details aufklappen"}
         >
@@ -1053,7 +1065,15 @@ export default function MorgenroutineTab({
               {/* Kopfzeile: Trend-Legende */}
               <div className="flex items-center justify-between px-1">
                 <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Indikatoren &amp; Kauf-Status</span>
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                <span className="inline-flex items-center gap-2.5 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                  <button
+                    type="button"
+                    onClick={alleZeilenToggle}
+                    className="inline-flex items-center gap-1 px-2 h-6 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 text-[10px] font-bold uppercase tracking-wide cursor-pointer"
+                    title={alleZeilenOffen ? "Alle Zeilen zuklappen" : "Alle Zeilen aufklappen"}
+                  >
+                    {alleZeilenOffen ? <><ChevronUp className="h-3.5 w-3.5" /> Alle zu</> : <><ChevronDown className="h-3.5 w-3.5" /> Alle auf</>}
+                  </button>
                   Trend
                   <button
                     type="button"
