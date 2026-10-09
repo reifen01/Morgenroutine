@@ -41,6 +41,8 @@ const KEY_TO_YAHOO: Record<string, string> = {
   baba: "BABA.F",
   btc: "BTC-EUR",
   nflx: "NFC.F",
+  // Alphabet Class A (ISIN US02079K3059, WKN A14Y6F) — Frankfurt ABEA.
+  googl: "ABEA.F",
 };
 
 // Ticker shorthand -> Yahoo ticker (handles German Tradegate symbols)
@@ -59,17 +61,25 @@ const TICKER_TO_YAHOO: Record<string, string> = {
   NFLX: "NFC.F",
   NFC: "NFC.F",
   NETFLIX: "NFC.F",
+  GOOGL: "ABEA.F",
+  ABEA: "ABEA.F",
+  ALPHABET: "ABEA.F",
 };
 
 // Fallback candidates per primary ticker. Yahoo periodically drops a specific
 // German listing without notice. We send all candidates and the response
 // resolver in MorgenroutineTab picks the first one that returned a price.
+// Kandidaten je Wert: zuerst deutsche EUR-Börsen, zuletzt die US-Notierung.
+// Die US-Börse ist ab 15:30 oft die aktuellere — der Kurs kommt dort in USD
+// und wird von waehleEuroKurs() in Euro umgerechnet. Gewählt wird der
+// frischeste Kurs, nicht der erste.
 const FALLBACKS: Record<string, string[]> = {
-  "TL0.F": ["TL0.F", "TL0.DE"],
-  "4S0.F": ["4S0.F", "4S0.DE"],
-  "BABA.F": ["BABA.F", "BABA.DE", "BABA.MU", "BABA.SG"],
+  "TL0.F": ["TL0.F", "TL0.DE", "TSLA"],
+  "4S0.F": ["4S0.F", "4S0.DE", "NOW"],
+  "BABA.F": ["BABA.F", "BABA.DE", "BABA.MU", "BABA.SG", "BABA"],
   "BTC-EUR": ["BTC-EUR"],
   "NFC.F": ["NFC.F", "NFC.DE", "NFLX"],
+  "ABEA.F": ["ABEA.F", "ABEA.DE", "GOOGL"],
 };
 
 /**
@@ -156,4 +166,83 @@ export function computeATR(
   }
   const avg = trs.reduce((a, b) => a + b, 0) / trs.length;
   return Number.isFinite(avg) ? avg : null;
+}
+
+
+// ─── KURSE IMMER IN EURO ────────────────────────────────────────────────
+/** Yahoo-Symbol für den Wechselkurs: Preis = USD je 1 EUR (z.B. 1,0912). */
+export const EUR_USD_SYMBOL = "EURUSD=X";
+
+export interface KursEintrag {
+  price: number | null;
+  atr: number | null;
+  currency?: string;
+  time?: number;
+  prevClose?: number;
+}
+
+export interface EuroKurs {
+  price: number;        // in EUR
+  atr: number | null;   // in EUR
+  symbol: string;
+  time?: number;
+  quelle: string;       // Klartext für die Anzeige
+  /** Tagesänderung in % — in der Originalwährung derselben Börse gerechnet,
+   *  damit Wechselkursbewegungen sie nicht verfälschen. */
+  changePct?: number;
+}
+
+const EUR_SUFFIX = /(\.F|\.DE|\.MU|\.SG|\.BE|\.DU|\.HM|\.HA|\.VI|-EUR)$/i;
+
+/**
+ * Wählt aus allen Kandidaten den FRISCHESTEN Kurs und gibt ihn in EURO zurück.
+ * - EUR-Kurse: unverändert.
+ * - USD-Kurse: geteilt durch EUR/USD (Kurs und ATR). Ohne Wechselkurs → verworfen.
+ * - Andere Währungen oder unbekannte Währung bei einem US-Symbol → verworfen
+ *   (lieber Stern "kein Live-Kurs" als eine falsche Zahl).
+ * Bei gleicher Aktualität (< 5 Min. Unterschied) gewinnt die EUR-Börse,
+ * weil dort kein Umrechnungsfehler entsteht.
+ * NICHT für Ampel-Indikatoren verwenden — deren Schwellen stehen in USD.
+ */
+export function waehleEuroKurs(
+  kandidaten: string[],
+  prices: Record<string, KursEintrag | undefined> | undefined,
+  eurUsd: number | null
+): EuroKurs | null {
+  if (!prices) return null;
+  let best: EuroKurs | null = null;
+  let bestIstEur = false;
+  for (const sym of kandidaten) {
+    const e = prices[sym];
+    if (!e || typeof e.price !== "number" || !(e.price > 0)) continue;
+    const cur = (e.currency || (EUR_SUFFIX.test(sym) ? "EUR" : "")).toUpperCase();
+    let faktor: number;
+    if (cur === "EUR") faktor = 1;
+    else if (cur === "USD" && eurUsd && eurUsd > 0) faktor = 1 / eurUsd;
+    else continue;
+
+    const uhr = e.time
+      ? new Date(e.time * 1000).toLocaleString("de-AT", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Vienna" })
+      : "Zeit unbekannt";
+    const kandidat: EuroKurs = {
+      price: e.price * faktor,
+      atr: typeof e.atr === "number" && e.atr > 0 ? e.atr * faktor : null,
+      symbol: sym,
+      time: e.time,
+      changePct: typeof e.prevClose === "number" && e.prevClose > 0 ? (e.price / e.prevClose - 1) * 100 : undefined,
+      quelle: cur === "EUR"
+        ? `${sym} · ${uhr}`
+        : `${sym} · ${uhr} · USD→EUR ${eurUsd!.toLocaleString("de-DE", { minimumFractionDigits: 4, maximumFractionDigits: 4 })}`,
+    };
+    const istEur = cur === "EUR";
+    if (!best) { best = kandidat; bestIstEur = istEur; continue; }
+    const tNeu = kandidat.time ?? 0;
+    const tAlt = best.time ?? 0;
+    const deutlichFrischer = tNeu - tAlt > 300;
+    const gleichAlt = Math.abs(tNeu - tAlt) <= 300;
+    if (deutlichFrischer || (gleichAlt && istEur && !bestIstEur)) {
+      best = kandidat; bestIstEur = istEur;
+    }
+  }
+  return best;
 }

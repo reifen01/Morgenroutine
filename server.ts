@@ -667,7 +667,9 @@ app.post("/api/fetch-live-prices", async (req, res) => {
     );
 
     const market: Record<string, number> = {};
-    const prices: Record<string, { price: number | null; atr: number | null; currency?: string; name?: string; source?: string }> = {};
+    // Tagesänderung in % der Ampel-Indikatoren (gegen Schlusskurs Vortag)
+    const marketChange: Record<string, number> = {};
+    const prices: Record<string, { price: number | null; atr: number | null; currency?: string; name?: string; source?: string; time?: number; prevClose?: number }> = {};
 
     for (let i = 0; i < cleanSymbols.length; i++) {
       const sym = cleanSymbols[i];
@@ -675,6 +677,8 @@ app.post("/api/fetch-live-prices", async (req, res) => {
       let currency: string | undefined;
       let name: string | undefined;
       let atr: number | null = null;
+      let time: number | undefined; // Unix-Sekunden des letzten Handels
+      let prevClose: number | undefined; // Schlusskurs des Vortags
 
       const chartRes = chartResults[i];
       if (chartRes.status === "fulfilled") {
@@ -687,6 +691,7 @@ app.post("/api/fetch-live-prices", async (req, res) => {
           price = meta.regularMarketPrice;
         }
         if (meta?.currency) currency = meta.currency;
+        if (typeof meta?.regularMarketTime === "number") time = meta.regularMarketTime;
         if (meta?.symbol) name = meta.symbol;
 
         if (indicators && timestamps.length > 0) {
@@ -703,15 +708,32 @@ app.post("/api/fetch-live-prices", async (req, res) => {
           if (price === null && bars.length > 0) {
             price = bars[bars.length - 1].close;
           }
+
+          // Vortages-Schluss: Ist der letzte Tagesbalken bereits der Tag des
+          // letzten Handels, ist der vorletzte Balken der Vortag — sonst der
+          // letzte. (chartPreviousClose ist bei range=2mo der Schluss VOR dem
+          // Zeitraum und daher unbrauchbar.)
+          const closes: { day: string; close: number }[] = [];
+          for (let j = 0; j < timestamps.length; j++) {
+            const c = indicators.close?.[j];
+            if (typeof c === "number") closes.push({ day: new Date(timestamps[j] * 1000).toISOString().slice(0, 10), close: c });
+          }
+          if (closes.length >= 2) {
+            const handelsTag = time ? new Date(time * 1000).toISOString().slice(0, 10) : closes[closes.length - 1].day;
+            const letzter = closes[closes.length - 1];
+            prevClose = letzter.day === handelsTag ? closes[closes.length - 2].close : letzter.close;
+          }
         }
+        if (prevClose === undefined && typeof meta?.previousClose === "number") prevClose = meta.previousClose;
       } else {
         console.warn(`[Live] Chart fetch failed for ${sym}:`, chartRes.reason?.message || chartRes.reason);
       }
 
       if (YAHOO_MARKET_MAP[sym] && price !== null) {
         market[YAHOO_MARKET_MAP[sym]] = price;
+        if (prevClose && prevClose > 0) marketChange[YAHOO_MARKET_MAP[sym]] = (price / prevClose - 1) * 100;
       } else {
-        prices[sym] = { price, atr, currency, name };
+        prices[sym] = { price, atr, currency, name, time, prevClose };
       }
     }
 
@@ -739,6 +761,7 @@ app.post("/api/fetch-live-prices", async (req, res) => {
 
     const payload = {
       market,
+      marketChange,
       prices,
       fetchedAt: new Date().toISOString(),
     };

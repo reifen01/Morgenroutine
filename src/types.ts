@@ -7,6 +7,10 @@ export interface LivePriceData {
   price: number | null;
   date: string;
   atr: number;
+  /** Herkunft des Kurses, z.B. "GOOGL · 21:59 · USD→EUR 1,0912" (optional). */
+  quelle?: string;
+  /** Tagesänderung in % gegen den Vortagesschluss derselben Börse (optional). */
+  changePct?: number;
 }
 
 /**
@@ -131,6 +135,8 @@ export interface MarketState {
    *  "ai" = KI-Schätzung per Websuche, "estimate" = fester Notnagel-Schätzwert,
    *  "manual" = von Hand eingetragen. Nur "yahoo" und "manual" lösen die Kaufsperre aus. */
   distSource?: "yahoo" | "ai" | "estimate" | "manual";
+  /** Tagesänderung in % gegen den Vortagesschluss, je Indikator-Key (nur Anzeige). */
+  tagesAenderung?: Record<string, number>;
 }
 
 /** One captured day of market-regime values, used for the weekly/monthly

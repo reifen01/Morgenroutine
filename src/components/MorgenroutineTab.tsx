@@ -26,7 +26,7 @@ import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot, P
 import HilfeLink from "./HilfeLink";
 import { statusFuerSnapshot } from "../utils/historyBackfill";
 import { computeTrend, TrendArrow, TrendHistory, TrendKey } from "./TrendBarometer";
-import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist } from "../utils/yahooMapping";
+import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist, waehleEuroKurs, EUR_USD_SYMBOL } from "../utils/yahooMapping";
 import { 
   parseCleanFloat, 
   parseCleanDate,
@@ -271,7 +271,7 @@ export default function MorgenroutineTab({
     const portfolioSyms = portfolioData.flatMap(p => yahooCandidatesForPortfolio(p));
     const journalSyms = journalHoldings().flatMap(h => yahooCandidatesForPortfolio(h));
     const watchlistSyms = watchlist.flatMap(w => yahooCandidatesForWatchlist(w));
-    return Array.from(new Set([...marketSyms, SPX_SURROGATE_SYMBOL, ...portfolioSyms, ...journalSyms, ...watchlistSyms]));
+    return Array.from(new Set([...marketSyms, SPX_SURROGATE_SYMBOL, EUR_USD_SYMBOL, ...portfolioSyms, ...journalSyms, ...watchlistSyms]));
   };
 
   const handleFetchLivePrices = async () => {
@@ -311,6 +311,14 @@ export default function MorgenroutineTab({
             updatedCount++;
           }
         }
+      }
+      // Tagesänderung der Indikatoren (nur Anzeige, keine Regelwirkung).
+      if (data.marketChange && typeof data.marketChange === "object") {
+        const ta: Record<string, number> = {};
+        for (const [k, v] of Object.entries(data.marketChange)) {
+          if (typeof v === "number" && isFinite(v)) ta[k] = v;
+        }
+        newMarket.tagesAenderung = ta;
       }
       // SPX surrogate: if Yahoo refused ^GSPC but SPY came through, derive
       // SPX as SPY * 10 (close enough for our regime checks).
@@ -370,16 +378,12 @@ export default function MorgenroutineTab({
       // Keys — sonst verlieren neue Positionen still ihren Kurs).
       const newLive: LivePrices = {};
       for (const [k, v] of Object.entries(livePrices)) newLive[k] = { ...v };
-      // Walk through each item's candidate symbols, take the first that
-      // actually came back with a numeric price (so BABA.DE → BABA.F
-      // fallbacks resolve transparently).
-      const firstEntryWithPrice = (candidates: string[]) => {
-        for (const sym of candidates) {
-          const entry = data.prices?.[sym];
-          if (entry && typeof entry.price === "number") return entry;
-        }
-        return null;
-      };
+      // Kurse IMMER in Euro: aus allen Kandidaten (EUR-Börsen + US-Notierung)
+      // den frischesten wählen, USD per EUR/USD umrechnen — siehe waehleEuroKurs().
+      const eurUsdRaw = data.prices?.[EUR_USD_SYMBOL]?.price;
+      const eurUsd = typeof eurUsdRaw === "number" && eurUsdRaw > 0.5 && eurUsdRaw < 2 ? eurUsdRaw : null;
+      const firstEntryWithPrice = (candidates: string[]) =>
+        waehleEuroKurs(candidates, data.prices, eurUsd);
 
       // Handels-Wächter-Positionen UND Journal-Holdings versorgen; fehlende
       // Kurs-Einträge werden angelegt statt übersprungen.
@@ -395,8 +399,10 @@ export default function MorgenroutineTab({
         const entry = firstEntryWithPrice(candidates);
         if (!entry) continue;
         if (!newLive[key]) newLive[key] = emptyLivePrice(routineDate);
-        newLive[key].price = entry.price as number;
+        newLive[key].price = entry.price;
         newLive[key].date = routineDate;
+        newLive[key].quelle = entry.quelle;
+        newLive[key].changePct = entry.changePct;
         if (typeof entry.atr === "number" && entry.atr > 0) {
           newLive[key].atr = entry.atr;
         }
@@ -412,7 +418,7 @@ export default function MorgenroutineTab({
         const entry = firstEntryWithPrice(candidates);
         if (!entry) return w;
         const next = { ...w };
-        next.price = (entry.price as number).toFixed(2);
+        next.price = entry.price.toFixed(2);
         updatedCount++;
         watchlistChanged = true;
         if (typeof entry.atr === "number" && entry.atr > 0) {
@@ -660,6 +666,18 @@ export default function MorgenroutineTab({
    * ANZEIGE (kein Knopf), "Verlauf" (ⓘ) ist der Button, der die
    * gesammelten Tageswerte öffnet.
    */
+  /** Tagesänderung eines Ampel-Indikators in % (neutral gefärbt — ob steigend
+   *  gut oder schlecht ist, zeigt der Trend-Pfeil, nicht diese Zahl). */
+  const renderTagesAenderung = (key: string) => {
+    const v = marketState.tagesAenderung?.[key];
+    if (typeof v !== "number") return null;
+    return (
+      <div className="mt-0.5 text-[11px] font-mono font-semibold text-slate-500 leading-none" title="Veränderung seit Vortagesschluss">
+        heute {v >= 0 ? "+" : ""}{v.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} % {v > 0 ? "↑" : v < 0 ? "↓" : "→"}
+      </div>
+    );
+  };
+
   const renderTrendVerlauf = (trendKey: TrendKey, histId: string) => (
     <div className="flex items-stretch shrink-0">
       <div className="flex flex-col items-center gap-1">
@@ -804,11 +822,18 @@ export default function MorgenroutineTab({
           <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
             🌐 Heute starten
           </h3>
-          {lastLiveFetchAt && (
-            <p className="text-[11px] text-slate-400 font-mono mt-0.5">
-              Marktwerte zuletzt: {new Date(lastLiveFetchAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" })}
-            </p>
-          )}
+          {lastLiveFetchAt && (() => {
+            const t = new Date(lastLiveFetchAt);
+            const alterMin = (Date.now() - t.getTime()) / 60000;
+            const frisch = alterMin <= 30 && t.toDateString() === new Date().toDateString();
+            return (
+              <div className={"mt-1.5 inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[11px] font-bold font-mono " +
+                (frisch ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-amber-50 text-amber-700 border-amber-200")}>
+                <span className={"h-1.5 w-1.5 rounded-full " + (frisch ? "bg-emerald-500 animate-pulse" : "bg-amber-500")}></span>
+                {frisch ? "LIVE" : "VERALTET"} · Stand {t.toLocaleString("de-AT", frisch ? { timeStyle: "medium" } : { dateStyle: "short", timeStyle: "short" })}
+              </div>
+            );
+          })()}
         </div>
 
         {/* Kompakte Marktampel — ersetzt den großen Sicherheits-Block */}
@@ -1004,6 +1029,7 @@ export default function MorgenroutineTab({
                   </div>
                   <div className={`text-right font-mono font-bold tabular-nums text-base ${vix && vix >= 25 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                     {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
+                    {renderTagesAenderung("vix")}
                     <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">0–25</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;25</span></div>
                   </div>
                 </div>
@@ -1099,6 +1125,7 @@ export default function MorgenroutineTab({
                   </div>
                   <div className="text-right font-mono font-bold tabular-nums text-base text-slate-800">
                     {marketState.vvix !== null ? marketState.vvix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
+                    {renderTagesAenderung("vvix")}
                     <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">0–110</span><span className="text-slate-300">|</span><span className="text-amber-500/90">110–130</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;130</span></div>
                   </div>
                 </div>
@@ -1145,6 +1172,7 @@ export default function MorgenroutineTab({
                   </div>
                   <div className={`text-right font-mono font-bold tabular-nums text-base ${wti && wti >= 100 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                     {wti ? `$ ${wti.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "FEHLT"}
+                    {renderTagesAenderung("wti")}
                     <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;100</span></div>
                   </div>
                 </div>
@@ -1189,6 +1217,7 @@ export default function MorgenroutineTab({
                   </div>
                   <div className={`text-right font-mono font-bold tabular-nums text-base ${gas && gas >= 4.5 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                     {gas ? `$ ${gas.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : "FEHLT"}
+                    {renderTagesAenderung("gas")}
                     <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;4,50</span></div>
                   </div>
                 </div>
