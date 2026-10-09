@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect, ChangeEvent } from "react";
+import { useState, useEffect, ChangeEvent, ReactNode } from "react";
 import { 
   CheckCircle, 
   HelpCircle, 
@@ -119,6 +119,8 @@ export default function MorgenroutineTab({
 }: MorgenroutineTabProps) {
    // Help tooltips visibility state
   const [helpId, setHelpId] = useState<string | null>(null);
+  /** Welche Watchlist-Zeile gerade aufgeklappt ist (null = keine). */
+  const [zeileOffen, setZeileOffen] = useState<string | null>(null);
   const [copiedPineScript, setCopiedPineScript] = useState(false);
   const [calculatingDistDays, setCalculatingDistDays] = useState(false);
   const [distDaysReasoning, setDistDaysReasoning] = useState<string | null>(null);
@@ -661,43 +663,128 @@ export default function MorgenroutineTab({
   const isContango = ratio !== null ? ratio < 1.0 : false;
 
   /**
-   * Rechter Kopfbereich jeder Indikator-Karte: zwei fingertaugliche
-   * Elemente mit Beschriftung und Trennlinie: "Trend" ist eine reine
-   * ANZEIGE (kein Knopf), "Verlauf" (ⓘ) ist der Button, der die
-   * gesammelten Tageswerte öffnet.
+   * WATCHLIST-ZEILE (Vorbild TradingView): eine kompakte Zeile pro Indikator.
+   * Links Ampel-Punkt, Kurzname und Status, rechts Wert groß und darunter die
+   * Tagesänderung (absolut + %) grün/rot. Antippen klappt Trend, Verlauf,
+   * Schwellen und Hilfe auf. Logik und Hilfetexte bleiben unverändert —
+   * nur die Darstellung ist neu.
    */
-  /** Tagesänderung eines Ampel-Indikators in % (neutral gefärbt — ob steigend
-   *  gut oder schlecht ist, zeigt der Trend-Pfeil, nicht diese Zahl). */
-  const renderTagesAenderung = (key: string) => {
-    const v = marketState.tagesAenderung?.[key];
-    if (typeof v !== "number") return null;
+  type Ampel = "gruen" | "gelb" | "rot" | "grau";
+  const AMPEL_PUNKT: Record<Ampel, string> = {
+    gruen: "bg-emerald-500",
+    gelb: "bg-amber-400",
+    rot: "bg-rose-500 animate-pulse",
+    grau: "bg-slate-300 animate-pulse",
+  };
+  const AMPEL_TEXT: Record<Ampel, string> = {
+    gruen: "text-emerald-700",
+    gelb: "text-amber-700",
+    rot: "text-rose-600",
+    grau: "text-slate-500",
+  };
+  const fmtDe = (v: number, nk: number) =>
+    v.toLocaleString("de-DE", { minimumFractionDigits: nk, maximumFractionDigits: nk });
+
+  /** Tagesänderung absolut + %, grün/rot wie bei TradingView. */
+  const renderAenderung = (key: string, wert: number | null, nk: number) => {
+    const pct = marketState.tagesAenderung?.[key];
+    if (typeof pct !== "number" || wert === null) {
+      return <div className="text-[12px] font-mono text-slate-400 leading-none">—</div>;
+    }
+    // Vortagesschluss = heute ÷ (1 + pct/100) → absolute Änderung in Originalwährung
+    const abs = wert - wert / (1 + pct / 100);
+    const farbe = pct > 0 ? "text-emerald-600" : pct < 0 ? "text-rose-600" : "text-slate-500";
+    const vz = pct > 0 ? "+" : "";
     return (
-      <div className="mt-0.5 text-[11px] font-mono font-semibold text-slate-500 leading-none" title="Veränderung seit Vortagesschluss">
-        heute {v >= 0 ? "+" : ""}{v.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} % {v > 0 ? "↑" : v < 0 ? "↓" : "→"}
+      <div className={`flex items-center justify-end gap-2 text-[12px] font-mono font-semibold tabular-nums leading-none ${farbe}`} title="Veränderung seit Vortagesschluss">
+        <span>{vz}{fmtDe(abs, nk)}</span>
+        <span>{vz}{fmtDe(pct, 2)} %</span>
       </div>
     );
   };
 
-  const renderTrendVerlauf = (trendKey: TrendKey, histId: string) => (
-    <div className="flex items-stretch shrink-0">
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide leading-none">Trend</span>
-        <TrendArrow result={computeTrend(dailyHistory, trendKey)} />
-      </div>
-      <div className="w-px bg-slate-200 mx-2.5 my-0.5"></div>
-      <div className="flex flex-col items-center gap-1">
-        <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide leading-none">Verlauf</span>
+  interface ZeileCfg {
+    id: string;
+    kurz: string;
+    lang: string;
+    ampel: Ampel;
+    statusText: string;
+    wert: string;
+    wertRot?: boolean;
+    aenderung?: ReactNode | null;
+    unterWert?: ReactNode;
+    trendKey: TrendKey;
+    histLabel: string;
+    schwellen: ReactNode;
+    hilfe: ReactNode;
+    extra?: ReactNode;
+  }
+
+  const renderZeile = (z: ZeileCfg) => {
+    const offen = zeileOffen === z.id;
+    const histId = `hist-${z.id}`;
+    return (
+      <div key={z.id} className="py-2.5">
         <button
           type="button"
-          onClick={() => toggleHelp(histId)}
-          className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-slate-50 text-slate-600 border border-slate-200 hover:bg-slate-100 hover:text-slate-900 active:scale-95 transition-all cursor-pointer"
-          title="Gesammelte Tageswerte anzeigen"
+          onClick={() => setZeileOffen(offen ? null : z.id)}
+          className="w-full flex items-center gap-2.5 text-left cursor-pointer active:bg-slate-50 rounded-lg -mx-1 px-1"
+          title={offen ? "Details zuklappen" : "Details aufklappen"}
         >
-          <Info className="h-4 w-4" />
+          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${AMPEL_PUNKT[z.ampel]}`}></span>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-baseline gap-1.5 min-w-0">
+              <span className="font-bold text-slate-900 text-[15px] leading-tight shrink-0">{z.kurz}</span>
+              <span className={`text-[11px] font-bold uppercase tracking-wide leading-none truncate ${AMPEL_TEXT[z.ampel]}`}>{z.statusText}</span>
+            </div>
+            <div className="text-[12px] text-slate-500 leading-tight truncate">{z.lang}</div>
+          </div>
+          <TrendArrow result={computeTrend(dailyHistory, z.trendKey)} />
+          <div className="text-right shrink-0 min-w-[84px]">
+            <div className={`font-mono font-bold tabular-nums text-[17px] leading-tight ${z.wertRot ? "text-rose-600" : "text-slate-900"}`}>{z.wert}</div>
+            {z.unterWert}
+            <div className="mt-0.5">{z.aenderung}</div>
+          </div>
+          <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${offen ? "rotate-180" : ""}`} />
         </button>
+
+        {offen && (
+          <div className="mt-2.5 ml-5 space-y-2.5 animate-fade-in">
+            <div className="flex items-center justify-between gap-3 flex-wrap">
+              <button
+                type="button"
+                onClick={() => toggleHelp(histId)}
+                className="inline-flex items-center gap-1 px-2.5 h-7 rounded-lg bg-slate-50 text-slate-700 border border-slate-200 hover:bg-slate-100 text-[11px] font-bold cursor-pointer"
+                title="Gesammelte Tageswerte anzeigen"
+              >
+                <Info className="h-3.5 w-3.5" /> Verlauf
+              </button>
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide leading-none">Schwellen</span>
+                {z.schwellen}
+              </div>
+              <button
+                type="button"
+                onClick={() => toggleHelp(z.id)}
+                className="inline-flex items-center gap-1 px-2.5 h-7 rounded-lg text-emerald-700 hover:text-emerald-900 bg-emerald-50 border border-emerald-100 text-[11px] font-bold cursor-pointer"
+                title="Hilfe anzeigen"
+              >
+                <HelpCircle className="h-3.5 w-3.5" /> Hilfe
+              </button>
+            </div>
+            {helpId === histId && (
+              <div className="p-3 rounded-xl border-l-4 border-slate-400 bg-slate-500/5">
+                <TrendHistory history={dailyHistory} trendKey={z.trendKey} label={z.histLabel} />
+              </div>
+            )}
+            {helpId === z.id && z.hilfe}
+            {z.extra}
+          </div>
+        )}
       </div>
-    </div>
-  );
+    );
+  };
+
 
   const livesFilled = vix !== null && vxv !== null && marketState.vvix !== null && wti !== null && gas !== null;
   
@@ -1001,326 +1088,171 @@ export default function MorgenroutineTab({
                 </div>
               )}
 
-              {/* ── VIX ── */}
-              <div className="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <span>VIX (US-Angst)</span>
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('vix')}
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 bg-emerald-50 border border-emerald-100/60 shadow-xs transition-all cursor-pointer shrink-0"
-                      title="Hilfe anzeigen"
-                    >
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  {renderTrendVerlauf("vix", "hist-vix")}
-                </div>
-                <div className="flex items-end justify-between gap-2">
-                  <div>
-                    {vix === null ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                    ) : vix < 25 ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Gelassen</span>
-                    ) : (
-                      <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Panikverbot</span>
-                    )}
-                  </div>
-                  <div className={`text-right font-mono font-bold tabular-nums text-base ${vix && vix >= 25 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
-                    {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    {renderTagesAenderung("vix")}
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–25</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;25</span></div>
-                  </div>
-                </div>
-                {helpId === 'hist-vix' && (
-                  <div className="p-3 rounded-xl border-l-4 border-slate-400 bg-slate-500/5">
-                    <TrendHistory history={dailyHistory} trendKey="vix" label="VIX (US-Angst)" />
-                  </div>
-                )}
-                {helpId === 'vix' && (
-                  <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
-                    <strong className="text-emerald-950">VIX Index (Cboe S&amp;P 500 Volatility):</strong> Misst die implizite Volatilität des US-Leitindex auf Sicht der nächsten 30 Tage. 
-                    Werte über <strong>25,00</strong> weisen auf starke Marktunordnung und Absicherungsausbrüche der US-Profis hin. 
-                    Neukäufe von Tech-Aktien sind bei VIX &gt;= 25 strictly banned!
-                  </div>
-                )}
-              </div>
-
-              {/* ── VXV ── */}
-              <div className="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <span>VIX/VXV-Verhältnis (Contango)</span>
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('vxv')}
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 bg-emerald-50 border border-emerald-100/60 shadow-xs transition-all cursor-pointer shrink-0"
-                      title="Hilfe anzeigen"
-                    >
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  {renderTrendVerlauf("ratio", "hist-ratio")}
-                </div>
-                <div className="flex items-end justify-between gap-2">
-                  <div>
-                    {vxv === null || vix === null ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                    ) : isContango ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Contango</span>
-                    ) : (
-                      <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Backwardation</span>
-                    )}
-                  </div>
-                  <div className={`text-right font-mono font-bold tabular-nums text-base ${ratio !== null && !isContango ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
-                    {ratio !== null ? ratio.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    <div className="mt-0.5 text-[10px] font-medium text-slate-500 leading-none">
-                      VIX {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"} · VXV {vxv ? vxv.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+              {/* ── Watchlist-Zeilen (Vorbild TradingView) ── */}
+              <div className="divide-y divide-slate-200 border-t border-b border-slate-200">
+                {renderZeile({
+                  id: "vix",
+                  kurz: "VIX",
+                  lang: "US-Angst (S&P 500)",
+                  ampel: vix === null ? "grau" : vix < 25 ? "gruen" : "rot",
+                  statusText: vix === null ? "Fehlt" : vix < 25 ? "Gelassen" : "Panikverbot",
+                  wert: vix ? fmtDe(vix, 2) : "FEHLT",
+                  wertRot: !!vix && vix >= 25,
+                  aenderung: renderAenderung("vix", vix, 2),
+                  trendKey: "vix",
+                  histLabel: "VIX (US-Angst)",
+                  schwellen: <div className="flex items-center gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–25</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;25</span></div>,
+                  hilfe: (
+                    <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
+                      <strong className="text-emerald-950">VIX Index (Cboe S&amp;P 500 Volatility):</strong> Misst die implizite Volatilität des US-Leitindex auf Sicht der nächsten 30 Tage. 
+                      Werte über <strong>25,00</strong> weisen auf starke Marktunordnung und Absicherungsausbrüche der US-Profis hin. 
+                      Neukäufe von Tech-Aktien sind bei VIX &gt;= 25 strictly banned!
                     </div>
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-600">≥1,00</span></div>
-                  </div>
-                </div>
-                {helpId === 'hist-ratio' && (
-                  <div className="p-3 rounded-xl border-l-4 border-slate-400 bg-slate-500/5">
-                    <TrendHistory history={dailyHistory} trendKey="ratio" label="VIX/VXV-Verhältnis" />
-                  </div>
-                )}
-                {helpId === 'vxv' && (
-                  <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
-                    <strong className="text-emerald-950">VXV Index:</strong> Drückt die 3-Monatserwartung aus. 
-                    Ein gesundes Marktumfeld befindet sich in der Konstellation <strong>Contango</strong> (VIX &lt; VXV). 
-                    Fällt die Strukturkurve unter 1.0 (VIX &gt;= VXV, Backwardation), herrscht Panik im aktuellen Monat, was das Risiko neuer Long-Käufe massiv erhöht.
-                  </div>
-                )}
-              </div>
+                  ),
+                })}
 
-              {/* ── VVIX ── */}
-              <div className="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <span>VVIX (Angst der Angst)</span>
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('vvix')}
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 bg-emerald-50 border border-emerald-100/60 shadow-xs transition-all cursor-pointer shrink-0"
-                      title="Hilfe anzeigen"
-                    >
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  {renderTrendVerlauf("vvix", "hist-vvix")}
-                </div>
-                <div className="flex items-end justify-between gap-2">
-                  <div>
-                    {marketState.vvix === null ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                    ) : marketState.vvix < 100 ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Entspannt</span>
-                    ) : marketState.vvix < 130 ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-amber-50 text-amber-600 border border-amber-100 text-[10px] font-bold uppercase">Erhöht</span>
-                    ) : (
-                      <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
-                    )}
-                  </div>
-                  <div className="text-right font-mono font-bold tabular-nums text-base text-slate-800">
-                    {marketState.vvix !== null ? marketState.vvix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
-                    {renderTagesAenderung("vvix")}
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–110</span><span className="text-slate-300">|</span><span className="text-amber-600">110–130</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;130</span></div>
-                  </div>
-                </div>
-                {helpId === 'hist-vvix' && (
-                  <div className="p-3 rounded-xl border-l-4 border-slate-400 bg-slate-500/5">
-                    <TrendHistory history={dailyHistory} trendKey="vvix" label="VVIX" />
-                  </div>
-                )}
-                {helpId === 'vvix' && (
-                  <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
-                    <strong className="text-emerald-950">VVIX Index (Die Volatilität der Volatilität):</strong> Dieser Index misst die erwartete Schwankungsbreite des VIX selbst (auch bekannt als „die Angst der Angst“). 
-                    Ein VVIX unter <strong>100</strong> gilt als entspanntes Marktumfeld. 
-                    Steigt der VVIX über <strong>110</strong>, steigen die Preise für VIX-Absicherungen deutlich (Profis bereiten sich vor). 
-                    Ab <strong>130</strong> herrscht laut Handbuch ein unbestechliches <strong>Kaufverbot (absoluter Kaufstopp)</strong> für neue Positionen, da explosive Kursausschläge und unberechenbare Wendepunkte am Gesamtmarkt drohen.
-                  </div>
-                )}
-              </div>
+                {renderZeile({
+                  id: "vxv",
+                  kurz: "VIX/VXV",
+                  lang: "Verhältnis (Contango)",
+                  ampel: vxv === null || vix === null ? "grau" : isContango ? "gruen" : "rot",
+                  statusText: vxv === null || vix === null ? "Fehlt" : isContango ? "Contango" : "Backwardation",
+                  wert: ratio !== null ? fmtDe(ratio, 2) : "FEHLT",
+                  wertRot: ratio !== null && !isContango,
+                  unterWert: (
+                    <div className="text-[11px] font-mono text-slate-500 leading-none mt-0.5">
+                      {vix ? fmtDe(vix, 2) : "—"} / {vxv ? fmtDe(vxv, 2) : "—"}
+                    </div>
+                  ),
+                  aenderung: null,
+                  trendKey: "ratio",
+                  histLabel: "VIX/VXV-Verhältnis",
+                  schwellen: <div className="flex items-center gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-600">≥1,00</span></div>,
+                  hilfe: (
+                    <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
+                      <strong className="text-emerald-950">VXV Index:</strong> Drückt die 3-Monatserwartung aus. 
+                      Ein gesundes Marktumfeld befindet sich in der Konstellation <strong>Contango</strong> (VIX &lt; VXV). 
+                      Fällt die Strukturkurve unter 1.0 (VIX &gt;= VXV, Backwardation), herrscht Panik im aktuellen Monat, was das Risiko neuer Long-Käufe massiv erhöht.
+                    </div>
+                  ),
+                })}
 
-              {/* ── WTI Öl ── */}
-              <div className="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <span>WTI Oil ($ pro Barrel)</span>
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('wti')}
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 bg-emerald-50 border border-emerald-100/60 shadow-xs transition-all cursor-pointer shrink-0"
-                      title="Hilfe anzeigen"
-                    >
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  {renderTrendVerlauf("wti", "hist-wti")}
-                </div>
-                <div className="flex items-end justify-between gap-2">
-                  <div>
-                    {wti === null ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                    ) : wti < 100 ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">OK (100%)</span>
-                    ) : (
-                      <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Risiko -50%</span>
-                    )}
-                  </div>
-                  <div className={`text-right font-mono font-bold tabular-nums text-base ${wti && wti >= 100 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
-                    {wti ? `$ ${wti.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "FEHLT"}
-                    {renderTagesAenderung("wti")}
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;100</span></div>
-                  </div>
-                </div>
-                {helpId === 'hist-wti' && (
-                  <div className="p-3 rounded-xl border-l-4 border-slate-400 bg-slate-500/5">
-                    <TrendHistory history={dailyHistory} trendKey="wti" label="WTI Öl" />
-                  </div>
-                )}
-                {helpId === 'wti' && (
-                  <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
-                    <strong className="text-emerald-950">WTI Öl-Klausel ($100-Schranke):</strong> Ein hoher Rohölpreis treibt die globale Inflation drastisch an und belastet die Margen von Fahrzeugherstellern wie Tesla massiv. 
-                    Liegt WTI Öl über <strong>$ 100,00</strong>, wird das eingeplante Trade-Risiko für Neukäufe halbiert (<strong>0,5%</strong> statt 1% Depotrisiko pro Trade), um Verlustrisiken vorsorglich zu minimieren.
-                  </div>
-                )}
-              </div>
+                {renderZeile({
+                  id: "vvix",
+                  kurz: "VVIX",
+                  lang: "Angst der Angst",
+                  ampel: marketState.vvix === null ? "grau" : marketState.vvix < 100 ? "gruen" : marketState.vvix < 130 ? "gelb" : "rot",
+                  statusText: marketState.vvix === null ? "Fehlt" : marketState.vvix < 100 ? "Entspannt" : marketState.vvix < 130 ? "Erhöht" : "Kaufstopp",
+                  wert: marketState.vvix !== null ? fmtDe(marketState.vvix, 2) : "FEHLT",
+                  wertRot: marketState.vvix !== null && marketState.vvix >= 130,
+                  aenderung: renderAenderung("vvix", marketState.vvix, 2),
+                  trendKey: "vvix",
+                  histLabel: "VVIX",
+                  schwellen: <div className="flex items-center gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–110</span><span className="text-slate-300">|</span><span className="text-amber-600">110–130</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;130</span></div>,
+                  hilfe: (
+                    <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
+                      <strong className="text-emerald-950">VVIX Index (Die Volatilität der Volatilität):</strong> Dieser Index misst die erwartete Schwankungsbreite des VIX selbst (auch bekannt als „die Angst der Angst“). 
+                      Ein VVIX unter <strong>100</strong> gilt als entspanntes Marktumfeld. 
+                      Steigt der VVIX über <strong>110</strong>, steigen die Preise für VIX-Absicherungen deutlich (Profis bereiten sich vor). 
+                      Ab <strong>130</strong> herrscht laut Handbuch ein unbestechliches <strong>Kaufverbot (absoluter Kaufstopp)</strong> für neue Positionen, da explosive Kursausschläge und unberechenbare Wendepunkte am Gesamtmarkt drohen.
+                    </div>
+                  ),
+                })}
 
-              {/* ── Henry Hub Gas ── */}
-              <div className="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
-                <div className="flex items-center justify-between gap-2">
-                  <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                    <span>Henry Hub Gas ($)</span>
-                    <button
-                      type="button"
-                      onClick={() => toggleHelp('gas')}
-                      className="inline-flex items-center justify-center w-5 h-5 rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 bg-emerald-50 border border-emerald-100/60 shadow-xs transition-all cursor-pointer shrink-0"
-                      title="Hilfe anzeigen"
-                    >
-                      <HelpCircle className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  {renderTrendVerlauf("gas", "hist-gas")}
-                </div>
-                <div className="flex items-end justify-between gap-2">
-                  <div>
-                    {gas === null ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                    ) : gas < 4.5 ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Stabil</span>
-                    ) : (
-                      <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
-                    )}
-                  </div>
-                  <div className={`text-right font-mono font-bold tabular-nums text-base ${gas && gas >= 4.5 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
-                    {gas ? `$ ${gas.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : "FEHLT"}
-                    {renderTagesAenderung("gas")}
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;4,50</span></div>
-                  </div>
-                </div>
-                {helpId === 'hist-gas' && (
-                  <div className="p-3 rounded-xl border-l-4 border-slate-400 bg-slate-500/5">
-                    <TrendHistory history={dailyHistory} trendKey="gas" label="Erdgas" />
-                  </div>
-                )}
-                {helpId === 'gas' && (
-                  <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
-                    <strong className="text-emerald-950">Henry Hub Erdgas ($4.50-Sperre):</strong> Dient als sekundäres makroökonomisches Schutzschild. 
-                    Sollte der Gaspreis in den USA auf über <strong>$ 4,50</strong> schießen, greift das System mit einem automatischen <strong>Kaufstopp</strong> ein.
-                  </div>
-                )}
-              </div>
+                {renderZeile({
+                  id: "wti",
+                  kurz: "WTI",
+                  lang: "Rohöl ($/Barrel)",
+                  ampel: wti === null ? "grau" : wti < 100 ? "gruen" : "rot",
+                  statusText: wti === null ? "Fehlt" : wti < 100 ? "OK (100 %)" : "Risiko −50 %",
+                  wert: wti ? fmtDe(wti, 2) : "FEHLT",
+                  wertRot: !!wti && wti >= 100,
+                  aenderung: renderAenderung("wti", wti, 2),
+                  trendKey: "wti",
+                  histLabel: "WTI Öl",
+                  schwellen: <div className="flex items-center gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;100</span></div>,
+                  hilfe: (
+                    <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
+                      <strong className="text-emerald-950">WTI Öl-Klausel ($100-Schranke):</strong> Ein hoher Rohölpreis treibt die globale Inflation drastisch an und belastet die Margen von Fahrzeugherstellern wie Tesla massiv. 
+                      Liegt WTI Öl über <strong>$ 100,00</strong>, wird das eingeplante Trade-Risiko für Neukäufe halbiert (<strong>0,5%</strong> statt 1% Depotrisiko pro Trade), um Verlustrisiken vorsorglich zu minimieren.
+                    </div>
+                  ),
+                })}
 
-              {/* ── Distribution Days ── */}
-              <div className="border border-slate-200 rounded-xl p-3.5 space-y-2.5 bg-white">
-                <div className="flex items-center justify-between gap-2">
-                  <div>
-                    <div className="font-bold text-slate-900 text-sm flex items-center gap-1.5">
-                      <span>Distribution Days</span>
+                {renderZeile({
+                  id: "gas",
+                  kurz: "Erdgas",
+                  lang: "Henry Hub ($)",
+                  ampel: gas === null ? "grau" : gas < 4.5 ? "gruen" : "rot",
+                  statusText: gas === null ? "Fehlt" : gas < 4.5 ? "Stabil" : "Kaufstopp",
+                  wert: gas ? fmtDe(gas, 3) : "FEHLT",
+                  wertRot: !!gas && gas >= 4.5,
+                  aenderung: renderAenderung("gas", gas, 3),
+                  trendKey: "gas",
+                  histLabel: "Erdgas",
+                  schwellen: <div className="flex items-center gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;4,50</span></div>,
+                  hilfe: (
+                    <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5">
+                      <strong className="text-emerald-950">Henry Hub Erdgas ($4.50-Sperre):</strong> Dient als sekundäres makroökonomisches Schutzschild. 
+                      Sollte der Gaspreis in den USA auf über <strong>$ 4,50</strong> schießen, greift das System mit einem automatischen <strong>Kaufstopp</strong> ein.
+                    </div>
+                  ),
+                })}
+
+                {renderZeile({
+                  id: "distDays",
+                  kurz: "Distribution Days",
+                  lang: marketState.distSource === "manual" ? "manuell" : marketState.distSource === "yahoo" ? "Yahoo-berechnet" : marketState.distSource === "ai" ? "≈ KI-Schätzung" : marketState.distSource === "estimate" ? "≈ Notnagel-Schätzwert" : "keine Quelle",
+                  ampel: distMax === 0 && marketState.distSource == null ? "grau" : distBlocks ? "rot" : distWarnUnverified ? "gelb" : "gruen",
+                  statusText: distMax === 0 && marketState.distSource == null ? "Fehlt" : distBlocks ? "Kaufstopp" : distWarnUnverified ? "Ungeprüft" : "OK",
+                  wert: `SPX ${marketState.distSpx ?? "—"}`,
+                  wertRot: distBlocks,
+                  unterWert: <div className="font-mono font-bold tabular-nums text-[15px] text-slate-500 leading-tight">NDX {marketState.distNdx ?? "—"}</div>,
+                  aenderung: null,
+                  trendKey: "dist",
+                  histLabel: "Distribution Days",
+                  schwellen: <div className="flex items-center gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–4</span><span className="text-slate-300">|</span><span className="text-rose-600">≥5</span></div>,
+                  hilfe: (
+                    <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5 space-y-3">
+                      <div>
+                        <strong className="text-slate-900">Was sind Distribution Days (Distributionstage)?</strong><br />
+                        Ein Distributionstag entsteht, wenn der Index (S&amp;P 500 oder Nasdaq 100) im Minus schließt — typisch ab −0,2 % — bei <strong>höherem Handelsvolumen</strong> als am Vortag. Das deutet auf institutionelle Verkäufe hin (die großen Adressen verteilen ihre Bestände). Gezählt werden sie über die letzten <strong>25 Handelstage</strong>.
+                      </div>
+                      <ul className="list-disc pl-4 space-y-1 font-bold">
+                        <li><span className="text-emerald-800">0 bis 4 Tage:</span> Normaler Markt — Neukäufe sind unbedenklich.</li>
+                        <li><span className="text-rose-800">≥ 5 Tage (Kaufstopp):</span> Hohe Gefahr einer Marktumkehr. Die Kaufampel schaltet automatisch auf Kaufsperre — Risiko minimieren, Stops enger ziehen &amp; keine Neukäufe.</li>
+                      </ul>
+                      <div className="p-2.5 bg-white/70 rounded-xl border border-emerald-100 text-[11px] font-semibold text-slate-800">
+                        <strong>Wichtig — woher die Zahl kommt:</strong> Die automatische Kaufsperre greift nur, wenn die Zahl aus <strong>verlässlicher Quelle</strong> stammt: der echten Berechnung aus Yahoo-Finance-Daten (SPY &amp; QQQ, Kurs + Volumen der letzten 25 Handelstage) oder deiner manuellen Eingabe. Die Quelle steht in der Zeile unter dem Namen: <span className="text-emerald-700 font-bold">Yahoo-berechnet / manuell</span> = scharf, Sperre aktiv. <span className="text-amber-700 font-bold">≈ KI-Schätzung / Notnagel</span> = nur ein Warnhinweis, <strong>keine</strong> harte Sperre — dann bitte den Wert selbst prüfen (z. B. über den Auto-Ermitteln-Button erneut, oder manuell in den Notfall-Eingaben eintragen).
+                      </div>
+                      <div className="text-[11px] text-slate-500">
+                        Zur eigenen Kontrolle in TradingView gibt es unten in den Notfall-Eingaben (bei „Distribution Days manuell verifizieren") ein fertiges Pine-Script zum Kopieren.
+                      </div>
+                    </div>
+                  ),
+                  extra: (
+                    <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
                       <button
                         type="button"
-                        onClick={() => toggleHelp('distDays')}
-                        className="inline-flex items-center justify-center w-5 h-5 rounded-full text-emerald-600 hover:text-emerald-800 hover:bg-emerald-100/80 bg-emerald-50 border border-emerald-100/60 shadow-xs transition-all cursor-pointer shrink-0"
-                        title="Hilfe anzeigen"
+                        onClick={handleCalculateDistributionDays}
+                        disabled={calculatingDistDays}
+                        title="Distribution Days automatisch aus Yahoo-Finance-Daten (SPY & QQQ) berechnen; bei Ausfall KI-Fallback"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white rounded-lg transition-all active:scale-95"
                       >
-                        <HelpCircle className="h-3.5 w-3.5" />
+                        {calculatingDistDays ? (
+                          <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Berechne…</>
+                        ) : (
+                          <><Sparkles className="h-3.5 w-3.5" /> Auto-Ermitteln (Yahoo/KI)</>
+                        )}
                       </button>
+                      {distDaysReasoning && (
+                        <span className="text-[10px] text-slate-400 font-medium">Details siehe Hilfe</span>
+                      )}
                     </div>
-                    <div className="mt-1 flex items-center gap-1.5">
-                      {marketState.distSource === "yahoo" || marketState.distSource === "manual" ? (
-                        <span className="text-[9px] font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100">✓ {marketState.distSource === "manual" ? "manuell" : "Yahoo-berechnet"}</span>
-                      ) : marketState.distSource === "ai" ? (
-                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">≈ KI-Schätzung</span>
-                      ) : marketState.distSource === "estimate" ? (
-                        <span className="text-[9px] font-bold text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">≈ Notnagel-Schätzwert</span>
-                      ) : null}
-                    </div>
-                  </div>
-                  {renderTrendVerlauf("dist", "hist-dist")}
-                </div>
-                <div className="flex items-end justify-between gap-2">
-                  <div>
-                    {distMax === 0 && marketState.distSource == null ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-slate-50 text-slate-500 border border-slate-200 text-[10px] font-bold animate-pulse">🔴 FEHLT</span>
-                    ) : distBlocks ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-rose-50 text-rose-600 border border-rose-100 text-[10px] font-bold uppercase animate-pulse">Kaufstopp</span>
-                    ) : distWarnUnverified ? (
-                      <span className="inline-block px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 text-[10px] font-bold uppercase">Ungeprüft</span>
-                    ) : (
-                      <span className="inline-block px-3 py-1 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-100/70 text-[10px] font-bold uppercase">Ok</span>
-                    )}
-                  </div>
-                  <div className={`text-right font-mono font-bold tabular-nums text-base ${distBlocks ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
-                    <div>SPX {marketState.distSpx ?? "—"}</div>
-                    <div className="text-slate-500">NDX {marketState.distNdx ?? "—"}</div>
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–4</span><span className="text-slate-300">|</span><span className="text-rose-600">≥5</span></div>
-                  </div>
-                </div>
-                {helpId === 'hist-dist' && (
-                  <div className="p-3 rounded-xl border-l-4 border-slate-400 bg-slate-500/5">
-                    <TrendHistory history={dailyHistory} trendKey="dist" label="Distribution Days" />
-                  </div>
-                )}
-                {helpId === 'distDays' && (
-                  <div className="p-3.5 text-xs text-slate-650 leading-relaxed font-semibold rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5 space-y-3">
-                    <div>
-                      <strong className="text-slate-900">Was sind Distribution Days (Distributionstage)?</strong><br />
-                      Ein Distributionstag entsteht, wenn der Index (S&amp;P 500 oder Nasdaq 100) im Minus schließt — typisch ab −0,2 % — bei <strong>höherem Handelsvolumen</strong> als am Vortag. Das deutet auf institutionelle Verkäufe hin (die großen Adressen verteilen ihre Bestände). Gezählt werden sie über die letzten <strong>25 Handelstage</strong>.
-                    </div>
-                    <ul className="list-disc pl-4 space-y-1 font-bold">
-                      <li><span className="text-emerald-800">0 bis 4 Tage:</span> Normaler Markt — Neukäufe sind unbedenklich.</li>
-                      <li><span className="text-rose-800">≥ 5 Tage (Kaufstopp):</span> Hohe Gefahr einer Marktumkehr. Die Kaufampel schaltet automatisch auf Kaufsperre — Risiko minimieren, Stops enger ziehen &amp; keine Neukäufe.</li>
-                    </ul>
-                    <div className="p-2.5 bg-white/70 rounded-xl border border-emerald-100 text-[11px] font-semibold text-slate-800">
-                      <strong>Wichtig — woher die Zahl kommt:</strong> Die automatische Kaufsperre greift nur, wenn die Zahl aus <strong>verlässlicher Quelle</strong> stammt: der echten Berechnung aus Yahoo-Finance-Daten (SPY &amp; QQQ, Kurs + Volumen der letzten 25 Handelstage) oder deiner manuellen Eingabe. Das Badge in der Karte zeigt dir die Quelle: <span className="text-emerald-700 font-bold">✓ Yahoo-berechnet / manuell</span> = scharf, Sperre aktiv. <span className="text-amber-700 font-bold">≈ KI-Schätzung / Notnagel</span> = nur ein Warnhinweis, <strong>keine</strong> harte Sperre — dann bitte den Wert selbst prüfen (z. B. über den Auto-Ermitteln-Button erneut, oder manuell in den Notfall-Eingaben eintragen).
-                    </div>
-                    <div className="text-[11px] text-slate-500">
-                      Zur eigenen Kontrolle in TradingView gibt es unten in den Notfall-Eingaben (bei „Distribution Days manuell verifizieren") ein fertiges Pine-Script zum Kopieren.
-                    </div>
-                  </div>
-                )}
-                <div className="flex items-center justify-between gap-2 flex-wrap pt-0.5">
-                  <button
-                    type="button"
-                    onClick={handleCalculateDistributionDays}
-                    disabled={calculatingDistDays}
-                    title="Distribution Days automatisch aus Yahoo-Finance-Daten (SPY & QQQ) berechnen; bei Ausfall KI-Fallback"
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[11px] font-bold bg-slate-800 hover:bg-slate-900 disabled:bg-slate-300 text-white rounded-lg transition-all active:scale-95"
-                  >
-                    {calculatingDistDays ? (
-                      <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Berechne…</>
-                    ) : (
-                      <><Sparkles className="h-3.5 w-3.5" /> Auto-Ermitteln (Yahoo/KI)</>
-                    )}
-                  </button>
-                  {distDaysReasoning && (
-                    <span className="text-[10px] text-slate-400 font-medium">Details siehe Hilfe (?)</span>
-                  )}
-                </div>
+                  ),
+                })}
               </div>
+              <p className="text-[11px] text-slate-500 px-1">Zeile antippen → Trend-Verlauf, Schwellen und Hilfe. Änderung = seit Vortagesschluss.</p>
 
             </div>
           </div>
