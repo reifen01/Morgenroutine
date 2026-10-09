@@ -274,6 +274,15 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                     <span className="font-mono text-[15px] font-extrabold text-slate-900 whitespace-nowrap shrink-0">
                       {formatAccounting(r.livePrice)}
                       {!hasLivePrice && <span className="text-amber-600 ml-0.5" title="Kein Live-Kurs — der Ø-Kaufkurs wird als Kurs eingesetzt">*</span>}
+                      {hasLivePrice && typeof getLivePrice(livePrices, ck)?.changePct === "number" && (() => {
+                        const c = getLivePrice(livePrices, ck)!.changePct as number;
+                        return (
+                          <span className={"block text-right text-[11px] font-bold leading-none mt-0.5 " + (c > 0 ? "text-emerald-600" : c < 0 ? "text-rose-600" : "text-slate-500")}
+                            title="Veränderung seit Vortagesschluss">
+                            heute {c >= 0 ? "+" : ""}{c.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} % {c > 0 ? "↑" : c < 0 ? "↓" : "→"}
+                          </span>
+                        );
+                      })()}
                     </span>
                   </div>
 
@@ -335,6 +344,9 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                             <span className="text-amber-700 font-bold"> · liefert derzeit keinen Kurs</span>
                           )}
                         </div>
+                        {hasLivePrice && getLivePrice(livePrices, ck)?.quelle && (
+                          <div>Kurs-Quelle: <strong className="text-slate-900">{getLivePrice(livePrices, ck)?.quelle}</strong></div>
+                        )}
                       </div>
                     </div>
 
