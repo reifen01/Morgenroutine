@@ -183,4 +183,8 @@ export interface WatchlistItem {
   name: string;
   atr: string;
   price: string;
+  /** Tagesänderung in % seit Vortagesschluss (vom Live-Abruf). */
+  changePct?: number;
+  /** Kurs-Quelle des Live-Abrufs, z. B. "TL0.F (EUR)". */
+  quelle?: string;
 }

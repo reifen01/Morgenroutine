@@ -19,7 +19,9 @@ import {
   Plus,
   Trash2,
   Star,
-  Search
+  Search,
+  ChevronDown,
+  ChevronUp
 } from "lucide-react";
 import { parseCleanFloat, formatAccounting } from "../utils/mathUtils";
 import HilfeLink from "./HilfeLink";
@@ -73,6 +75,13 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
   // Vor dem Umbau 07/2026 stand die identische fetch-/Debounce-Logik hier
   // zweimal wortgleich untereinander.
   const watchlistSearch = useStockSearch(600);
+  /** Aufgeklappte Watchlist-Zeilen (Symbol). */
+  const [wlOffen, setWlOffen] = useState<Set<string>>(new Set());
+  const wlAlleOffen = watchlist.length > 0 && watchlist.every((w) => wlOffen.has(w.symbol));
+  const wlToggle = (sym: string) =>
+    setWlOffen((prev) => { const n = new Set(prev); if (n.has(sym)) n.delete(sym); else n.add(sym); return n; });
+  const wlAlleToggle = () => setWlOffen(wlAlleOffen ? new Set() : new Set(watchlist.map((w) => w.symbol)));
+  const fmt2 = (v: number) => v.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   const globalSearch = useStockSearch(500);
 
   const stockSearchQuery = watchlistSearch.query;
@@ -956,9 +965,9 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           {ansicht === "watchlist" && (
           <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
-                <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
-                ⭐ Deine unbestechliche Watchlist (Favoriten)
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-widest">
+                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
+                Watchlist (Favoriten)
               </h3>
               <span className="text-[10px] bg-amber-50 text-amber-805 px-2.5 py-1 rounded-xl font-mono font-bold uppercase whitespace-nowrap border border-amber-100">
                 {watchlist.length} Werte gesichert
@@ -969,75 +978,115 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
               Lege hier favorisierte Ticker oder potenzielle Setups ab. Mit einem Klick lädst du sie blitzschnell in den ATR-Rechner und Positionsgrößen-Planer!
             </p>
 
-            {/* List current watchlist */}
+            {/* Watchlist-Zeilen (Vorbild TradingView) — Kurs in Euro aus dem Live-Abruf */}
             {watchlist.length === 0 ? (
               <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-2xl text-slate-450 text-xs">
                 Keine Watchlist-Favoriten vorhanden. Nutze das Formular unten, um Favoriten hinzuzufügen!
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {watchlist.map((item, index) => (
-                  <div 
-                    key={index}
-                    className="group border border-slate-150 rounded-2xl p-4.5 bg-slate-50/55 hover:bg-slate-50 hover:border-slate-200 hover:shadow-sm transition-all duration-200 flex flex-col justify-between gap-3"
+              <div>
+                <div className="flex items-center justify-between px-1 mb-1">
+                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Kurs in € · Änderung seit Vortag</span>
+                  <button
+                    type="button"
+                    onClick={wlAlleToggle}
+                    className="inline-flex items-center gap-1 px-2 h-6 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 text-[10px] font-bold uppercase tracking-wide cursor-pointer"
+                    title={wlAlleOffen ? "Alle Zeilen zuklappen" : "Alle Zeilen aufklappen"}
                   >
-                    <div className="space-y-1">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-sm font-extrabold text-slate-900 group-hover:text-slate-800 font-mono transition-colors">
-                          {item.symbol}
-                        </span>
+                    {wlAlleOffen ? <><ChevronUp className="h-3.5 w-3.5" /> Alle zu</> : <><ChevronDown className="h-3.5 w-3.5" /> Alle auf</>}
+                  </button>
+                </div>
+                <div className="divide-y divide-slate-200 border-t border-b border-slate-200">
+                  {watchlist.map((item, index) => {
+                    const offen = wlOffen.has(item.symbol);
+                    const kurs = parseCleanFloat(item.price);
+                    const pct = typeof item.changePct === "number" ? item.changePct : null;
+                    const abs = kurs && pct !== null ? kurs - kurs / (1 + pct / 100) : null;
+                    const farbe = pct === null ? "text-slate-400" : pct > 0 ? "text-emerald-600" : pct < 0 ? "text-rose-600" : "text-slate-500";
+                    const vz = pct !== null && pct > 0 ? "+" : "";
+                    return (
+                      <div key={`${item.symbol}-${index}`} className="py-2.5">
                         <button
                           type="button"
-                          onClick={() => {
-                            setWatchlist(prev => prev.filter((_, idx) => idx !== index));
-                            onShowToast?.("Watchlist", `🗑️ '${item.symbol}' erfolgreich gelöscht!`, "success");
-                          }}
-                          className="opacity-100 p-1 bg-rose-50 hover:bg-rose-100 border border-rose-150 rounded-lg text-rose-600 hover:text-rose-700 cursor-pointer transition-all duration-200 shadow-2xs"
-                          title="Aus Watchlist löschen"
+                          onClick={() => wlToggle(item.symbol)}
+                          className="w-full flex items-center gap-2.5 text-left cursor-pointer active:bg-slate-50 rounded-lg -mx-1 px-1"
+                          title={offen ? "Details zuklappen" : "Details aufklappen"}
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
+                          <Star className="h-3.5 w-3.5 fill-amber-400 stroke-amber-500 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <div className="font-bold text-slate-900 text-[15px] leading-tight font-mono">{item.symbol.toUpperCase()}</div>
+                            <div className="text-[12px] text-slate-500 leading-tight truncate">{item.name || "Custom Asset"}</div>
+                          </div>
+                          <div className="text-right shrink-0 min-w-[84px]">
+                            <div className="font-mono font-bold tabular-nums text-[17px] leading-tight text-slate-900">
+                              {kurs ? fmt2(kurs) : "—"}
+                            </div>
+                            <div className={`mt-0.5 flex items-center justify-end gap-2 text-[12px] font-mono font-semibold tabular-nums leading-none ${farbe}`} title="Veränderung seit Vortagesschluss">
+                              {pct === null || abs === null ? <span>—</span> : <><span>{vz}{fmt2(abs)}</span><span>{vz}{fmt2(pct)} %</span></>}
+                            </div>
+                          </div>
+                          <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${offen ? "rotate-180" : ""}`} />
                         </button>
-                      </div>
-                      <p className="text-xs text-slate-500 font-semibold truncate leading-tight">
-                        {item.name || "Custom Asset"}
-                      </p>
-                    </div>
 
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-[11px] font-mono leading-tight">
-                      <div>
-                        <span className="text-slate-400 block tracking-wide">ATR-Wert:</span>
-                        <span className="font-bold text-slate-800">{item.atr || "--"}</span>
+                        {offen && (
+                          <div className="mt-2.5 ml-6 space-y-2.5 animate-fade-in">
+                            <div className="flex items-center justify-between gap-3 text-[11px] font-mono leading-tight">
+                              <div>
+                                <span className="text-slate-400 block tracking-wide font-sans">ATR-Wert:</span>
+                                <span className="font-bold text-slate-800">{item.atr || "--"}</span>
+                              </div>
+                              <div className="text-right">
+                                <span className="text-slate-400 block tracking-wide font-sans">Einstieg:</span>
+                                <span className="font-bold text-slate-800">{kurs ? fmt2(kurs) : "--"} €</span>
+                              </div>
+                              {item.quelle && (
+                                <div className="text-right">
+                                  <span className="text-slate-400 block tracking-wide font-sans">Quelle:</span>
+                                  <span className="font-bold text-slate-800">{item.quelle}</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setAtrCalcAsset(item.symbol.toUpperCase());
+                                  setTicker(item.symbol.toUpperCase());
+                                  if (item.atr) setAtrCalcValue(item.atr);
+                                  if (item.price) {
+                                    setAtrCalcEntry(item.price);
+                                    setEntryPrice(item.price);
+                                  }
+                                  onShowToast?.(
+                                    "Favorit geladen 🎯",
+                                    `'${item.symbol}' wurde erfolgreich in alle Rechner-Formulare geladen!`,
+                                    "success"
+                                  );
+                                  if (ansicht === "watchlist") onZumRechner?.();
+                                }}
+                                className="flex-1 py-1.5 px-3 bg-white hover:bg-slate-800 border border-slate-200 hover:border-slate-800 text-slate-700 hover:text-white font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-[11px]"
+                              >
+                                <Star className="h-3 w-3 fill-amber-400 stroke-amber-500 text-amber-500" />
+                                <span>In Rechner laden</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setWatchlist(prev => prev.filter((_, idx) => idx !== index));
+                                  onShowToast?.("Watchlist", `🗑️ '${item.symbol}' erfolgreich gelöscht!`, "success");
+                                }}
+                                className="p-2 bg-rose-50 hover:bg-rose-100 border border-rose-150 rounded-xl text-rose-600 hover:text-rose-700 cursor-pointer transition-all"
+                                title="Aus Watchlist löschen"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </button>
+                            </div>
+                          </div>
+                        )}
                       </div>
-                      <div className="text-right">
-                        <span className="text-slate-400 block tracking-wide font-sans">Einstieg:</span>
-                        <span className="font-bold text-slate-800">{item.price || "--"} {currencyLabel}</span>
-                      </div>
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setAtrCalcAsset(item.symbol.toUpperCase());
-                        setTicker(item.symbol.toUpperCase());
-                        if (item.atr) setAtrCalcValue(item.atr);
-                        if (item.price) {
-                          setAtrCalcEntry(item.price);
-                          setEntryPrice(item.price);
-                        }
-                        onShowToast?.(
-                          "Favorit geladen 🎯",
-                          `'${item.symbol}' wurde erfolgreich in alle Rechner-Formulare geladen!`,
-                          "success"
-                        );
-                        if (ansicht === "watchlist") onZumRechner?.();
-                      }}
-                      className="w-full py-1.5 px-3 bg-white hover:bg-slate-800 border border-slate-200 hover:border-slate-800 text-slate-700 hover:text-white font-extrabold rounded-xl transition-all cursor-pointer flex items-center justify-center gap-1.5 text-[11px]"
-                    >
-                      <Star className="h-3 w-3 fill-amber-400 stroke-amber-500 text-amber-500" />
-                      <span>In Rechner laden</span>
-                    </button>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
             )}
 
