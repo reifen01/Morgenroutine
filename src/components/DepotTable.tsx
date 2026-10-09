@@ -232,8 +232,8 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
           Die 11-spaltige Tabelle darunter erzwang seitwärts scrollen;
           hier passt alles in die Breite.
           ═══════════════════════════════════════════════════════════ */}
-      {/* Karten auf allen Bildschirmgrößen — am Desktop mehrspaltig, kein Querscrollen */}
-      <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 xl:grid-cols-3 items-start">
+      {/* Zeilen-Liste (Vorbild TradingView-Watchlist) auf allen Bildschirmgrößen — kein Querscrollen */}
+      <div className="divide-y divide-slate-200 border-t border-b border-slate-200 bg-white">
         {rows.length === 0 ? (
           <div className="py-10 text-center text-slate-400 font-semibold text-[13px] bg-white border border-slate-100 rounded-xl">
             Keine aktiven Bestände. Buche unten im Journal einen Kauf ein!
@@ -257,11 +257,11 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
             return (
               <div
                 key={`m-${r.key}-${r.depot}-${r.besitzerName}-${idx}`}
-                className={`bg-white border rounded-xl overflow-hidden ${istOffen ? "border-slate-800" : "border-slate-200"}`}
+                className={`bg-white overflow-hidden ${istOffen ? "border-l-4 border-l-slate-800" : ""}`}
               >
                 <button
                   onClick={() => toggleRow(id)}
-                  className="w-full px-3 py-2.5 text-left active:bg-slate-50 transition-colors"
+                  className="w-full px-1.5 py-2.5 text-left active:bg-slate-50 transition-colors"
                 >
                   {/* Zeile 1: Kürzel + Name  |  Kurs */}
                   <div className="flex items-baseline justify-between gap-2">
@@ -269,9 +269,9 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                       <span className="font-mono text-[11px] font-extrabold text-slate-800 bg-slate-100 border border-slate-200 rounded px-1.5 py-0.5 shrink-0">
                         {ck.toUpperCase()}
                       </span>
-                      <span className="text-[14px] font-extrabold text-slate-900 truncate">{r.name}</span>
+                      <span className="text-[15px] font-extrabold text-slate-900 truncate">{r.name}</span>
                     </span>
-                    <span className="font-mono text-[15px] font-extrabold text-slate-900 whitespace-nowrap shrink-0">
+                    <span className="font-mono text-[17px] font-extrabold text-slate-900 whitespace-nowrap shrink-0">
                       {formatAccounting(r.livePrice)}
                       {!hasLivePrice && <span className="text-amber-600 ml-0.5" title="Kein Live-Kurs — der Ø-Kaufkurs wird als Kurs eingesetzt">*</span>}
                       {hasLivePrice && typeof getLivePrice(livePrices, ck)?.changePct === "number" && (() => {
