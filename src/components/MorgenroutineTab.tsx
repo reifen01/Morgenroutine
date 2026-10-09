@@ -897,7 +897,7 @@ export default function MorgenroutineTab({
 
       {/* SCHNELL-EINGABE-ASSISTENT WENN DATEN FEHLEN (Bzw. unvollständig) */}
       {!isTodayCompleteAndSecure && (
-        <div className="bg-gradient-to-br from-amber-50 to-orange-50/60 border border-amber-200 rounded-3xl p-5 sm:p-6 shadow-md space-y-4 animate-scaleIn text-left">
+        <div className="bg-gradient-to-br from-amber-50 to-orange-50/60 border border-amber-200 rounded-3xl p-3.5 sm:p-6 shadow-md space-y-4 animate-scaleIn text-left">
           <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
             <div>
               <span className="text-[9px] font-extrabold text-amber-800 bg-amber-100 border border-amber-200 px-2 py-0.5 rounded-md uppercase tracking-wider block w-fit">
@@ -953,7 +953,7 @@ export default function MorgenroutineTab({
       <div className="space-y-6">
 
         {/* Marktstimmung & Kaufschranken (inkl. Distribution Days) */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
+          <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
               📊 Marktstimmung &amp; Kaufschranken
@@ -1030,7 +1030,7 @@ export default function MorgenroutineTab({
                   <div className={`text-right font-mono font-bold tabular-nums text-base ${vix && vix >= 25 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                     {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
                     {renderTagesAenderung("vix")}
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">0–25</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;25</span></div>
+                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–25</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;25</span></div>
                   </div>
                 </div>
                 {helpId === 'hist-vix' && (
@@ -1078,7 +1078,7 @@ export default function MorgenroutineTab({
                     <div className="mt-0.5 text-[10px] font-medium text-slate-500 leading-none">
                       VIX {vix ? vix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"} · VXV {vxv ? vxv.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
                     </div>
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥1,00</span></div>
+                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">&lt;1,00</span><span className="text-slate-300">|</span><span className="text-rose-600">≥1,00</span></div>
                   </div>
                 </div>
                 {helpId === 'hist-ratio' && (
@@ -1126,7 +1126,7 @@ export default function MorgenroutineTab({
                   <div className="text-right font-mono font-bold tabular-nums text-base text-slate-800">
                     {marketState.vvix !== null ? marketState.vvix.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "FEHLT"}
                     {renderTagesAenderung("vvix")}
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">0–110</span><span className="text-slate-300">|</span><span className="text-amber-500/90">110–130</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;130</span></div>
+                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–110</span><span className="text-slate-300">|</span><span className="text-amber-600">110–130</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;130</span></div>
                   </div>
                 </div>
                 {helpId === 'hist-vvix' && (
@@ -1173,7 +1173,7 @@ export default function MorgenroutineTab({
                   <div className={`text-right font-mono font-bold tabular-nums text-base ${wti && wti >= 100 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                     {wti ? `$ ${wti.toLocaleString('de-DE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : "FEHLT"}
                     {renderTagesAenderung("wti")}
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;100</span></div>
+                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">$0–100</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;100</span></div>
                   </div>
                 </div>
                 {helpId === 'hist-wti' && (
@@ -1218,7 +1218,7 @@ export default function MorgenroutineTab({
                   <div className={`text-right font-mono font-bold tabular-nums text-base ${gas && gas >= 4.5 ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                     {gas ? `$ ${gas.toLocaleString('de-DE', { minimumFractionDigits: 3, maximumFractionDigits: 3 })}` : "FEHLT"}
                     {renderTagesAenderung("gas")}
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-400/90">&gt;4,50</span></div>
+                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">$0–4,50</span><span className="text-slate-300">|</span><span className="text-rose-600">&gt;4,50</span></div>
                   </div>
                 </div>
                 {helpId === 'hist-gas' && (
@@ -1276,7 +1276,7 @@ export default function MorgenroutineTab({
                   <div className={`text-right font-mono font-bold tabular-nums text-base ${distBlocks ? 'text-rose-600 font-extrabold' : 'text-slate-800'}`}>
                     <div>SPX {marketState.distSpx ?? "—"}</div>
                     <div className="text-slate-500">NDX {marketState.distNdx ?? "—"}</div>
-                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-600/90">0–4</span><span className="text-slate-300">|</span><span className="text-rose-400/90">≥5</span></div>
+                    <div className="mt-1 flex items-center justify-end gap-1 text-[11px] font-mono font-medium tracking-tight leading-none"><span className="text-emerald-700">0–4</span><span className="text-slate-300">|</span><span className="text-rose-600">≥5</span></div>
                   </div>
                 </div>
                 {helpId === 'hist-dist' && (
@@ -1339,7 +1339,7 @@ export default function MorgenroutineTab({
             <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
               Normalerweise nicht nötig — die Werte kommen automatisch über „Marktwerte holen". Nutze diese Felder nur, falls ein Wert beim Live-Abruf einmal fehlt.
             </p>
-            <div id="daily-inputs-card" className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
+            <div id="daily-inputs-card" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
             <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest pb-3 border-b border-slate-50 flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
               Tages-Eingaben

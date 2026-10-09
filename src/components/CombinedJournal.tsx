@@ -790,7 +790,7 @@ export function CombinedJournal({
     <div id="transaction-journal-section" className="space-y-6">
       
       {/* HEADER BAR FOR COMBINED TRANSACTION JOURNAL */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+      <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-slate-50 border border-slate-100/70 rounded-xl text-slate-800">

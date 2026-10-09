@@ -1480,7 +1480,7 @@ export default function PortfolioTab({
       
       {/* ═══ 1. MEIN DEPOT — sofort sichtbar ═══ */}
       {/* 💼 BIOMETRISCH/REALE PORTFOLIO-BESTÄNDE (AUS ANSCHAFFUNGEN KALKULIERT) */}
-      <div id="derived-active-portfolio-section" className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+      <div id="derived-active-portfolio-section" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-emerald-50 border border-emerald-100/70 rounded-xl text-emerald-600">
@@ -1645,7 +1645,7 @@ export default function PortfolioTab({
         </summary>
         <div className="px-2 sm:px-3 pb-3">
       {/* Dynamic Cash Cockpit (Sticky visual helper) */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/15 space-y-6">
+      <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/15 space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-50 pb-4 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-slate-50 border border-slate-100/70 rounded-xl text-slate-800">
@@ -1743,7 +1743,7 @@ export default function PortfolioTab({
         </summary>
         <div className="px-2 sm:px-3 pb-3">
       {/* PORTFOLIO ACCORDION */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+      <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-2">
           <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
             <TrendingUp className="h-5 w-5 text-slate-800 shrink-0" />
@@ -2106,7 +2106,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
         </summary>
         <div className="px-2 sm:px-3 pb-3">
       {/* DEPOT & BESITZER VERWALTUNG (Stammdaten — selten gebraucht, daher unten) */}
-      <div id="depot-consolidation-summary" className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+      <div id="depot-consolidation-summary" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex items-center justify-between border-b border-slate-50 pb-4 gap-4">
           <div className="flex items-center gap-3">
             <div className="p-2.5 bg-slate-100 border border-slate-250 rounded-xl text-slate-700">

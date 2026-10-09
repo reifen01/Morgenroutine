@@ -729,7 +729,7 @@ export default function App() {
       </nav>
 
       {/* MAIN VIEWPORT BODY */}
-      <main className="flex-1 overflow-y-auto w-full max-w-full overflow-x-hidden p-4 sm:p-8 pb-16">
+      <main className="flex-1 overflow-y-auto w-full max-w-full overflow-x-hidden px-2.5 py-4 sm:p-8 pb-16">
         <div className="max-w-7xl mx-auto">
           {activeTab === "morgenroutine" && (
             <MorgenroutineTab
