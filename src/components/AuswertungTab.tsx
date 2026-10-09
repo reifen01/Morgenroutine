@@ -134,7 +134,7 @@ export default function AuswertungTab({ dailyHistory, periodLearnings, onSaveLea
       {periods.map((period) => {
         const learning = learningFor(period.key);
         return (
-          <div key={period.key} className="bg-white border border-slate-100 rounded-3xl p-5 sm:p-6 shadow-md space-y-4">
+          <div key={period.key} className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-6 shadow-md space-y-4">
             <div className="flex items-center justify-between flex-wrap gap-2 border-b border-slate-100 pb-3">
               <h3 className="font-bold text-slate-900 font-display">{period.label}</h3>
               <div className="flex items-center gap-2 text-[11px] font-mono">

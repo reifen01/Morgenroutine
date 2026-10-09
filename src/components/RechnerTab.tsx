@@ -417,7 +417,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           
           {ansicht === "rechner" && (<>
           {/* CALCULATOR CARD */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
+          <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-50 pb-4">
               <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
                 <Calculator className="h-5 w-5 text-slate-800" />
@@ -654,7 +654,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           </div>
 
           {/* PSYCHOLOGY DISCIPLINE FORM */}
-          <div className="bg-[#FFFDF9] border border-amber-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-amber-100/30 space-y-4">
+          <div className="bg-[#FFFDF9] border border-amber-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-amber-100/30 space-y-4">
             <h3 className="text-base font-bold text-amber-950 border-b border-amber-50 pb-2.5 flex items-center gap-2 font-display">
               <Brain className="h-5 w-5 text-amber-600" />
               Renes unbestechlicher Disziplin-Filter (Psychologie)
@@ -723,7 +723,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           </div>
 
           {/* ATR STOP-LOSS FINDER (PINE SCRIPT SYNC) */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
+          <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-2">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
                 <TrendingDown className="h-5 w-5 text-slate-800 animate-pulse" />
@@ -954,7 +954,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
           {/* WATCHLIST & FAVORITEN CARD */}
           {ansicht === "watchlist" && (
-          <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
+          <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex items-center justify-between border-b border-slate-50 pb-4">
               <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
                 <Star className="h-5 w-5 text-amber-500 fill-amber-500" />
@@ -1198,7 +1198,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
         {/* Right Column: Dynamic Outputs */}
         {ansicht === "rechner" && (
-        <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 shadow-md shadow-slate-200/10 space-y-6 h-fit lg:sticky lg:top-8 animate-fade-in">
+        <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6 h-fit lg:sticky lg:top-8 animate-fade-in">
           <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-widest border-b border-slate-50 pb-3 font-display">
             Mathematische Risikoanalyse
           </h3>

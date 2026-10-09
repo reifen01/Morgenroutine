@@ -205,7 +205,7 @@ export default function DepotCurveChart({
 
   if (!soldTrades || soldTrades.length === 0) {
     return (
-      <div className="bg-white border border-slate-150 rounded-3xl p-6 sm:p-8 space-y-4 text-center ">
+      <div className="bg-white border border-slate-150 rounded-3xl p-3.5 sm:p-8 space-y-4 text-center ">
         <div className="p-8 border border-dashed border-slate-200 rounded-2xl flex flex-col items-center justify-center space-y-2">
           <TrendingUp className="h-8 w-8 text-slate-350 animate-bounce" />
           <h4 className="text-xs sm:text-sm font-bold text-slate-700 font-display uppercase tracking-wider">Keine Realisierten Verkäufe vorhanden</h4>
@@ -218,7 +218,7 @@ export default function DepotCurveChart({
   }
 
   return (
-    <div className="bg-white border border-slate-100 rounded-3xl p-6 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+    <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
       {/* Title & View Selector */}
       <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-50 pb-4 gap-4">
         <div>

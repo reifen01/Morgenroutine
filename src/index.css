@@ -48,3 +48,13 @@ body {
   scrollbar-width: none; /* Firefox */
 }
 
+
+/* ── LESBARKEIT: helle Grautöne für TEXT dunkler (Anthrazit) ────────────
+   Eine Stelle statt hunderter Klassen. Gilt nur für Textfarbe — Rahmen,
+   Hintergründe und Platzhalter in Eingabefeldern bleiben hell, damit man
+   Platzhalter nicht mit eingetragenen Werten verwechselt.
+   Steht außerhalb der Tailwind-Layer und gewinnt daher gegen die Utilities. */
+.text-slate-300 { color: var(--color-slate-500); }
+.text-slate-400 { color: var(--color-slate-600); }
+.text-slate-450 { color: var(--color-slate-600); }
+.text-slate-500 { color: var(--color-slate-700); }
