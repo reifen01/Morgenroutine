@@ -20,7 +20,7 @@ import CompactHeader from "./components/CompactHeader";
 import HelpModal from "./components/HelpModal";
 import { usePWAUpdate } from "./usePWAUpdate";
 import MorgenroutineTab from "./components/MorgenroutineTab";
-import RechnerTab from "./components/RechnerTab";
+import RechnerTab, { RechnerVorlage } from "./components/RechnerTab";
 import PortfolioTab from "./components/PortfolioTab";
 import AuswertungTab from "./components/AuswertungTab";
 import AICoachTab from "./components/AICoachTab";
@@ -47,11 +47,25 @@ const getTodayDateStr = () => {
   return `${year}-${month}-${day}`;
 };
 
+/** Unterreiter des Analyse-Tabs in der gewünschten Reihenfolge. */
+const ANALYSE_REITER = [
+  ["screener", "🔎 Screener"],
+  ["auswertung", "📊 Auswertung"],
+  ["kaufziele", "🎯 Kaufziele"],
+  ["cash", "💵 Cash"],
+  ["rechner", "🧮 Rechner"],
+] as const;
+const ANALYSE_TABS: readonly string[] = ANALYSE_REITER.map(([id]) => id);
+
 export default function App() {
   // Shared global state variables
   const initialDate = getTodayDateStr();
   const [routineDate, setRoutineDate] = useState(initialDate);
-  const [activeTab, setActiveTab] = useState<"morgenroutine" | "screener" | "watchlist" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
+  const [activeTab, setActiveTab] = useState<"morgenroutine" | "screener" | "kaufziele" | "cash" | "rechner" | "journal" | "auswertung" | "regelwerk" | "ai-coach" | "workspace">("morgenroutine");
+  /** Werte, die beim nächsten Öffnen des Rechners übernommen werden. */
+  const [rechnerVorlage, setRechnerVorlage] = useState<RechnerVorlage | null>(null);
+  /** Verkauf, der aus den Kaufzielen angestoßen wurde und im Depot geöffnet wird. */
+  const [verkaufVorlage, setVerkaufVorlage] = useState<PortfolioItem | null>(null);
 
   // Hilfe-Fragezeichen: springt in den passenden Handbuch-Abschnitt.
   // Laeuft ueber ein CustomEvent, damit HilfeLink ueberall einsetzbar ist,
@@ -83,6 +97,9 @@ export default function App() {
     journal: "Depot",
     rechner: "Analyse",
     auswertung: "Analyse",
+    screener: "Analyse",
+    kaufziele: "Analyse",
+    cash: "Analyse",
     workspace: "System",
   };
   const [helpOpen, setHelpOpen] = useState(false);
@@ -179,7 +196,8 @@ export default function App() {
   const helpSectionForTab: Record<typeof activeTab, string> = {
     morgenroutine: "live-abruf",
     screener: "stop-loss-berechnung",
-    watchlist: "stop-loss-berechnung",
+    kaufziele: "stop-loss-berechnung",
+    cash: "position-sizing",
     rechner: "stop-loss-berechnung",
     journal: "steuern",
     auswertung: "tagesablauf",
@@ -584,7 +602,13 @@ export default function App() {
       return;
     }
 
-    // Direct routing and warning
+    // Werte an den Rechner übergeben (vorher wurde nur der Tab gewechselt)
+    setRechnerVorlage({
+      ticker: assetKey.toUpperCase(),
+      einstieg: String(limitPrice > 0 ? limitPrice : liveVal),
+      stop: currentStop > 0 ? currentStop.toFixed(2) : undefined,
+      tranche: trancheSize > 0 ? String(trancheSize) : undefined,
+    });
     setActiveTab("rechner");
     showToast(
       assetName,
@@ -702,9 +726,9 @@ export default function App() {
           </button>
 
           <button
-            onClick={() => setActiveTab("rechner")}
+            onClick={() => setActiveTab("screener")}
             className={`tab-btn flex flex-col items-center justify-center flex-1 h-full py-2 transition-all cursor-pointer ${
-              activeTab === "rechner" || activeTab === "auswertung" || activeTab === "screener" || activeTab === "watchlist"
+              ANALYSE_TABS.includes(activeTab)
                 ? "text-slate-800 font-bold border-b-2 border-slate-800"
                 : "text-slate-400 border-b-2 border-transparent hover:text-slate-700"
             }`}
@@ -749,62 +773,63 @@ export default function App() {
             />
           )}
 
-          {(activeTab === "rechner" || activeTab === "auswertung" || activeTab === "screener" || activeTab === "watchlist") && (
+          {ANALYSE_TABS.includes(activeTab) && (
             <div className="flex flex-wrap gap-2 mb-4">
-              <button
-                onClick={() => setActiveTab("rechner")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === "rechner"
-                    ? "bg-slate-800 text-white shadow"
-                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
-                }`}
-              >
-                🧮 Rechner &amp; Checks
-              </button>
-              <button
-                onClick={() => setActiveTab("watchlist")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === "watchlist"
-                    ? "bg-slate-800 text-white shadow"
-                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
-                }`}
-              >
-                ⭐ Watchlist
-              </button>
-              <button
-                onClick={() => setActiveTab("screener")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === "screener"
-                    ? "bg-slate-800 text-white shadow"
-                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
-                }`}
-              >
-                🔎 Aktien-Screener
-              </button>
-              <button
-                onClick={() => setActiveTab("auswertung")}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
-                  activeTab === "auswertung"
-                    ? "bg-slate-800 text-white shadow"
-                    : "bg-white text-slate-500 border border-slate-200 hover:text-slate-800"
-                }`}
-              >
-                📊 Auswertung
-              </button>
+              {ANALYSE_REITER.map(([id, label]) => (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+                    activeTab === id
+                      ? "bg-slate-800 text-white shadow"
+                      : "bg-white text-slate-600 border border-slate-200 hover:text-slate-800"
+                  }`}
+                >
+                  {label}
+                </button>
+              ))}
             </div>
           )}
 
           {activeTab === "screener" && <AktienScreenerTab watchlist={watchlist} portfolio={portfolioData} />}
 
-          {(activeTab === "rechner" || activeTab === "watchlist") && (
+          {activeTab === "rechner" && (
             <RechnerTab
-              ansicht={activeTab === "watchlist" ? "watchlist" : "rechner"}
-              onZumRechner={() => setActiveTab("rechner")}
+              ansicht="rechner"
+              vorlage={rechnerVorlage}
+              onVorlageVerbraucht={() => setRechnerVorlage(null)}
               routineDate={routineDate}
               livePrices={livePrices}
               portfolioData={portfolioData}
               watchlist={watchlist}
               onWatchlistChange={setWatchlist}
+              onShowToast={showToast}
+            />
+          )}
+
+          {(activeTab === "kaufziele" || activeTab === "cash") && (
+            <PortfolioTab
+              ansicht={activeTab}
+              onVerkaufBuchen={(item) => { setVerkaufVorlage(item); setActiveTab("journal"); }}
+              routineDate={routineDate}
+              marketState={marketState}
+              livePrices={livePrices}
+              portfolioData={portfolioData}
+              onPortfolioDataChange={setPortfolioData}
+              watchlist={watchlist}
+              checklistData={checklistData}
+              onChecklistDataChange={setChecklistData}
+              soldTrades={soldTrades}
+              onSoldTradesChange={setSoldTrades}
+              portfolioPurchases={portfolioPurchases}
+              onPortfolioPurchasesChange={setPortfolioPurchases}
+              customDepots={customDepots}
+              onCustomDepotsChange={setCustomDepots}
+              customBesitzer={customBesitzer}
+              onCustomBesitzerChange={setCustomBesitzer}
+              depotStartingCash={depotStartingCash}
+              onDepotStartingCashChange={setDepotStartingCash}
+              onLoadToCalculator={handleLoadToCalculator}
               onShowToast={showToast}
             />
           )}
@@ -831,7 +856,41 @@ export default function App() {
               onDepotStartingCashChange={setDepotStartingCash}
               onLoadToCalculator={handleLoadToCalculator}
               onShowToast={showToast}
+              verkaufVorlage={verkaufVorlage}
+              onVerkaufVorlageVerbraucht={() => setVerkaufVorlage(null)}
             />
+          )}
+
+          {/* ⭐ Watchlist — im Depot ganz unten, eingeklappt */}
+          {activeTab === "journal" && (
+            <details className="mt-6 bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
+              <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-center justify-between gap-2 select-none">
+                <div>
+                  <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest block">
+                    ⭐ Watchlist
+                  </span>
+                  <span className="text-[11px] text-slate-500 font-semibold">{watchlist.length} {watchlist.length === 1 ? "Wert" : "Werte"} beobachtet · Kurs &amp; Tagesänderung</span>
+                </div>
+                <span className="text-[11px] font-bold text-slate-500 shrink-0 group-open:hidden">Öffnen ▾</span>
+                <span className="text-[11px] font-bold text-slate-500 shrink-0 hidden group-open:inline">Schließen ▴</span>
+              </summary>
+              <div className="px-1 sm:px-3 pb-3">
+                <RechnerTab
+                  ansicht="watchlist"
+                  onInRechnerLaden={(v) => {
+                    setRechnerVorlage(v);
+                    setActiveTab("rechner");
+                    showToast("Favorit geladen 🎯", `'${v.ticker}' wurde in den Rechner geladen.`, "success");
+                  }}
+                  routineDate={routineDate}
+                  livePrices={livePrices}
+                  portfolioData={portfolioData}
+                  watchlist={watchlist}
+                  onWatchlistChange={setWatchlist}
+                  onShowToast={showToast}
+                />
+              </div>
+            </details>
           )}
 
           {activeTab === "auswertung" && (

@@ -56,6 +56,17 @@ interface PortfolioTabProps {
     currentStop: number
   ) => void;
   onShowToast: (title: string, msg: string, type: "success" | "warning" | "error") => void;
+  /**
+   * Welche Ansicht: "depot" = Bestände, Journal, Verwaltung (Depot-Tab);
+   * "kaufziele" bzw. "cash" = nur dieser Block (Analyse-Tab).
+   * Die Blöcke existieren nur einmal — hier — und werden je nach Ansicht gezeigt.
+   */
+  ansicht?: "depot" | "kaufziele" | "cash";
+  /** Kaufziele-Ansicht: "Verkauf buchen" springt ins Depot und öffnet dort das Formular. */
+  onVerkaufBuchen?: (item: PortfolioItem) => void;
+  /** Depot-Ansicht: beim Öffnen vorbefüllter Verkauf (aus der Kaufziele-Ansicht). */
+  verkaufVorlage?: PortfolioItem | null;
+  onVerkaufVorlageVerbraucht?: () => void;
 }
 
 export default function PortfolioTab({
@@ -79,6 +90,10 @@ export default function PortfolioTab({
   onDepotStartingCashChange,
   onLoadToCalculator,
   onShowToast,
+  ansicht = "depot",
+  onVerkaufBuchen,
+  verkaufVorlage,
+  onVerkaufVorlageVerbraucht,
 }: PortfolioTabProps) {
   const setCustomDepots = onCustomDepotsChange;
   const setCustomBesitzer = onCustomBesitzerChange;
@@ -1142,6 +1157,15 @@ export default function PortfolioTab({
       document.getElementById("realized-sales-section")?.scrollIntoView({ behavior: "smooth" });
     }, 100);
   };
+  // Aus der Kaufziele-Ansicht (Analyse) angestoßenen Verkauf hier im Depot öffnen.
+  useEffect(() => {
+    if (ansicht === "depot" && verkaufVorlage) {
+      handlePreFillSale(verkaufVorlage);
+      onVerkaufVorlageVerbraucht?.();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ansicht, verkaufVorlage]);
+
 
   const handleStartEditSale = (trade: SoldTradeItem) => {
     setEditingTradeId(trade.id);
@@ -1475,175 +1499,11 @@ export default function PortfolioTab({
   const isHighDistributionDays = false;
 
   // Verification helper for alarm states
-  let anyStopTriggered = false;  return (
-    <div className="space-y-6 text-slate-900">
-      
-      {/* ═══ 1. MEIN DEPOT — sofort sichtbar ═══ */}
-      {/* 💼 BIOMETRISCH/REALE PORTFOLIO-BESTÄNDE (AUS ANSCHAFFUNGEN KALKULIERT) */}
-      <div id="derived-active-portfolio-section" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-50 border border-emerald-100/70 rounded-xl text-emerald-600">
-              <Scale className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
-                💼 Reale Portfolio-Bestände (Aus Anschaffungen)
-                <HilfeLink abschnitt="steuern" titel="KESt und Verlustausgleich im Handbuch nachlesen" />
-              </h3>
-              <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Aktive Wertpapiere berechnet aus dem Transaktions-Journal nach Abzug aller realisierten Verkäufe
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex flex-wrap items-center gap-4 text-xs font-bold font-mono">
-            <div className="bg-slate-50 border border-slate-150 rounded-xl px-4 py-2">
-              <span className="text-slate-400 text-[10px] block uppercase">Gesamtwert Aktive Aktien</span>
-              <span className="text-slate-800 text-sm font-extrabold">E: € {formatAccounting(derivedActivePortfolio.reduce((sum, item) => sum + (item.totalShares * (livePrices[item.key as keyof typeof livePrices]?.price || item.averageKaufkurs)), 0))}</span>
-            </div>
-            <div className="bg-slate-50 border border-slate-150 rounded-xl px-4 py-2">
-              <span className="text-slate-400 text-[10px] block uppercase">Gesamtanschaffungskosten</span>
-              <span className="text-slate-800 text-sm font-extrabold">K: € {formatAccounting(derivedActivePortfolio.reduce((sum, item) => sum + item.totalCost, 0))}</span>
-            </div>
-          </div>
-        </div>
+  let anyStopTriggered = false;
 
-
-        {/* NEUE SORTIERBARE DEPOT-TABELLE (liest Limits aus dem Asset-Register) */}
-        <DepotTable
-          holdings={derivedActivePortfolio}
-          livePrices={livePrices}
-          registry={assetRegistry}
-          marketHealth={evaluateMarketHealth(marketState)}
-          purchases={portfolioPurchases}
-          onEditPurchase={(p) => {
-            handleStartEditPurchase(p);
-            const element = document.getElementById("transaction-journal-section");
-            if (element) element.scrollIntoView({ behavior: "smooth" });
-          }}
-          onDeletePurchase={handleDeletePurchase}
-          onExit={(holding, livePr) => {
-            setSaleAssetName(holding.name);
-            setSaleAssetKey(holding.key);
-            setSaleKaufKurs(holding.averageKaufkurs.toFixed(2));
-            setSaleVerkaufsKurs(livePr.toFixed(2));
-            setSaleAnzahlAktien(holding.totalShares.toFixed(2));
-            setSaleDepot(holding.depot);
-            setSaleBesitzer(holding.besitzerName);
-            setSaleNotiz("Teilverkauf / Abwicklung");
-            setShowAddSaleForm(true);
-            setShowAddPurchaseForm(false);
-            const element = document.getElementById("transaction-journal-section");
-            if (element) element.scrollIntoView({ behavior: "smooth" });
-          }}
-        />
-      </div>
-
-
-      {/* ═══ 2. Buchen & Historie ═══ */}
-      <CombinedJournal
-        routineDate={routineDate}
-        portfolioPurchases={portfolioPurchases}
-        soldTrades={soldTrades}
-        portfolioData={portfolioData}
-        onPortfolioPurchasesChange={onPortfolioPurchasesChange}
-        onSoldTradesChange={onSoldTradesChange}
-        customDepots={customDepots}
-        customBesitzer={customBesitzer}
-        onShowToast={onShowToast}
-        livePrices={livePrices}
-
-        // Form states and toggles
-        watchlist={watchlist}
-        showAddPurchaseForm={showAddPurchaseForm}
-        setShowAddPurchaseForm={setShowAddPurchaseForm}
-        showAddSaleForm={showAddSaleForm}
-        setShowAddSaleForm={setShowAddSaleForm}
-        editingPurchaseId={editingPurchaseId}
-        setEditingPurchaseId={setEditingPurchaseId}
-        editingTradeId={editingTradeId}
-        setEditingTradeId={setEditingTradeId}
-
-        // Buy form input states
-        purchaseAssetKey={purchaseAssetKey}
-        setPurchaseAssetKey={setPurchaseAssetKey}
-        purchaseCustomKeyEnabled={purchaseCustomKeyEnabled}
-        setPurchaseCustomKeyEnabled={setPurchaseCustomKeyEnabled}
-        purchaseAssetName={purchaseAssetName}
-        setPurchaseAssetName={setPurchaseAssetName}
-        purchaseKaufKurs={purchaseKaufKurs}
-        setPurchaseKaufKurs={setPurchaseKaufKurs}
-        purchaseAnzahlAktien={purchaseAnzahlAktien}
-        setPurchaseAnzahlAktien={setPurchaseAnzahlAktien}
-        purchaseTotalKosten={purchaseTotalKosten}
-        setPurchaseTotalKosten={setPurchaseTotalKosten}
-        purchaseDatum={purchaseDatum}
-        setPurchaseDatum={setPurchaseDatum}
-        purchaseNotiz={purchaseNotiz}
-        setPurchaseNotiz={setPurchaseNotiz}
-        purchaseGedanken={purchaseGedanken}
-        setPurchaseGedanken={setPurchaseGedanken}
-        purchaseZiele={purchaseZiele}
-        setPurchaseZiele={setPurchaseZiele}
-        purchaseDepot={purchaseDepot}
-        setPurchaseDepot={setPurchaseDepot}
-        purchaseBesitzer={purchaseBesitzer}
-        setPurchaseBesitzer={setPurchaseBesitzer}
-
-        // Sell form input states
-        saleAssetName={saleAssetName}
-        setSaleAssetName={setSaleAssetName}
-        saleAssetKey={saleAssetKey}
-        setSaleAssetKey={setSaleAssetKey}
-        saleKaufKurs={saleKaufKurs}
-        setSaleKaufKurs={setSaleKaufKurs}
-        saleVerkaufsKurs={saleVerkaufsKurs}
-        setSaleVerkaufsKurs={setSaleVerkaufsKurs}
-        saleAnzahlAktien={saleAnzahlAktien}
-        setSaleAnzahlAktien={setSaleAnzahlAktien}
-        saleDatum={saleDatum}
-        setSaleDatum={setSaleDatum}
-        saleNotiz={saleNotiz}
-        setSaleNotiz={setSaleNotiz}
-        saleTaxMethod={saleTaxMethod}
-        setSaleTaxMethod={setSaleTaxMethod}
-        saleDepot={saleDepot}
-        setSaleDepot={setSaleDepot}
-        saleBesitzer={saleBesitzer}
-        setSaleBesitzer={setSaleBesitzer}
-
-        // Handlers
-        handleSavePurchase={handleSavePurchase}
-        handleAddSale={handleAddSale}
-        handlePurchaseAssetChange={handlePurchaseAssetChange}
-        handlePurchaseAnzahlChange={handlePurchaseAnzahlChange}
-        handlePurchaseTotalChange={handlePurchaseTotalChange}
-        handlePurchaseKaufKursChange={handlePurchaseKaufKursChange}
-        taxCalculationPreview={taxCalculationPreview}
-
-        // Row operations
-        handleStartEditPurchase={handleStartEditPurchase}
-        handleStartEditSale={handleStartEditSale}
-        handleUndoSale={handleUndoSale}
-        handleDeletePurchase={handleDeletePurchase}
-        handleDeleteSale={handleDeleteSale}
-      />
-
-      {/* ═══ 3. Selten gebraucht — eingeklappt ═══ */}
-
-      <details className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
-        <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-center justify-between gap-2 select-none">
-          <div>
-            <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display block">
-              💵 Cash-Cockpit
-            </span>
-            <span className="text-[10px] text-slate-400 font-semibold font-mono">Freies Cash je Depot &amp; Sachwert-Quote</span>
-          </div>
-          <span className="text-[10px] font-bold text-slate-400 shrink-0 group-open:hidden">Öffnen ▾</span>
-          <span className="text-[10px] font-bold text-slate-400 shrink-0 hidden group-open:inline">Schließen ▴</span>
-        </summary>
-        <div className="px-2 sm:px-3 pb-3">
+  // 💵 Cash-Cockpit — wird im Analyse-Tab angezeigt (ansicht="cash")
+  const cashBlock = (
+    <>
       {/* Dynamic Cash Cockpit (Sticky visual helper) */}
       <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/15 space-y-6">
         <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-50 pb-4 gap-4">
@@ -1726,22 +1586,12 @@ export default function PortfolioTab({
           </div>
         </div>
       </div>
+    </>
+  );
 
-        </div>
-      </details>
-
-      <details className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
-        <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-center justify-between gap-2 select-none">
-          <div>
-            <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display block">
-              🎯 Kaufziele &amp; Stop-Schutz
-            </span>
-            <span className="text-[10px] text-slate-400 font-semibold font-mono">Harte Anker, Limits und ATR-Stops je Wert</span>
-          </div>
-          <span className="text-[10px] font-bold text-slate-400 shrink-0 group-open:hidden">Öffnen ▾</span>
-          <span className="text-[10px] font-bold text-slate-400 shrink-0 hidden group-open:inline">Schließen ▴</span>
-        </summary>
-        <div className="px-2 sm:px-3 pb-3">
+  // 🎯 Kaufziele & Stop-Schutz — wird im Analyse-Tab angezeigt (ansicht="kaufziele")
+  const kaufzieleBlock = (
+    <>
       {/* PORTFOLIO ACCORDION */}
       <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-2">
@@ -1993,7 +1843,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                         🚨 STOP RISK GERISSEN! IMMEDIAT EXIT!
                       </div>
                       <button
-                        onClick={() => handlePreFillSale(item)}
+                        onClick={() => (onVerkaufBuchen ? onVerkaufBuchen(item) : handlePreFillSale(item))}
                         className="bg-rose-600 hover:bg-rose-700 text-white rounded-lg text-[10px] font-semibold px-2.5 py-1 flex items-center gap-1 shadow-sm transition-all cursor-pointer"
                       >
                         💸 Exit buchen
@@ -2022,7 +1872,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
                           🎯 Rechnen
                         </button>
                         <button
-                          onClick={() => handlePreFillSale(item)}
+                          onClick={() => (onVerkaufBuchen ? onVerkaufBuchen(item) : handlePreFillSale(item))}
                           className="h-6 px-2 bg-rose-50 hover:bg-rose-650 hover:text-white text-rose-700 border border-rose-200 rounded-lg text-[9px] font-bold flex items-center gap-0.5 transition-all shadow-xs active:scale-95 cursor-pointer"
                           title="Verkauf dieser Position zur Dokumentation eintragen"
                         >
@@ -2089,9 +1939,168 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
           })}
         </div>
       </div>
+    </>
+  );
 
+  if (ansicht === "cash") return <div className="space-y-6 text-slate-900">{cashBlock}</div>;
+  if (ansicht === "kaufziele") return <div className="space-y-6 text-slate-900">{kaufzieleBlock}</div>;
+
+  return (
+    <div className="space-y-6 text-slate-900">
+      
+      {/* ═══ 1. MEIN DEPOT — sofort sichtbar ═══ */}
+      {/* 💼 BIOMETRISCH/REALE PORTFOLIO-BESTÄNDE (AUS ANSCHAFFUNGEN KALKULIERT) */}
+      <div id="derived-active-portfolio-section" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2.5 bg-emerald-50 border border-emerald-100/70 rounded-xl text-emerald-600">
+              <Scale className="h-5 w-5" />
+            </div>
+            <div>
+              <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
+                💼 Reale Portfolio-Bestände (Aus Anschaffungen)
+                <HilfeLink abschnitt="steuern" titel="KESt und Verlustausgleich im Handbuch nachlesen" />
+              </h3>
+              <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
+                Aktive Wertpapiere berechnet aus dem Transaktions-Journal nach Abzug aller realisierten Verkäufe
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 text-xs font-bold font-mono">
+            <div className="bg-slate-50 border border-slate-150 rounded-xl px-4 py-2">
+              <span className="text-slate-400 text-[10px] block uppercase">Gesamtwert Aktive Aktien</span>
+              <span className="text-slate-800 text-sm font-extrabold">E: € {formatAccounting(derivedActivePortfolio.reduce((sum, item) => sum + (item.totalShares * (livePrices[item.key as keyof typeof livePrices]?.price || item.averageKaufkurs)), 0))}</span>
+            </div>
+            <div className="bg-slate-50 border border-slate-150 rounded-xl px-4 py-2">
+              <span className="text-slate-400 text-[10px] block uppercase">Gesamtanschaffungskosten</span>
+              <span className="text-slate-800 text-sm font-extrabold">K: € {formatAccounting(derivedActivePortfolio.reduce((sum, item) => sum + item.totalCost, 0))}</span>
+            </div>
+          </div>
         </div>
-      </details>
+
+
+        {/* NEUE SORTIERBARE DEPOT-TABELLE (liest Limits aus dem Asset-Register) */}
+        <DepotTable
+          holdings={derivedActivePortfolio}
+          livePrices={livePrices}
+          registry={assetRegistry}
+          marketHealth={evaluateMarketHealth(marketState)}
+          purchases={portfolioPurchases}
+          onEditPurchase={(p) => {
+            handleStartEditPurchase(p);
+            const element = document.getElementById("transaction-journal-section");
+            if (element) element.scrollIntoView({ behavior: "smooth" });
+          }}
+          onDeletePurchase={handleDeletePurchase}
+          onExit={(holding, livePr) => {
+            setSaleAssetName(holding.name);
+            setSaleAssetKey(holding.key);
+            setSaleKaufKurs(holding.averageKaufkurs.toFixed(2));
+            setSaleVerkaufsKurs(livePr.toFixed(2));
+            setSaleAnzahlAktien(holding.totalShares.toFixed(2));
+            setSaleDepot(holding.depot);
+            setSaleBesitzer(holding.besitzerName);
+            setSaleNotiz("Teilverkauf / Abwicklung");
+            setShowAddSaleForm(true);
+            setShowAddPurchaseForm(false);
+            const element = document.getElementById("transaction-journal-section");
+            if (element) element.scrollIntoView({ behavior: "smooth" });
+          }}
+        />
+      </div>
+
+
+      {/* ═══ 2. Buchen & Historie ═══ */}
+      <CombinedJournal
+        routineDate={routineDate}
+        portfolioPurchases={portfolioPurchases}
+        soldTrades={soldTrades}
+        portfolioData={portfolioData}
+        onPortfolioPurchasesChange={onPortfolioPurchasesChange}
+        onSoldTradesChange={onSoldTradesChange}
+        customDepots={customDepots}
+        customBesitzer={customBesitzer}
+        onShowToast={onShowToast}
+        livePrices={livePrices}
+
+        // Form states and toggles
+        watchlist={watchlist}
+        showAddPurchaseForm={showAddPurchaseForm}
+        setShowAddPurchaseForm={setShowAddPurchaseForm}
+        showAddSaleForm={showAddSaleForm}
+        setShowAddSaleForm={setShowAddSaleForm}
+        editingPurchaseId={editingPurchaseId}
+        setEditingPurchaseId={setEditingPurchaseId}
+        editingTradeId={editingTradeId}
+        setEditingTradeId={setEditingTradeId}
+
+        // Buy form input states
+        purchaseAssetKey={purchaseAssetKey}
+        setPurchaseAssetKey={setPurchaseAssetKey}
+        purchaseCustomKeyEnabled={purchaseCustomKeyEnabled}
+        setPurchaseCustomKeyEnabled={setPurchaseCustomKeyEnabled}
+        purchaseAssetName={purchaseAssetName}
+        setPurchaseAssetName={setPurchaseAssetName}
+        purchaseKaufKurs={purchaseKaufKurs}
+        setPurchaseKaufKurs={setPurchaseKaufKurs}
+        purchaseAnzahlAktien={purchaseAnzahlAktien}
+        setPurchaseAnzahlAktien={setPurchaseAnzahlAktien}
+        purchaseTotalKosten={purchaseTotalKosten}
+        setPurchaseTotalKosten={setPurchaseTotalKosten}
+        purchaseDatum={purchaseDatum}
+        setPurchaseDatum={setPurchaseDatum}
+        purchaseNotiz={purchaseNotiz}
+        setPurchaseNotiz={setPurchaseNotiz}
+        purchaseGedanken={purchaseGedanken}
+        setPurchaseGedanken={setPurchaseGedanken}
+        purchaseZiele={purchaseZiele}
+        setPurchaseZiele={setPurchaseZiele}
+        purchaseDepot={purchaseDepot}
+        setPurchaseDepot={setPurchaseDepot}
+        purchaseBesitzer={purchaseBesitzer}
+        setPurchaseBesitzer={setPurchaseBesitzer}
+
+        // Sell form input states
+        saleAssetName={saleAssetName}
+        setSaleAssetName={setSaleAssetName}
+        saleAssetKey={saleAssetKey}
+        setSaleAssetKey={setSaleAssetKey}
+        saleKaufKurs={saleKaufKurs}
+        setSaleKaufKurs={setSaleKaufKurs}
+        saleVerkaufsKurs={saleVerkaufsKurs}
+        setSaleVerkaufsKurs={setSaleVerkaufsKurs}
+        saleAnzahlAktien={saleAnzahlAktien}
+        setSaleAnzahlAktien={setSaleAnzahlAktien}
+        saleDatum={saleDatum}
+        setSaleDatum={setSaleDatum}
+        saleNotiz={saleNotiz}
+        setSaleNotiz={setSaleNotiz}
+        saleTaxMethod={saleTaxMethod}
+        setSaleTaxMethod={setSaleTaxMethod}
+        saleDepot={saleDepot}
+        setSaleDepot={setSaleDepot}
+        saleBesitzer={saleBesitzer}
+        setSaleBesitzer={setSaleBesitzer}
+
+        // Handlers
+        handleSavePurchase={handleSavePurchase}
+        handleAddSale={handleAddSale}
+        handlePurchaseAssetChange={handlePurchaseAssetChange}
+        handlePurchaseAnzahlChange={handlePurchaseAnzahlChange}
+        handlePurchaseTotalChange={handlePurchaseTotalChange}
+        handlePurchaseKaufKursChange={handlePurchaseKaufKursChange}
+        taxCalculationPreview={taxCalculationPreview}
+
+        // Row operations
+        handleStartEditPurchase={handleStartEditPurchase}
+        handleStartEditSale={handleStartEditSale}
+        handleUndoSale={handleUndoSale}
+        handleDeletePurchase={handleDeletePurchase}
+        handleDeleteSale={handleDeleteSale}
+      />
+
+      {/* ═══ 3. Selten gebraucht — eingeklappt ═══ */}
 
       <details className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
         <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-center justify-between gap-2 select-none">
