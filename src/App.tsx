@@ -864,15 +864,15 @@ export default function App() {
           {/* ⭐ Watchlist — im Depot ganz unten, eingeklappt */}
           {activeTab === "journal" && (
             <details className="mt-6 bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
-              <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-center justify-between gap-2 select-none">
+              <summary className="cursor-pointer list-none px-4 py-3.5 sm:px-6 flex items-center justify-between gap-2 select-none bg-slate-800 text-white rounded-3xl group-open:rounded-b-none">
                 <div>
-                  <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest block">
+                  <span className="text-[15px] font-extrabold uppercase tracking-wide block">
                     ⭐ Watchlist
                   </span>
-                  <span className="text-[11px] text-slate-500 font-semibold">{watchlist.length} {watchlist.length === 1 ? "Wert" : "Werte"} beobachtet · Kurs &amp; Tagesänderung</span>
+                  <span className="text-[12px] text-slate-200 font-semibold">{watchlist.length} {watchlist.length === 1 ? "Wert" : "Werte"} beobachtet · Kurs &amp; Tagesänderung</span>
                 </div>
-                <span className="text-[11px] font-bold text-slate-500 shrink-0 group-open:hidden">Öffnen ▾</span>
-                <span className="text-[11px] font-bold text-slate-500 shrink-0 hidden group-open:inline">Schließen ▴</span>
+                <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 group-open:hidden">Öffnen ▾</span>
+                <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 hidden group-open:inline">Schließen ▴</span>
               </summary>
               <div className="px-1 sm:px-3 pb-3">
                 <RechnerTab
