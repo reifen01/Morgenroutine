@@ -2103,15 +2103,15 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
       {/* ═══ 3. Selten gebraucht — eingeklappt ═══ */}
 
       <details className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
-        <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-center justify-between gap-2 select-none">
+        <summary className="cursor-pointer list-none px-4 py-3.5 sm:px-6 flex items-center justify-between gap-2 select-none bg-slate-800 text-white rounded-3xl group-open:rounded-b-none">
           <div>
-            <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display block">
+            <span className="text-[15px] font-extrabold uppercase tracking-wide block">
               🏢 Depot- &amp; Besitzer-Verwaltung
             </span>
-            <span className="text-[10px] text-slate-400 font-semibold font-mono">Eigene Broker- und Besitzernamen anlegen</span>
+            <span className="text-[12px] text-slate-200 font-semibold">Eigene Broker- und Besitzernamen anlegen</span>
           </div>
-          <span className="text-[10px] font-bold text-slate-400 shrink-0 group-open:hidden">Öffnen ▾</span>
-          <span className="text-[10px] font-bold text-slate-400 shrink-0 hidden group-open:inline">Schließen ▴</span>
+          <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 group-open:hidden">Öffnen ▾</span>
+          <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 hidden group-open:inline">Schließen ▴</span>
         </summary>
         <div className="px-2 sm:px-3 pb-3">
       {/* DEPOT & BESITZER VERWALTUNG (Stammdaten — selten gebraucht, daher unten) */}
