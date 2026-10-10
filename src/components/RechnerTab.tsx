@@ -27,6 +27,19 @@ import { parseCleanFloat, formatAccounting } from "../utils/mathUtils";
 import HilfeLink from "./HilfeLink";
 import { LivePrices, PortfolioItem, WatchlistItem, getLivePrice } from "../types";
 
+/**
+ * Werte, die von außerhalb in den Rechner geladen werden (Watchlist im Depot,
+ * „Rechnen“ in den Kaufzielen). Einzige Übergabestelle — der Rechner übernimmt
+ * die Werte einmal beim Öffnen und meldet sie dann als verbraucht.
+ */
+export interface RechnerVorlage {
+  ticker: string;
+  einstieg?: string;
+  atr?: string;
+  stop?: string;
+  tranche?: string;
+}
+
 interface RechnerTabProps {
   routineDate: string;
   livePrices?: LivePrices;
@@ -37,10 +50,15 @@ interface RechnerTabProps {
   ansicht?: "rechner" | "watchlist";
   /** Wechselt nach „In Rechner laden“ aus der Watchlist-Ansicht zum Rechner. */
   onZumRechner?: () => void;
+  /** Watchlist außerhalb des Rechners (Depot-Tab): Werte an App übergeben statt intern setzen. */
+  onInRechnerLaden?: (v: RechnerVorlage) => void;
+  /** Rechner-Ansicht: von außen übergebene Werte, einmalig übernehmen. */
+  vorlage?: RechnerVorlage | null;
+  onVorlageVerbraucht?: () => void;
   onShowToast?: (title: string, msg: string, type: "success" | "warning" | "error") => void;
 }
 
-export default function RechnerTab({ routineDate, livePrices, portfolioData, watchlist, onWatchlistChange, onShowToast, ansicht = "rechner", onZumRechner }: RechnerTabProps) {
+export default function RechnerTab({ routineDate, livePrices, portfolioData, watchlist, onWatchlistChange, onShowToast, ansicht = "rechner", onZumRechner, onInRechnerLaden, vorlage, onVorlageVerbraucht }: RechnerTabProps) {
   // Input states — start blank so the user fills in their own numbers.
   const [depotCapital, setDepotCapital] = useState("");
   const [calcMode, setCalcMode] = useState<"shares" | "stop">("shares");
@@ -173,6 +191,19 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
   const [crvValue, setCrvValue] = useState<number | null>(null);
   const [calculatedMaxStop, setCalculatedMaxStop] = useState<number | null>(null); // for Mode 2
   const [logicWarning, setLogicWarning] = useState<string | null>(null);
+
+  // Von außen geladene Werte (Watchlist im Depot, Kaufziele) einmalig übernehmen.
+  useEffect(() => {
+    if (!vorlage) return;
+    setTicker(vorlage.ticker);
+    setAtrCalcAsset(vorlage.ticker);
+    if (vorlage.einstieg) { setEntryPrice(vorlage.einstieg); setAtrCalcEntry(vorlage.einstieg); }
+    if (vorlage.atr) setAtrCalcValue(vorlage.atr);
+    if (vorlage.stop) setStopPrice(vorlage.stop);
+    if (vorlage.tranche) setTrancheSize(vorlage.tranche);
+    onVorlageVerbraucht?.();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [vorlage]);
 
   useEffect(() => {
     runCalculations();
@@ -1050,6 +1081,10 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                               <button
                                 type="button"
                                 onClick={() => {
+                                  if (onInRechnerLaden) {
+                                    onInRechnerLaden({ ticker: item.symbol.toUpperCase(), einstieg: item.price || undefined, atr: item.atr || undefined });
+                                    return;
+                                  }
                                   setAtrCalcAsset(item.symbol.toUpperCase());
                                   setTicker(item.symbol.toUpperCase());
                                   if (item.atr) setAtrCalcValue(item.atr);

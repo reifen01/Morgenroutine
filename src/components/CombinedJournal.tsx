@@ -393,6 +393,12 @@ export function CombinedJournal({
   const [saleSortField, setSaleSortField] = useState<string>("verkaufsDatum");
   /** Aufgeklappte Verkaufs-Zeilen (Trade-IDs). */
   const [saleOffen, setSaleOffen] = useState<Set<string>>(new Set());
+  /** Aufgeklappte Zeilen in „Alle“ und „Käufe“ (IDs; Sparplan-Gruppen inklusive). */
+  const [zeilenOffen, setZeilenOffen] = useState<Set<string>>(new Set());
+  const toggleZeile = (id: string) =>
+    setZeilenOffen((prev) => { const n = new Set(prev); if (n.has(id)) n.delete(id); else n.add(id); return n; });
+  /** Filterleiste (Depot/Besitzer/Typ) — standardmäßig zu, Suche bleibt sichtbar. */
+  const [filterOffen, setFilterOffen] = useState(false);
   const [saleSortAsc, setSaleSortAsc] = useState<boolean>(false);
 
   // Computed Combined Transactions List
@@ -532,7 +538,7 @@ export function CombinedJournal({
   // bei Coinfinity). Ungruppiert ersaeuft jede andere Transaktion darin.
   // Zusammengefasst werden NUR Kaeufe, deren Notiz "Sparplan" enthaelt —
   // gruppiert nach Asset + Depot + Besitzer. Normale Kaeufe bleiben einzeln.
-  const [offeneGruppen, setOffeneGruppen] = useState<Set<string>>(new Set());
+  // Auf-/Zuklappen läuft über zeilenOffen (gemeinsam mit allen Zeilen).
 
   const gruppierteTransaktionen = useMemo(() => {
     const istSparplan = (tx: any) =>
@@ -552,7 +558,7 @@ export function CombinedJournal({
     for (const [gid, txs] of gruppen) {
       // Einzelner Sparplan-Kauf lohnt keine Gruppe
       if (txs.length < 2) { ergebnis.push(...txs); continue; }
-      const menge = txs.reduce((sum, t) => sum + (Number(t.anzahl) || 0), 0);
+      const menge = txs.reduce((sum, t) => sum + (Number(t.anzahlAktien) || 0), 0);
       const volumen = txs.reduce((sum, t) => sum + (Number(t.volumen) || 0), 0);
       const daten = txs.map((t) => String(t.datum)).sort();
       ergebnis.push({
@@ -582,13 +588,6 @@ export function CombinedJournal({
     );
     return ergebnis;
   }, [combinedTransactions, txSortAsc]);
-
-  const toggleGruppe = (gid: string) =>
-    setOffeneGruppen((prev) => {
-      const next = new Set(prev);
-      next.has(gid) ? next.delete(gid) : next.add(gid);
-      return next;
-    });
 
   // Purchases list memo (traditional list)
   const sortedPurchases = useMemo(() => {
@@ -788,6 +787,56 @@ export function CombinedJournal({
         })}
       </div>
     );
+  };
+
+
+  // ── Zeilen-Stil (Vorbild TradingView-Watchlist) — gemeinsame Bausteine ──
+  const alleKnopf = (ids: string[]) => {
+    const alle = ids.length > 0 && ids.every((i) => zeilenOffen.has(i));
+    return (
+      <button
+        type="button"
+        onClick={() => setZeilenOffen(alle ? new Set() : new Set(ids))}
+        className="ml-auto inline-flex items-center gap-1 h-8 px-2.5 bg-white border border-slate-200 rounded-lg text-[11px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+        title={alle ? "Alle Zeilen zuklappen" : "Alle Zeilen aufklappen"}
+      >
+        {alle ? <><ChevronUp className="h-3.5 w-3.5" /> Alle zu</> : <><ChevronDown className="h-3.5 w-3.5" /> Alle auf</>}
+      </button>
+    );
+  };
+  const zeilenKopf = (z: {
+    id: string; punkt: string; titel: string; ticker?: string; unter: string;
+    gross: string; grossFarbe?: string; klein?: string; kleinFarbe?: string;
+  }) => {
+    const offen = zeilenOffen.has(z.id);
+    return (
+      <button
+        type="button"
+        onClick={() => toggleZeile(z.id)}
+        className="w-full flex items-center gap-2.5 text-left cursor-pointer active:bg-slate-50 rounded-lg -mx-1 px-1"
+        title={offen ? "Details zuklappen" : "Details aufklappen"}
+      >
+        <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${z.punkt}`}></span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-baseline gap-1.5 min-w-0">
+            <span className="font-bold text-slate-900 text-[15px] leading-tight line-clamp-2 break-words">{z.titel}</span>
+            {z.ticker && <span className="font-mono text-[11px] font-bold text-slate-500 shrink-0">{z.ticker}</span>}
+          </div>
+          <div className="text-[12px] text-slate-500 leading-tight line-clamp-2">{z.unter}</div>
+        </div>
+        <div className="text-right shrink-0">
+          <div className={`font-mono font-bold tabular-nums text-[15px] leading-tight ${z.grossFarbe || "text-slate-900"}`}>{z.gross}</div>
+          {z.klein && <div className={`mt-0.5 text-[12px] font-mono font-semibold tabular-nums leading-none ${z.kleinFarbe || "text-slate-500"}`}>{z.klein}</div>}
+        </div>
+        <ChevronDown className={`h-4 w-4 text-slate-400 shrink-0 transition-transform ${offen ? "rotate-180" : ""}`} />
+      </button>
+    );
+  };
+  /** Kurz-Stückzahl: ganze Zahlen ohne Nachkommastellen, sonst bis 4 (Krypto bis 8). */
+  const stk = (n: number) => {
+    const v = Number(n) || 0;
+    const nk = Number.isInteger(v) ? 0 : Math.abs(v) < 1 ? 8 : 4;
+    return v.toLocaleString("de-DE", { minimumFractionDigits: 0, maximumFractionDigits: nk });
   };
 
   return (
@@ -1036,57 +1085,20 @@ export function CombinedJournal({
           </div>
         )}
 
-        {/* STATISTIKEN DER TRANSAKTIONEN */}
-        <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 text-center bg-slate-50 border border-slate-100 p-4 rounded-2xl">
-          <div className="bg-white border border-slate-100 p-3 rounded-xl col-span-2 lg:col-span-1">
-            <span className="block text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-              Aktives Invest-Kollateral
-            </span>
-            <span className="block font-mono font-bold text-slate-800 text-xs sm:text-sm mt-0.5 tabular-nums">
-              {formatAccounting(activeInvested)} €
-            </span>
-            <span className="text-[7.5px] text-slate-400 block font-semibold">Anschaffungswert Tranchen</span>
-          </div>
-
-          <div className="bg-white border border-slate-100 p-3 rounded-xl">
-            <span className="block text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-              Realisations-Umsatz
-            </span>
-            <span className="block font-mono font-bold text-slate-800 text-xs sm:text-sm mt-0.5 tabular-nums">
-              {formatAccounting(totalVolume)} €
-            </span>
-            <span className="text-[7.5px] text-slate-400 block font-semibold">Aus Verkaufs-Erlösen</span>
-          </div>
-
-          <div className="bg-white border border-slate-100 p-3 rounded-xl">
-            <span className="block text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-              Brutto-Ertrag (P&amp;L)
-            </span>
-            <span className={`block font-mono font-bold text-xs sm:text-sm mt-0.5 tabular-nums ${totalGross >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
-              {totalGross >= 0 ? "+" : ""}{formatAccounting(totalGross)} €
-            </span>
-            <span className="text-[7.5px] text-slate-400 block font-semibold">Realisierte Trades</span>
-          </div>
-
-          <div className="bg-white border border-slate-100 p-3 rounded-xl">
-            <span className="block text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-              KESt-Rückbehalt (27,5%)
-            </span>
-            <span className="block font-mono font-bold text-rose-500 text-xs sm:text-sm mt-0.5 tabular-nums">
-              -{formatAccounting(totalKest)} €
-            </span>
-            <span className="text-[7.5px] text-slate-400 block font-semibold">Österr. Kapitalertragsteuer</span>
-          </div>
-
-          <div className="bg-white border border-slate-100 p-3 rounded-xl">
-            <span className="block text-[8px] sm:text-[9px] font-bold text-slate-400 uppercase tracking-wider">
-              Reiner Netto-Gewinn
-            </span>
-            <span className={`block font-mono font-bold text-xs sm:text-sm mt-0.5 tabular-nums ${totalNet >= 0 ? "text-emerald-600 font-extrabold" : "text-rose-600"}`}>
-              {totalNet >= 0 ? "+" : ""}{formatAccounting(totalNet)} €
-            </span>
-            <span className="text-[7.5px] text-slate-400 block font-semibold">Netto nach KESt-Dämpfung</span>
-          </div>
+        {/* STATISTIKEN DER TRANSAKTIONEN — kompakte Zahlenzeilen */}
+        <div className="divide-y divide-slate-200 border-t border-b border-slate-200 text-[13px]">
+          {[
+            ["Aktiv investiert (Anschaffung)", `${formatAccounting(activeInvested)} €`, "text-slate-900"],
+            ["Verkaufs-Erlöse", `${formatAccounting(totalVolume)} €`, "text-slate-900"],
+            ["Ergebnis brutto", `${totalGross >= 0 ? "+" : ""}${formatAccounting(totalGross)} €`, totalGross >= 0 ? "text-emerald-600" : "text-rose-600"],
+            ["KESt (27,5 %)", `−${formatAccounting(totalKest)} €`, "text-rose-600"],
+            ["Netto nach KESt", `${totalNet >= 0 ? "+" : ""}${formatAccounting(totalNet)} €`, totalNet >= 0 ? "text-emerald-600" : "text-rose-600"],
+          ].map(([label, wert, farbe]) => (
+            <div key={label} className="flex items-baseline justify-between gap-3 py-1.5 px-1">
+              <span className="text-slate-600 font-semibold">{label}</span>
+              <span className={`font-mono font-bold tabular-nums ${farbe}`}>{wert}</span>
+            </div>
+          ))}
         </div>
 
         {/* INPUT FORMS INSERTION (FROM PARENT RENDERED IN BOUNDS) */}
@@ -1702,92 +1714,81 @@ export function CombinedJournal({
           </div>
         )}
 
-        {/* INTERACTIVE FILTERS FOR TRANSACTIONS */}
-        <div className="bg-slate-50 border border-slate-100 h-auto p-4 rounded-2xl flex flex-col md:flex-row flex-wrap items-center gap-4 text-xs font-semibold text-slate-705">
-          
-          <div className="flex flex-col w-full md:w-auto">
-            <label className="text-[9px] font-bold text-slate-400 uppercase mb-1">Suchen</label>
-            <input
-              type="text"
-              placeholder="Wertpapier, Notiz..."
-              value={txSearchQuery}
-              onChange={(e) => setTxSearchQuery(e.target.value)}
-              className="h-9 px-3 bg-white border border-slate-200 rounded-xl focus:outline-none w-full md:w-[180px] font-medium text-slate-800"
-            />
-          </div>
-
-          <div className="flex flex-col w-full md:w-auto">
-            <label className="text-[9px] font-bold text-slate-400 uppercase mb-1">Depot</label>
-            <select
-              value={txDepotFilter}
-              onChange={(e) => setTxDepotFilter(e.target.value)}
-              className="h-9 bg-white border border-slate-200 rounded-xl px-2 cursor-pointer font-medium text-slate-800 w-full md:w-[130px]"
-            >
-              <option value="all">Alle Depots</option>
-              {customDepots.map(d => (
-                <option key={`filter-d-${d}`} value={d}>{d}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className="flex flex-col w-full md:w-auto">
-            <label className="text-[9px] font-bold text-slate-400 uppercase mb-1">Besitzer</label>
-            <select
-              value={txBesitzerFilter}
-              onChange={(e) => setTxBesitzerFilter(e.target.value)}
-              className="h-9 bg-white border border-slate-200 rounded-xl px-2 cursor-pointer font-medium text-slate-800 w-full md:w-[130px]"
-            >
-              <option value="all">Alle Besitzer</option>
-              {customBesitzer.map(b => (
-                <option key={`filter-b-${b}`} value={b}>{b}</option>
-              ))}
-            </select>
-          </div>
-
-          {journalTab === 'combined' && (
-            <div className="flex flex-col w-full md:w-auto">
-              <label className="text-[9px] font-bold text-slate-400 uppercase mb-1">Transaktionstyp</label>
-              <div className="flex bg-white border border-slate-200 p-0.5 rounded-xl h-9">
+        {/* FILTER — Suche immer sichtbar, Depot/Besitzer/Typ hinter „Filter ▾“ */}
+        {(() => {
+          const aktiv = (txDepotFilter !== 'all' ? 1 : 0) + (txBesitzerFilter !== 'all' ? 1 : 0) + (journalTab === 'combined' && txTypeFilter !== 'all' ? 1 : 0);
+          return (
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Suchen: Wertpapier, Notiz…"
+                  value={txSearchQuery}
+                  onChange={(e) => setTxSearchQuery(e.target.value)}
+                  className="h-9 flex-1 min-w-0 px-3 bg-white border border-slate-200 rounded-xl focus:outline-none font-medium text-[13px] text-slate-800"
+                />
                 <button
                   type="button"
-                  onClick={() => setTxTypeFilter('all')}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${txTypeFilter === 'all' ? 'bg-slate-900 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700'}`}
+                  onClick={() => setFilterOffen(!filterOffen)}
+                  className={`h-9 px-3 rounded-xl border text-[12px] font-bold shrink-0 cursor-pointer ${aktiv ? "bg-slate-800 text-white border-slate-800" : "bg-white text-slate-700 border-slate-200"}`}
                 >
-                  Alle
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTxTypeFilter('buy')}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${txTypeFilter === 'buy' ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700'}`}
-                >
-                  📥 Käufe
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTxTypeFilter('sell')}
-                  className={`px-3 py-1 rounded-lg text-[10px] font-bold transition-all ${txTypeFilter === 'sell' ? 'bg-rose-600 text-white shadow-xs' : 'text-slate-400 hover:text-slate-700'}`}
-                >
-                  💸 Verkäufe
+                  Filter{aktiv ? ` (${aktiv})` : ""} {filterOffen ? "▴" : "▾"}
                 </button>
               </div>
+              {filterOffen && (
+                <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl grid grid-cols-2 gap-2 text-xs font-semibold">
+                  <select
+                    value={txDepotFilter}
+                    onChange={(e) => setTxDepotFilter(e.target.value)}
+                    className="h-9 bg-white border border-slate-200 rounded-xl px-2 cursor-pointer font-medium text-slate-800"
+                  >
+                    <option value="all">Alle Depots</option>
+                    {customDepots.map(d => (
+                      <option key={`filter-d-${d}`} value={d}>{d}</option>
+                    ))}
+                  </select>
+                  <select
+                    value={txBesitzerFilter}
+                    onChange={(e) => setTxBesitzerFilter(e.target.value)}
+                    className="h-9 bg-white border border-slate-200 rounded-xl px-2 cursor-pointer font-medium text-slate-800"
+                  >
+                    <option value="all">Alle Besitzer</option>
+                    {customBesitzer.map(b => (
+                      <option key={`filter-b-${b}`} value={b}>{b}</option>
+                    ))}
+                  </select>
+                  {journalTab === 'combined' && (
+                    <div className="col-span-2 flex bg-white border border-slate-200 p-0.5 rounded-xl h-9">
+                      {([['all', 'Alle'], ['buy', '📥 Käufe'], ['sell', '💸 Verkäufe']] as const).map(([v, l]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          onClick={() => setTxTypeFilter(v)}
+                          className={`flex-1 rounded-lg text-[11px] font-bold transition-all ${txTypeFilter === v ? 'bg-slate-800 text-white shadow-xs' : 'text-slate-500 hover:text-slate-800'}`}
+                        >
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {(txSearchQuery || aktiv > 0) && (
+                    <button
+                      onClick={() => {
+                        setTxSearchQuery('');
+                        setTxDepotFilter('all');
+                        setTxBesitzerFilter('all');
+                        setTxTypeFilter('all');
+                      }}
+                      className="col-span-2 text-[11px] text-slate-500 font-bold hover:text-rose-600 underline cursor-pointer text-left"
+                    >
+                      Filter zurücksetzen
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
-          )}
-
-          {/* Reset Filters Option */}
-          {(txSearchQuery || txDepotFilter !== 'all' || txBesitzerFilter !== 'all' || (journalTab === 'combined' && txTypeFilter !== 'all')) && (
-            <button
-              onClick={() => {
-                setTxSearchQuery('');
-                setTxDepotFilter('all');
-                setTxBesitzerFilter('all');
-                setTxTypeFilter('all');
-              }}
-              className="text-[10px] text-slate-400 font-bold hover:text-rose-600 mt-auto mb-2 underline cursor-pointer"
-            >
-              Filter zurücksetzen
-            </button>
-          )}
-        </div>
+          );
+        })()}
 
         {/* JOURNAL TAB PILOTS */}
         <div className="border-b border-slate-200">
@@ -1855,274 +1856,183 @@ export function CombinedJournal({
               >
                 {txSortAsc ? "▲ aufsteigend" : "▼ absteigend"}
               </button>
+              {gruppierteTransaktionen.length > 0 && alleKnopf(gruppierteTransaktionen.map((t: any) => t.id))}
             </div>
 
-            <div className="space-y-3">
-              {gruppierteTransaktionen.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
-                  Keine Transaktionen gefunden, die dem Filter entsprechen.
-                </div>
-              ) : (
-                gruppierteTransaktionen.map((tx: any) => {
+            {gruppierteTransaktionen.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
+                Keine Transaktionen gefunden, die dem Filter entsprechen.
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-200 border-t border-b border-slate-200">
+                {gruppierteTransaktionen.map((tx: any) => {
                   const isBuy = tx.type === 'buy';
                   const isProfit = !isBuy && (tx.gewinnVerlust || 0) >= 0;
+                  const offen = zeilenOffen.has(tx.id);
 
-                  // ── Sparplan-Sammelkarte (aufklappbar) ──
+                  // ── Sparplan-Sammelzeile ──
                   if (tx.istGruppe) {
-                    const offen = offeneGruppen.has(tx.id);
                     return (
-                      <div key={tx.id} className="bg-slate-50/30 border border-slate-200 rounded-xl overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => toggleGruppe(tx.id)}
-                          className="w-full text-left p-3.5 cursor-pointer hover:bg-slate-50/60 transition-colors space-y-2"
-                        >
-                          <span className="flex items-center gap-1.5">
-                            <span className={`inline-flex items-center justify-center h-4 w-4 rounded border text-[9px] font-extrabold shrink-0 ${offen ? "border-slate-800 text-slate-900" : "border-slate-300 text-slate-500"}`}>
-                              {offen ? "▾" : "▸"}
-                            </span>
-                            <span className="font-semibold text-slate-400 font-mono text-[9px] uppercase">
-                              {formatToGermanDate(tx.datumVon)} – {formatToGermanDate(tx.datumBis)}
-                            </span>
-                          </span>
-                          <div className="flex flex-wrap items-center gap-1.5">
-                            <span className="inline-block px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase bg-sky-50 text-sky-700 border border-sky-100">
-                              🔁 SPARPLAN · {tx.anzahlKaeufe} KÄUFE
-                            </span>
-                            <span className="font-bold text-slate-900 text-sm sm:text-base">{tx.name}</span>
-                            <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase">
-                              {String(tx.key).toUpperCase()}
-                            </span>
-                          </div>
-                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-mono text-[10px]">
-                            <span className="font-bold text-slate-700">{tx.depot}</span>
-                            <span className="text-slate-500">{tx.besitzerName}</span>
-                          </div>
-                          <div className="flex flex-wrap items-end justify-between gap-2 font-mono tabular-nums">
-                            <span className="font-bold text-slate-800">{Number(tx.anzahl).toFixed(8)} Stk.</span>
-                            <span className="text-slate-500">Ø € {formatAccounting(tx.kurs)}</span>
-                            <span className="font-bold text-slate-900">€ {formatAccounting(tx.volumen)}</span>
-                          </div>
-                          <span className="block text-[10px] text-slate-500 font-semibold">
-                            Sammelzeile — antippen für alle {tx.anzahlKaeufe} Einzelkäufe
-                          </span>
-                        </button>
+                      <div key={tx.id} className="py-2.5">
+                        {zeilenKopf({
+                          id: tx.id,
+                          punkt: "bg-sky-500",
+                          titel: tx.name,
+                          ticker: String(tx.key).toUpperCase(),
+                          unter: `🔁 Sparplan · ${tx.anzahlKaeufe} Käufe · ${formatToGermanDate(tx.datumVon)} – ${formatToGermanDate(tx.datumBis)}`,
+                          gross: `${formatAccounting(tx.volumen)} €`,
+                          klein: `${stk(tx.anzahl)} Stk. · Ø ${formatAccounting(tx.kurs)}`,
+                        })}
                         {offen && (
-                          <div className="border-t border-slate-100 divide-y divide-slate-100">
-                            {tx.kinder.map((k: any) => (
-                              <div key={k.id} className="px-3.5 py-2 bg-slate-50/60 text-[11px] font-mono">
-                                <div className="flex flex-wrap items-center justify-between gap-x-3 gap-y-0.5">
-                                  <span className="text-slate-500">{formatToGermanDate(k.datum)}</span>
-                                  <span className="font-semibold text-slate-600">{String(k.key).toUpperCase()}</span>
-                                  <span>{Number(k.anzahl).toFixed(8)}</span>
-                                  <span>€ {formatAccounting(k.kurs)}</span>
-                                  <span className="font-bold">€ {formatAccounting(k.volumen)}</span>
+                          <div className="mt-2 ml-5 animate-fade-in">
+                            <div className="text-[12px] text-slate-500 mb-1">{tx.depot} · {tx.besitzerName}</div>
+                            <div className="divide-y divide-slate-100 border border-slate-100 rounded-lg bg-slate-50/60">
+                              {tx.kinder.map((k: any) => (
+                                <div key={k.id} className="px-2.5 py-1.5 text-[12px] font-mono">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <span className="text-slate-600">{formatToGermanDate(k.datum)}</span>
+                                    <span className="text-slate-700">{stk(k.anzahlAktien)} × {formatAccounting(k.kaufKurs)}</span>
+                                    <span className="font-bold text-slate-900">{formatAccounting(k.volumen)} €</span>
+                                  </div>
+                                  {k.notiz && (
+                                    <div className="text-[11px] text-slate-500 italic mt-0.5 font-sans truncate" title={k.notiz}>{k.notiz}</div>
+                                  )}
                                 </div>
-                                {k.notiz && (
-                                  <div className="text-[10px] text-slate-400 italic mt-0.5 font-sans truncate" title={k.notiz}>{k.notiz}</div>
-                                )}
-                              </div>
-                            ))}
+                              ))}
+                            </div>
                           </div>
                         )}
                       </div>
                     );
                   }
 
+                  const teilAktiv = isBuy && tx.verbleibendeAnzahlAktien !== undefined && tx.verbleibendeAnzahlAktien < tx.anzahlAktien;
                   return (
-                    <div key={tx.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+                    <div key={tx.id} className="py-2.5">
+                      {zeilenKopf({
+                        id: tx.id,
+                        punkt: isBuy ? "bg-sky-500" : isProfit ? "bg-emerald-500" : "bg-rose-500",
+                        titel: tx.name,
+                        ticker: String(tx.key).toUpperCase(),
+                        unter: `${isBuy ? "Kauf" : "Verkauf"} · ${formatToGermanDate(tx.datum)} · ${tx.depot} · ${tx.besitzerName}`,
+                        gross: isBuy ? `${formatAccounting(tx.volumen)} €` : `${isProfit ? "+" : ""}${formatAccounting(tx.nettoGewinn || 0)} €`,
+                        grossFarbe: isBuy ? "text-slate-900" : isProfit ? "text-emerald-600" : "text-rose-600",
+                        klein: isBuy
+                          ? `+${stk(tx.anzahlAktien)} × ${formatAccounting(tx.kaufKurs || 0)}${teilAktiv ? ` · aktiv ${stk(tx.verbleibendeAnzahlAktien)}` : ""}`
+                          : `−${stk(tx.anzahlAktien)} × ${formatAccounting(tx.verkaufsKurs || 0)} · netto`,
+                        kleinFarbe: teilAktiv ? "text-amber-700" : "text-slate-500",
+                      })}
 
-                      {/* Zeile 1: Datum + Typ (links), Aktionen (rechts) */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span className="block font-semibold text-slate-400 font-mono text-[9px] uppercase">
-                            🗓️ {formatToGermanDate(tx.datum)}
-                          </span>
-                          <span className={`inline-block px-1.5 py-0.5 rounded text-[8px] font-extrabold uppercase mt-1 ${
-                            isBuy 
-                              ? 'bg-emerald-50 text-emerald-700 border border-emerald-100/50' 
-                              : 'bg-rose-50 text-rose-700 border border-rose-100/50'
-                          }`}>
-                            {isBuy ? '📥 KAUF' : '💸 VERKAUF'}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-1 shrink-0">
+                      {offen && (
+                        <div className="mt-2.5 ml-5 space-y-2.5 animate-fade-in text-[12px]">
+                          {tx.notiz && (
+                            <p className="text-slate-600 italic border-l-2 border-slate-200 pl-2 whitespace-normal">{tx.notiz}</p>
+                          )}
+                          {tx.gedanken && (
+                            <p className="text-slate-600 italic whitespace-normal leading-tight border-l-2 border-emerald-500 pl-2">
+                              <b>Gedanken:</b> " {tx.gedanken} "
+                            </p>
+                          )}
+                          {tx.ziele && (
+                            <p className="text-slate-700 italic whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
+                              <b>Ziele:</b> " {tx.ziele} "
+                            </p>
+                          )}
+
+                          <div className="grid grid-cols-3 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
+                            <div>
+                              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Stück</span>
+                              <span className={`font-mono tabular-nums font-bold ${isBuy ? "text-emerald-700" : "text-rose-600"}`}>{isBuy ? "+" : "−"}{stk(tx.anzahlAktien)}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">{isBuy ? "Kaufkurs" : "Verkaufskurs"}</span>
+                              <span className="font-mono tabular-nums text-slate-700">€ {formatAccounting(tx.kaufKurs || tx.verkaufsKurs || 0)}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Volumen</span>
+                              <span className="font-mono tabular-nums font-bold text-slate-900">€ {formatAccounting(tx.volumen)}</span>
+                            </div>
+                          </div>
+
                           {isBuy ? (
-                            <>
+                            <div>
+                              <div className="flex items-center gap-1.5 font-semibold">
+                                <span className={`px-1.5 py-0.5 rounded font-mono text-[11px] font-bold ${
+                                  tx.verbleibendeAnzahlAktien === tx.anzahlAktien
+                                    ? 'bg-emerald-50 text-emerald-700'
+                                    : tx.verbleibendeAnzahlAktien === 0
+                                      ? 'bg-slate-100 text-slate-500 italic'
+                                      : 'bg-amber-50 text-amber-700 border-amber-200/50 border'
+                                }`}>
+                                  {tx.verbleibendeAnzahlAktien === tx.anzahlAktien
+                                    ? '🟢 Aktiv'
+                                    : tx.verbleibendeAnzahlAktien === 0
+                                      ? '⚪ Aufgebraucht'
+                                      : '🟡 Angeschnitten'}
+                                </span>
+                                <span className="font-mono text-slate-700">{stk(tx.verbleibendeAnzahlAktien || 0)} verbleibend</span>
+                              </div>
+                              <div className="w-full bg-slate-100 h-1 rounded-full mt-1.5 overflow-hidden">
+                                <div
+                                  className="bg-emerald-500 h-full rounded-full transition-all"
+                                  style={{ width: `${((tx.verbleibendeAnzahlAktien || 0) / tx.anzahlAktien) * 100}%` }}
+                                />
+                              </div>
+                              {renderPurchaseSalesMatches(tx.rawId)}
+                            </div>
+                          ) : (
+                            <div className="space-y-1">
+                              <div className="flex flex-wrap items-center gap-x-3 gap-y-1 font-bold">
+                                <span className="text-slate-700">{tx.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}</span>
+                                <span className={isProfit ? "text-emerald-600" : "text-rose-600"}>
+                                  Brutto: {isProfit ? "+" : ""}{formatAccounting(tx.gewinnVerlust || 0)} €
+                                </span>
+                                <span className="text-rose-600">KESt: −{formatAccounting(tx.kestBetrag || 0)} €</span>
+                              </div>
+                              {renderLotsDetails(tx)}
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => (isBuy ? handleStartEditPurchase(tx.originalItem) : handleStartEditSale(tx.originalItem))}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                              title={isBuy ? "Kauf bearbeiten" : "Verkauf bearbeiten"}
+                            >
+                              <Edit className="h-3.5 w-3.5" /> Bearbeiten
+                            </button>
+                            {!isBuy && (
                               <button
-                                onClick={() => handleStartEditPurchase(tx.originalItem)}
-                                className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
-                                title="Kauf bearbeiten"
+                                onClick={() => handleUndoSale(tx.originalItem)}
+                                className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 bg-white border border-amber-200 rounded-xl text-[11px] font-bold text-amber-700 hover:bg-amber-50 cursor-pointer"
+                                title="Verkauf rückgängig machen (Vollständig stornieren & Depot-Bestände wiederherstellen)"
                               >
-                                <Edit className="h-3.5 w-3.5" />
+                                <RotateCcw className="h-3.5 w-3.5" /> Stornieren
                               </button>
-                              <button
-                                onClick={() => {
+                            )}
+                            <button
+                              onClick={() => {
+                                if (isBuy) {
                                   if (confirm(`Möchtest du diesen Kauf von ${tx.name} für € ${formatAccounting(tx.volumen)} wirklich unwiderruflich löschen?`)) {
                                     handleDeletePurchase(tx.rawId);
                                   }
-                                }}
-                                className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                                title="Kauf löschen"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </>
-                          ) : (
-                            <>
-                              <button
-                                onClick={() => handleStartEditSale(tx.originalItem)}
-                                className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-400 hover:text-slate-800 transition-colors cursor-pointer"
-                                title="Verkauf bearbeiten"
-                              >
-                                <Edit className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                onClick={() => handleUndoSale(tx.originalItem)}
-                                className="p-1.5 hover:bg-amber-50/70 rounded-lg text-slate-400 hover:text-amber-600 transition-colors cursor-pointer"
-                                title="Verkauf rückgängig machen (Vollständig stornieren & Depot-Bestände wiederherstellen)"
-                              >
-                                <RotateCcw className="h-3.5 w-3.5" />
-                              </button>
-                              <button
-                                onClick={() => {
-                                  if (confirm(`Möchtest du diesen Verkaufseintrag für ${tx.name} wirklich unwiderruflich aus der Historie löschen?`)) {
-                                    handleDeleteSale(tx.rawId);
-                                  }
-                                }}
-                                className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-400 hover:text-rose-600 transition-colors cursor-pointer"
-                                title="Verkauf löschen"
-                              >
-                                <Trash2 className="h-3.5 w-3.5" />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      </div>
-
-                      {/* Zeile 2: Wertpapier + Notizen */}
-                      <div>
-                        <span className="font-bold text-slate-900 text-sm sm:text-base mr-1.5">{tx.name}</span>
-                        <span className="inline-block px-1.5 py-0.5 font-mono text-[9px] font-extrabold text-slate-900 bg-slate-50 border border-slate-100/40 rounded uppercase align-middle">
-                          {String(tx.key).toUpperCase()}
-                        </span>
-                        {tx.notiz && (
-                          <p
-                            className="text-[10px] text-slate-500 font-medium italic mt-1 truncate"
-                            title={tx.notiz}
-                          >
-                            {tx.notiz}
-                          </p>
-                        )}
-                        {tx.gedanken && (
-                          <p className="text-[10px] text-slate-600 font-medium italic mt-1.5 whitespace-normal leading-tight border-l-2 border-emerald-500 pl-2">
-                            <b>Gedanken:</b> " {tx.gedanken} "
-                          </p>
-                        )}
-                        {tx.ziele && (
-                          <p className="text-[10px] text-slate-700 font-medium italic mt-1.5 whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
-                            <b>Ziele:</b> " {tx.ziele} "
-                          </p>
-                        )}
-                      </div>
-
-                      {/* Zeile 3: Depot & Besitzer */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="px-2 py-0.5 rounded bg-slate-100 text-slate-700 font-mono text-[9.5px] font-bold border border-slate-200">
-                          🏢 {tx.depot}
-                        </span>
-                        <span className="px-2 py-0.5 rounded bg-slate-50 text-slate-900 font-mono text-[9.5px] font-bold border border-slate-100">
-                          👤 {tx.besitzerName}
-                        </span>
-                      </div>
-
-                      {/* Zeile 4: Zahlen */}
-                      <div className="grid grid-cols-3 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Stückzahl</span>
-                          <span className={`font-mono tabular-nums font-bold ${isBuy ? "text-emerald-600" : "text-rose-600"}`}>
-                            {isBuy ? "+" : "-"}{tx.anzahlAktien} Stk.
-                          </span>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Einstand / Kurs</span>
-                          <span className="font-mono tabular-nums text-slate-600">€ {formatAccounting(tx.kaufKurs || tx.verkaufsKurs || 0)}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Volumen</span>
-                          <span className="font-mono tabular-nums font-bold text-slate-800">€ {formatAccounting(tx.volumen)}</span>
-                        </div>
-                      </div>
-
-                      {/* Zeile 5: Steuer-Heuristik & Tranchenergebnis */}
-                      <div>
-                        {isBuy ? (
-                          <div>
-                            <div className="flex items-center gap-1.5 font-sans font-semibold">
-                              <span className={`px-1.5 py-0.5 rounded font-mono text-[8.5px] font-extrabold ${
-                                tx.verbleibendeAnzahlAktien === tx.anzahlAktien 
-                                  ? 'bg-emerald-50 text-emerald-700' 
-                                  : tx.verbleibendeAnzahlAktien === 0 
-                                    ? 'bg-slate-100 text-slate-400 italic' 
-                                    : 'bg-amber-50 text-amber-700 border-amber-200/50 border'
-                              }`}>
-                                {tx.verbleibendeAnzahlAktien === tx.anzahlAktien 
-                                  ? '🟢 Aktiv' 
-                                  : tx.verbleibendeAnzahlAktien === 0 
-                                    ? '⚪ Aufgebraucht' 
-                                    : '🟡 Angeschnitten'}
-                              </span>
-                              <span className="text-[11px] font-mono text-slate-700">
-                                {tx.verbleibendeAnzahlAktien?.toFixed(4)} verbleibend
-                              </span>
-                            </div>
-                            
-                            {/* Remaining bar */}
-                            <div className="w-full bg-slate-100 h-1 rounded-full mt-1.5 overflow-hidden">
-                              <div 
-                                className="bg-emerald-500 h-full rounded-full transition-all"
-                                style={{ width: `${((tx.verbleibendeAnzahlAktien || 0) / tx.anzahlAktien) * 100}%` }}
-                              />
-                            </div>
-
-                            {/* Bidirectional matching details */}
-                            {renderPurchaseSalesMatches(tx.rawId)}
+                                } else if (confirm(`Möchtest du diesen Verkaufseintrag für ${tx.name} wirklich unwiderruflich aus der Historie löschen?`)) {
+                                  handleDeleteSale(tx.rawId);
+                                }
+                              }}
+                              className="p-2 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 hover:bg-rose-100 cursor-pointer"
+                              title={isBuy ? "Kauf löschen" : "Verkauf löschen"}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                           </div>
-                        ) : (
-                          <div className="space-y-1">
-                            {/* taxMethod badge */}
-                            <div className="flex items-center gap-1.5 font-bold">
-                              <span className={`px-1.5 py-0.5 rounded-md font-mono text-[8px] tracking-wide border ${
-                                tx.taxMethod === 'FIFO'
-                                  ? 'bg-amber-100/40 text-amber-800 border-amber-200/40'
-                                  : 'bg-slate-50 text-slate-900 border border-slate-200'
-                              }`}>
-                                {tx.taxMethod === 'FIFO' ? '⚖️ FIFO' : '📊 Gleitender Ø'}
-                              </span>
-                              <span className={isProfit ? "text-emerald-600" : "text-rose-600"}>
-                                Ergebnis: {isProfit ? "+" : ""}{formatAccounting(tx.gewinnVerlust || 0)} €
-                              </span>
-                            </div>
-
-                            {/* Details: Gross, tax, net */}
-                            <div className="text-[10px] text-slate-500 font-medium">
-                              <span className="block">KESt (27,5%): € {formatAccounting(tx.kestBetrag || 0)}</span>
-                              <span className={`block font-semibold ${isProfit ? "text-emerald-700" : "text-rose-700"}`}>
-                                Netto: € {formatAccounting(tx.nettoGewinn || 0)}
-                              </span>
-                            </div>
-
-                            {/* Consumed Purchases list */}
-                            {renderLotsDetails(tx)}
-                          </div>
-                        )}
-                      </div>
-
+                        </div>
+                      )}
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         )}
 
@@ -2157,110 +2067,96 @@ export function CombinedJournal({
               >
                 {purchaseSortAsc ? "▲ aufsteigend" : "▼ absteigend"}
               </button>
+              {sortedPurchases.length > 0 && alleKnopf(sortedPurchases.map((p) => `k-${p.id}`))}
             </div>
 
-            <div className="space-y-3">
-              {sortedPurchases.length === 0 ? (
-                <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
-                  Es sind noch keine Anschaffungseinträge im Journal vorhanden. Buche einen Kauf oben!
-                </div>
-              ) : (
-                sortedPurchases.map((purchase) => {
+            {sortedPurchases.length === 0 ? (
+              <div className="py-8 text-center text-slate-400 font-semibold font-sans bg-white border border-slate-100 rounded-xl">
+                Es sind noch keine Anschaffungseinträge im Journal vorhanden. Buche einen Kauf oben!
+              </div>
+            ) : (
+              <div className="divide-y divide-slate-200 border-t border-b border-slate-200">
+                {sortedPurchases.map((purchase) => {
                   const isActive = purchase.verbleibendeAnzahlAktien > 0;
-                  
+                  const teil = isActive && purchase.verbleibendeAnzahlAktien < purchase.anzahlAktien;
+                  const zid = `k-${purchase.id}`;
+                  const offen = zeilenOffen.has(zid);
                   return (
-                    <div key={purchase.id} className="bg-white border border-slate-200 rounded-xl p-3.5 space-y-2.5">
-
-                      {/* Zeile 1: Asset + Datum (links), Aktionen (rechts) */}
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <span className="block font-bold text-slate-900 text-sm sm:text-base">{purchase.name}</span>
-                          <div className="flex flex-wrap items-center gap-1.5 mt-1.5">
-                            <span className="block text-[9px] font-semibold text-slate-400 font-mono uppercase">
-                              🗓️ {formatToGermanDate(purchase.kaufDatum)}
-                            </span>
-                            <span className="block px-1.5 py-0.5 rounded font-mono text-[9px] font-extrabold text-slate-800 bg-slate-50 uppercase border border-slate-100/50">
-                              {String(purchase.key).toUpperCase()}
-                            </span>
+                    <div key={purchase.id} className="py-2.5">
+                      {zeilenKopf({
+                        id: zid,
+                        punkt: !isActive ? "bg-slate-300" : teil ? "bg-amber-400" : "bg-sky-500",
+                        titel: purchase.name,
+                        ticker: String(purchase.key).toUpperCase(),
+                        unter: `${formatToGermanDate(purchase.kaufDatum)} · ${purchase.depot || "Standard Depot"} · ${purchase.besitzerName || "Standard Besitzer"}`,
+                        gross: `${formatAccounting(purchase.tatsaechlicheKosten)} €`,
+                        klein: `${stk(purchase.anzahlAktien)} × ${formatAccounting(purchase.kaufKurs)}${!isActive ? " · realisiert" : teil ? ` · aktiv ${stk(purchase.verbleibendeAnzahlAktien)}` : ""}`,
+                        kleinFarbe: teil ? "text-amber-700" : "text-slate-500",
+                      })}
+                      {offen && (
+                        <div className="mt-2.5 ml-5 space-y-2.5 animate-fade-in text-[12px]">
+                          {purchase.notiz && (
+                            <p className="text-slate-600 italic whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
+                              <b>Notiz:</b> " {purchase.notiz} "
+                            </p>
+                          )}
+                          {purchase.gedanken && (
+                            <p className="text-slate-600 italic whitespace-normal leading-tight border-l-2 border-emerald-500 pl-2">
+                              <b>Gedanken:</b> " {purchase.gedanken} "
+                            </p>
+                          )}
+                          {purchase.ziele && (
+                            <p className="text-slate-700 italic whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
+                              <b>Ziele:</b> " {purchase.ziele} "
+                            </p>
+                          )}
+                          <div className="grid grid-cols-2 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
+                            <div>
+                              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kauf-Menge</span>
+                              <span className="font-mono tabular-nums text-slate-700">{stk(purchase.anzahlAktien)} Stk.</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Verbleibend</span>
+                              <span className={`font-mono tabular-nums font-bold ${isActive ? 'text-emerald-700' : 'text-slate-500 italic font-medium'}`}>
+                                {isActive ? `${stk(purchase.verbleibendeAnzahlAktien)} Stk. aktiv` : "vollständig realisiert"}
+                              </span>
+                            </div>
+                            <div>
+                              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Kaufkurs</span>
+                              <span className="font-mono tabular-nums text-slate-700">€ {formatAccounting(purchase.kaufKurs)}</span>
+                            </div>
+                            <div className="text-right">
+                              <span className="block text-[10px] font-bold text-slate-500 uppercase tracking-wider">Anschaffungswert</span>
+                              <span className="font-mono tabular-nums font-bold text-slate-900">€ {formatAccounting(purchase.tatsaechlicheKosten)}</span>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={() => handleStartEditPurchase(purchase)}
+                              className="flex-1 inline-flex items-center justify-center gap-1.5 py-1.5 bg-white border border-slate-200 rounded-xl text-[11px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+                              title="Anschaffung ändern / bearbeiten"
+                            >
+                              <Edit className="h-3.5 w-3.5" /> Bearbeiten
+                            </button>
+                            <button
+                              onClick={() => {
+                                if (confirm(`Möchtest du diesen Anschaffungseintrag für ${purchase.name} wirklich unwiderruflich aus dem Journal löschen?`)) {
+                                  handleDeletePurchase(purchase.id);
+                                }
+                              }}
+                              className="p-2 bg-rose-50 border border-rose-200 rounded-xl text-rose-600 hover:bg-rose-100 cursor-pointer"
+                              title="Anschaffung löschen"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
                           </div>
                         </div>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button
-                            onClick={() => handleStartEditPurchase(purchase)}
-                            className="p-1.5 hover:bg-slate-50 rounded-lg text-slate-450 hover:text-slate-800 transition-colors cursor-pointer"
-                            title="Anschaffung ändern / bearbeiten"
-                          >
-                            <Edit className="h-3.5 w-3.5" />
-                          </button>
-                          
-                          <button
-                            onClick={() => {
-                              if (confirm(`Möchtest du diesen Anschaffungseintrag für ${purchase.name} wirklich unwiderruflich aus dem Journal löschen?`)) {
-                                handleDeletePurchase(purchase.id);
-                              }
-                            }}
-                            className="p-1.5 hover:bg-rose-50 rounded-lg text-slate-450 hover:text-rose-600 transition-colors cursor-pointer"
-                            title="Anschaffung löschen"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Notizen */}
-                      {purchase.notiz && (
-                        <p className="text-[10px] text-slate-500 font-medium italic whitespace-normal leading-tight border-l-2 border-slate-200 pl-2">
-                          <b>Notiz:</b> " {purchase.notiz} "
-                        </p>
                       )}
-                      {purchase.gedanken && (
-                        <p className="text-[10px] text-slate-600 font-medium italic whitespace-normal leading-tight border-l-2 border-emerald-500 pl-2">
-                          <b>Gedanken:</b> " {purchase.gedanken} "
-                        </p>
-                      )}
-                      {purchase.ziele && (
-                        <p className="text-[10px] text-slate-700 font-medium italic whitespace-normal leading-tight border-l-2 border-slate-600 pl-2">
-                          <b>Ziele:</b> " {purchase.ziele} "
-                        </p>
-                      )}
-
-                      {/* Depot & Besitzer */}
-                      <div className="flex flex-wrap gap-1.5">
-                        <span className="px-2 py-1 rounded bg-slate-100 text-slate-700 font-mono text-[10px] font-bold border border-slate-200">
-                          {purchase.depot || "Standard Depot"}
-                        </span>
-                        <span className="px-2 py-1 rounded bg-slate-50 text-slate-900 font-mono text-[10px] font-bold border border-slate-200">
-                          {purchase.besitzerName || "Standard Besitzer"}
-                        </span>
-                      </div>
-
-                      {/* Zahlen */}
-                      <div className="grid grid-cols-2 gap-2 bg-slate-50/60 border border-slate-100 rounded-lg p-2">
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Kauf-Menge</span>
-                          <span className="font-mono tabular-nums text-slate-500">{purchase.anzahlAktien} Stk.</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Verbleibend (Aktiv)</span>
-                          <span className={`font-mono tabular-nums font-bold px-1.5 py-0.5 rounded-md ${isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-slate-100 text-slate-400 italic font-medium'}`}>
-                            {purchase.verbleibendeAnzahlAktien.toFixed(4)} {isActive ? "Stk. aktiv" : "vollständig realisiert"}
-                          </span>
-                        </div>
-                        <div>
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Kaufkurs</span>
-                          <span className="font-mono tabular-nums text-slate-600">€ {formatAccounting(purchase.kaufKurs)}</span>
-                        </div>
-                        <div className="text-right">
-                          <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-wider">Anschaffungswert</span>
-                          <span className="font-mono tabular-nums font-bold text-slate-800">€ {formatAccounting(purchase.tatsaechlicheKosten)}</span>
-                        </div>
-                      </div>
-
                     </div>
                   );
-                })
-              )}
-            </div>
+                })}
+              </div>
+            )}
           </div>
         )}
 
