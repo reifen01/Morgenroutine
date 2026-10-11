@@ -753,7 +753,7 @@ export default function App() {
       </nav>
 
       {/* MAIN VIEWPORT BODY */}
-      <main className="flex-1 overflow-y-auto w-full max-w-full overflow-x-hidden px-2.5 py-4 sm:p-8 pb-16">
+      <main className="flex-1 overflow-y-auto w-full max-w-full overflow-x-hidden px-0 py-3 sm:p-8 pb-16">
         <div className="max-w-7xl mx-auto">
           {activeTab === "morgenroutine" && (
             <MorgenroutineTab
@@ -774,7 +774,7 @@ export default function App() {
           )}
 
           {ANALYSE_TABS.includes(activeTab) && (
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4 px-2 sm:px-0">
               {ANALYSE_REITER.map(([id, label]) => (
                 <button
                   key={id}
@@ -904,7 +904,7 @@ export default function App() {
           )}
 
           {(activeTab === "regelwerk" || activeTab === "workspace") && (
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 px-2 sm:px-0">
               <button
                 onClick={() => setActiveTab("regelwerk")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${
