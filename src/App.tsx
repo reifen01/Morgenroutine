@@ -863,13 +863,13 @@ export default function App() {
 
           {/* ⭐ Watchlist — im Depot ganz unten, eingeklappt */}
           {activeTab === "journal" && (
-            <details className="mt-6 bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
+            <details open className="mt-6 bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
               <summary className="cursor-pointer list-none px-4 py-3.5 sm:px-6 flex items-center justify-between gap-2 select-none bg-slate-800 text-white rounded-3xl group-open:rounded-b-none">
                 <div>
-                  <span className="text-[15px] font-extrabold uppercase tracking-wide block">
+                  <span className="text-[15px] font-extrabold uppercase tracking-wide block whitespace-nowrap">
                     ⭐ Watchlist
                   </span>
-                  <span className="text-[12px] text-slate-200 font-semibold">{watchlist.length} {watchlist.length === 1 ? "Wert" : "Werte"} beobachtet · Kurs &amp; Tagesänderung</span>
+                  <span className="text-[12px] text-slate-200 font-semibold whitespace-nowrap">{watchlist.length} {watchlist.length === 1 ? "Wert" : "Werte"} · Kurs &amp; Tagesänderung</span>
                 </div>
                 <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 group-open:hidden">Öffnen ▾</span>
                 <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 hidden group-open:inline">Schließen ▴</span>
