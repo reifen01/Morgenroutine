@@ -58,3 +58,15 @@ body {
 .text-slate-400 { color: var(--color-slate-600); }
 .text-slate-450 { color: var(--color-slate-600); }
 .text-slate-500 { color: var(--color-slate-700); }
+
+/* ── HANDY: Blöcke randlos bis zum Bildschirmrand (Vorbild TradingView) ──
+   Unter 640 px keine grauen Seitenränder: Karten im Inhaltsbereich ohne
+   Rundung und ohne seitlichen Rahmen; zwischen den Blöcken bleibt der
+   graue Abstand als Trenner. Ab 640 px bleibt alles wie bisher. */
+@media (max-width: 639px) {
+  main .rounded-3xl {
+    border-radius: 0;
+    border-left-width: 0;
+    border-right-width: 0;
+  }
+}

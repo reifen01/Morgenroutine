@@ -753,7 +753,7 @@ export default function App() {
       </nav>
 
       {/* MAIN VIEWPORT BODY */}
-      <main className="flex-1 overflow-y-auto w-full max-w-full overflow-x-hidden px-2.5 py-4 sm:p-8 pb-16">
+      <main className="flex-1 overflow-y-auto w-full max-w-full overflow-x-hidden px-0 py-3 sm:p-8 pb-16">
         <div className="max-w-7xl mx-auto">
           {activeTab === "morgenroutine" && (
             <MorgenroutineTab
@@ -774,7 +774,7 @@ export default function App() {
           )}
 
           {ANALYSE_TABS.includes(activeTab) && (
-            <div className="flex flex-wrap gap-2 mb-4">
+            <div className="flex flex-wrap gap-2 mb-4 px-2 sm:px-0">
               {ANALYSE_REITER.map(([id, label]) => (
                 <button
                   key={id}
@@ -863,13 +863,13 @@ export default function App() {
 
           {/* ⭐ Watchlist — im Depot ganz unten, eingeklappt */}
           {activeTab === "journal" && (
-            <details className="mt-6 bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
+            <details open className="mt-6 bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
               <summary className="cursor-pointer list-none px-4 py-3.5 sm:px-6 flex items-center justify-between gap-2 select-none bg-slate-800 text-white rounded-3xl group-open:rounded-b-none">
                 <div>
-                  <span className="text-[15px] font-extrabold uppercase tracking-wide block">
+                  <span className="text-[15px] font-extrabold uppercase tracking-wide block whitespace-nowrap">
                     ⭐ Watchlist
                   </span>
-                  <span className="text-[12px] text-slate-200 font-semibold">{watchlist.length} {watchlist.length === 1 ? "Wert" : "Werte"} beobachtet · Kurs &amp; Tagesänderung</span>
+                  <span className="text-[12px] text-slate-200 font-semibold whitespace-nowrap">{watchlist.length} {watchlist.length === 1 ? "Wert" : "Werte"} · Kurs &amp; Tagesänderung</span>
                 </div>
                 <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 group-open:hidden">Öffnen ▾</span>
                 <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 hidden group-open:inline">Schließen ▴</span>
@@ -904,7 +904,7 @@ export default function App() {
           )}
 
           {(activeTab === "regelwerk" || activeTab === "workspace") && (
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-2 mb-4 px-2 sm:px-0">
               <button
                 onClick={() => setActiveTab("regelwerk")}
                 className={`px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer ${

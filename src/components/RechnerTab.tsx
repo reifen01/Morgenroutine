@@ -95,6 +95,8 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
   const watchlistSearch = useStockSearch(600);
   /** Aufgeklappte Watchlist-Zeilen (Symbol). */
   const [wlOffen, setWlOffen] = useState<Set<string>>(new Set());
+  /** Formular „Neuen Wert hinzufügen“ ein-/ausgeklappt. */
+  const [wlFormOffen, setWlFormOffen] = useState(false);
   const wlAlleOffen = watchlist.length > 0 && watchlist.every((w) => wlOffen.has(w.symbol));
   const wlToggle = (sym: string) =>
     setWlOffen((prev) => { const n = new Set(prev); if (n.has(sym)) n.delete(sym); else n.add(sym); return n; });
@@ -994,25 +996,11 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
           {/* WATCHLIST & FAVORITEN CARD */}
           {ansicht === "watchlist" && (
-          <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 flex items-center gap-2 uppercase tracking-widest">
-                <Star className="h-4 w-4 text-amber-500 fill-amber-500" />
-                Watchlist (Favoriten)
-              </h3>
-              <span className="text-[10px] bg-amber-50 text-amber-805 px-2.5 py-1 rounded-xl font-mono font-bold uppercase whitespace-nowrap border border-amber-100">
-                {watchlist.length} Werte gesichert
-              </span>
-            </div>
-
-            <p className="text-xs text-slate-500 font-medium leading-relaxed">
-              Lege hier favorisierte Ticker oder potenzielle Setups ab. Mit einem Klick lädst du sie blitzschnell in den ATR-Rechner und Positionsgrößen-Planer!
-            </p>
-
+          <div className="bg-white px-1 sm:px-3 pb-2 space-y-4">
             {/* Watchlist-Zeilen (Vorbild TradingView) — Kurs in Euro aus dem Live-Abruf */}
             {watchlist.length === 0 ? (
               <div className="p-6 text-center border-2 border-dashed border-slate-200 rounded-2xl text-slate-450 text-xs">
-                Keine Watchlist-Favoriten vorhanden. Nutze das Formular unten, um Favoriten hinzuzufügen!
+                Keine Watchlist-Favoriten vorhanden. Unten auf „+ Wert hinzufügen“ tippen.
               </div>
             ) : (
               <div>
@@ -1125,6 +1113,17 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
               </div>
             )}
 
+            {/* Neuen Wert hinzufügen — eingeklappt, damit die Kurse sofort sichtbar sind */}
+            {!wlFormOffen ? (
+              <button
+                type="button"
+                onClick={() => setWlFormOffen(true)}
+                className="w-full h-10 inline-flex items-center justify-center gap-1.5 bg-white border border-dashed border-slate-300 rounded-xl text-[13px] font-bold text-slate-700 hover:bg-slate-50 cursor-pointer"
+              >
+                <Plus className="h-4 w-4 text-emerald-600" /> Wert hinzufügen
+              </button>
+            ) : (
+            <>
             {/* Form to add a new favorite */}
             <div className="bg-slate-50/50 border border-slate-105 rounded-2xl p-4 sm:p-5 space-y-4">
               <span className="block text-[11px] font-black text-slate-500 uppercase tracking-widest border-b border-slate-200 pb-2 flex items-center gap-1">
@@ -1275,6 +1274,8 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
                 Sichern &amp; Laden
               </button>
             </div>
+            </>
+            )}
           </div>
           )}
 

@@ -58,8 +58,8 @@ export default function AktienScreenerTab({ watchlist, portfolio }: Props) {
   });
 
   return (
-    <div className="-mx-4 sm:mx-0 flex flex-col" style={{ height: "calc(100dvh - 12.5rem)" }}>
-      <div className="flex items-center justify-between px-4 sm:px-0 py-2 text-xs text-slate-500">
+    <div className="flex flex-col" style={{ height: "calc(100dvh - 12.5rem)" }}>
+      <div className="flex items-center justify-between px-3 sm:px-0 py-2 text-xs text-slate-500">
         <span className="font-semibold text-slate-700">Aktien-Screener · Kriterien nach Jens Rabe</span>
         <a
           href={SCREENER_ORIGIN}
