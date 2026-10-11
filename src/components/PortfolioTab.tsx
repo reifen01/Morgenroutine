@@ -28,6 +28,7 @@ import DepotTable from "./DepotTable";
 import { buildAssetRegistry, CORE_ASSETS } from "../utils/assetRegistry";
 import { evaluateMarketHealth } from "../utils/marketHealth";
 import DepotCurveChart from "./DepotCurveChart";
+import DepotDashboard from "./DepotDashboard";
 
 interface PortfolioTabProps {
   routineDate: string;
@@ -2189,6 +2190,18 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
           })()}
         </div>
 
+
+        {/* 📊 Depot-Übersicht (Dashboard) — offen, zuklappbar */}
+        <details open className="group border border-slate-200 rounded-2xl">
+          <summary className="cursor-pointer list-none px-3 py-2.5 flex items-center justify-between gap-2 select-none bg-slate-800 text-white rounded-2xl group-open:rounded-b-none">
+            <span className="text-[14px] font-extrabold uppercase tracking-wide whitespace-nowrap">📊 Depot-Übersicht</span>
+            <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 group-open:hidden">Öffnen ▾</span>
+            <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 hidden group-open:inline">Schließen ▴</span>
+          </summary>
+          <div className="p-3">
+            <DepotDashboard holdings={derivedActivePortfolio} livePrices={livePrices} />
+          </div>
+        </details>
 
         {/* NEUE SORTIERBARE DEPOT-TABELLE (liest Limits aus dem Asset-Register) */}
         <DepotTable
