@@ -821,7 +821,7 @@ export function CombinedJournal({
   };
   const zeilenKopf = (z: {
     id: string; symbol: string; titel: string; ticker?: string; unter: string;
-    gross: string; grossFarbe?: string; klein?: string; kleinFarbe?: string;
+    gross: string; grossFarbe?: string; klein?: string; kleinFarbe?: string; hinweis?: string;
   }) => {
     const offen = zeilenOffen.has(z.id);
     return (
@@ -833,11 +833,11 @@ export function CombinedJournal({
       >
         <span className="w-6 text-center text-[17px] leading-none shrink-0" aria-hidden="true">{z.symbol}</span>
         <div className="flex-1 min-w-0">
-          <div className="flex flex-wrap items-baseline gap-x-1.5 min-w-0">
-            <span className="font-bold text-slate-900 text-[15px] leading-tight line-clamp-2">{z.titel}</span>
-            {z.ticker && <span className="font-mono text-[11px] font-bold text-slate-500 shrink-0">{z.ticker}</span>}
+          <div className="font-bold text-slate-900 text-[15px] leading-tight line-clamp-2">{z.titel}</div>
+          <div className="text-[12px] text-slate-500 leading-tight line-clamp-2">
+            {z.ticker && <b className="font-mono text-slate-700">{z.ticker} · </b>}{z.unter}
+            {z.hinweis && <span className="text-amber-700 font-bold"> · {z.hinweis}</span>}
           </div>
-          <div className="text-[12px] text-slate-500 leading-tight line-clamp-2">{z.unter}</div>
         </div>
         <div className="text-right shrink-0">
           <div className={`font-mono font-bold tabular-nums text-[15px] leading-tight ${z.grossFarbe || "text-slate-900"}`}>{z.gross}</div>
@@ -860,8 +860,9 @@ export function CombinedJournal({
         <div className="mt-1.5 p-3 text-[12px] text-slate-700 leading-relaxed rounded-xl border-l-4 border-emerald-500 bg-emerald-500/5 space-y-1">
           <div><b>📥 Kauf</b> — rechts der bezahlte Betrag, darunter Stück × Kaufkurs.</div>
           <div><b>💸 Verkauf</b> — rechts das Ergebnis <b>netto nach KESt</b>: <span className="text-emerald-700 font-bold">grün = Gewinn</span>, <span className="text-rose-600 font-bold">rot = Verlust</span>.</div>
+          <div><b>Graue Leiste „3×“</b> — mehrere Buchungen desselben Werts; antippen zeigt sie alle, jede einzelne lässt sich wieder aufklappen.</div>
           <div><b>🔁 Sparplan</b> — alle Sparplan-Käufe eines Werts in einer Zeile; antippen zeigt die einzelnen Käufe.</div>
-          <div><span className="text-amber-700 font-bold">„aktiv 300“ in Orange</span> — dieser Kauf ist schon teilweise verkauft; die Zahl ist der noch vorhandene Rest.</div>
+          <div><span className="text-amber-700 font-bold">„noch 300 aktiv“ in Orange</span> — dieser Kauf ist schon teilweise verkauft; die Zahl ist der noch vorhandene Rest.</div>
           <div className="text-slate-500">Die Symbole sind keine Ampel — sie zeigen nur die Art der Buchung. Zeile antippen für alle Details.</div>
         </div>
       )}
@@ -876,7 +877,8 @@ export function CombinedJournal({
   };
 
   // Eine Zeile der kombinierten Übersicht (Kauf, Verkauf oder Sparplan-Sammelzeile)
-  const renderTxZeile = (tx: any) => {
+  // inLeiste = innerhalb einer Aktien-Leiste: Name/Ticker nicht wiederholen
+  const renderTxZeile = (tx: any, inLeiste = false) => {
                   const isBuy = tx.type === 'buy';
                   const isProfit = !isBuy && (tx.gewinnVerlust || 0) >= 0;
                   const offen = zeilenOffen.has(tx.id);
@@ -888,9 +890,11 @@ export function CombinedJournal({
                         {zeilenKopf({
                           id: tx.id,
                           symbol: "🔁",
-                          titel: tx.name,
-                          ticker: String(tx.key).toUpperCase(),
-                          unter: `Sparplan · ${tx.anzahlKaeufe} Käufe · ${formatToGermanDate(tx.datumVon)} – ${formatToGermanDate(tx.datumBis)}`,
+                          titel: inLeiste ? `Sparplan · ${tx.anzahlKaeufe} Käufe` : tx.name,
+                          ticker: inLeiste ? undefined : String(tx.key).toUpperCase(),
+                          unter: inLeiste
+                            ? `${formatToGermanDate(tx.datumVon)} – ${formatToGermanDate(tx.datumBis)} · ${tx.depot}`
+                            : `Sparplan · ${tx.anzahlKaeufe} Käufe · ${formatToGermanDate(tx.datumVon)} – ${formatToGermanDate(tx.datumBis)}`,
                           gross: `${formatAccounting(tx.volumen)} €`,
                           klein: `${stk(tx.anzahl)} Stk. · Ø ${formatAccounting(tx.kurs)}`,
                         })}
@@ -923,15 +927,17 @@ export function CombinedJournal({
                       {zeilenKopf({
                         id: tx.id,
                         symbol: isBuy ? "📥" : "💸",
-                        titel: tx.name,
-                        ticker: String(tx.key).toUpperCase(),
-                        unter: `${isBuy ? "Kauf" : "Verkauf"} · ${formatToGermanDate(tx.datum)} · ${tx.depot} · ${tx.besitzerName}`,
+                        titel: inLeiste ? `${isBuy ? "Kauf" : "Verkauf"} ${formatToGermanDate(tx.datum)}` : tx.name,
+                        ticker: inLeiste ? undefined : String(tx.key).toUpperCase(),
+                        unter: inLeiste
+                          ? `${tx.depot} · ${tx.besitzerName}`
+                          : `${isBuy ? "Kauf" : "Verkauf"} · ${formatToGermanDate(tx.datum)} · ${tx.depot} · ${tx.besitzerName}`,
                         gross: isBuy ? `${formatAccounting(tx.volumen)} €` : `${isProfit ? "+" : ""}${formatAccounting(tx.nettoGewinn || 0)} €`,
                         grossFarbe: isBuy ? "text-slate-900" : isProfit ? "text-emerald-600" : "text-rose-600",
                         klein: isBuy
-                          ? `+${stk(tx.anzahlAktien)} × ${formatAccounting(tx.kaufKurs || 0)}${teilAktiv ? ` · aktiv ${stk(tx.verbleibendeAnzahlAktien)}` : ""}`
-                          : `−${stk(tx.anzahlAktien)} × ${formatAccounting(tx.verkaufsKurs || 0)} · netto`,
-                        kleinFarbe: teilAktiv ? "text-amber-700" : "text-slate-500",
+                          ? `+${stk(tx.anzahlAktien)} × ${formatAccounting(tx.kaufKurs || 0)}`
+                          : `−${stk(tx.anzahlAktien)} × ${formatAccounting(tx.verkaufsKurs || 0)}`,
+                        hinweis: teilAktiv ? `noch ${stk(tx.verbleibendeAnzahlAktien)} aktiv` : undefined,
                       })}
 
                       {offen && (
@@ -1044,8 +1050,83 @@ export function CombinedJournal({
   };
 
   // Gliederung nach Depot / Besitzer / Wertpapier — Reihenfolge innerhalb bleibt die gewählte Sortierung
+  // Gleiche Wertpapiere zu einer aufklappbaren Leiste bündeln (ab 2 Buchungen).
+  // Reihenfolge = Position der ersten Buchung (gewählte Sortierung bleibt).
+  const aktienLeisten = (abschnitt: string, zeilen: any[]) => {
+    const proKey = new Map<string, any[]>();
+    for (const t of zeilen) {
+      const k = String(t.key || t.name).toLowerCase();
+      if (!proKey.has(k)) proKey.set(k, []);
+      proKey.get(k)!.push(t);
+    }
+    const out: any[] = [];
+    const gesetzt = new Set<string>();
+    for (const t of zeilen) {
+      const k = String(t.key || t.name).toLowerCase();
+      const alle = proKey.get(k)!;
+      if (alle.length < 2) { out.push(t); continue; }
+      if (gesetzt.has(k)) continue;
+      gesetzt.add(k);
+      const anzahl = (x: any) => (x.istGruppe ? x.anzahlKaeufe : 1);
+      const kaeufe = alle.filter((x) => x.type === 'buy');
+      const verk = alle.filter((x) => x.type === 'sell');
+      out.push({
+        istAktie: true,
+        id: `a|${abschnitt}|${k}`,
+        name: alle[0].name,
+        key: alle[0].key,
+        kinder: alle,
+        buchungen: alle.reduce((s2, x) => s2 + anzahl(x), 0),
+        anzKauf: kaeufe.reduce((s2, x) => s2 + anzahl(x), 0),
+        anzVerk: verk.length,
+        kaufSumme: kaeufe.reduce((s2, x) => s2 + (Number(x.volumen) || 0), 0),
+        netto: verk.reduce((s2, x) => s2 + (Number(x.nettoGewinn) || 0), 0),
+        depots: [...new Set(alle.map((x) => x.depot).filter(Boolean))],
+      });
+    }
+    return out;
+  };
+
+  // Aktien-Leiste: Kopf + darunter die einzelnen Buchungen (je wieder aufklappbar)
+  const renderAktienLeiste = (a: any) => {
+    const offen = zeilenOffen.has(a.id);
+    return (
+      <div key={a.id} className="py-2">
+        <button
+          type="button"
+          onClick={() => toggleZeile(a.id)}
+          className="w-full flex items-center gap-2.5 text-left cursor-pointer bg-slate-100 hover:bg-slate-200/70 rounded-xl px-2.5 py-2"
+          title={offen ? "Buchungen zuklappen" : "Alle Buchungen dieses Werts zeigen"}
+        >
+          <span className="w-6 text-center text-[15px] font-extrabold text-slate-700 shrink-0">{a.buchungen}×</span>
+          <div className="flex-1 min-w-0">
+            <div className="font-extrabold text-slate-900 text-[15px] leading-tight line-clamp-2">{a.name}</div>
+            <div className="text-[12px] text-slate-600 leading-tight line-clamp-2">
+              <b className="font-mono text-slate-700">{String(a.key).toUpperCase()} · </b>
+              {a.anzKauf} {a.anzKauf === 1 ? 'Kauf' : 'Käufe'}{a.anzVerk > 0 ? ` · ${a.anzVerk} ${a.anzVerk === 1 ? 'Verkauf' : 'Verkäufe'}` : ''}{a.depots.length > 1 ? ` · ${a.depots.length} Depots` : ''}
+            </div>
+          </div>
+          <div className="text-right shrink-0">
+            <div className="font-mono font-bold tabular-nums text-[15px] leading-tight text-slate-900">{formatAccounting(a.kaufSumme)} €</div>
+            {a.anzVerk > 0 && (
+              <div className={`mt-0.5 text-[12px] font-mono font-semibold tabular-nums leading-none ${a.netto >= 0 ? 'text-emerald-600' : 'text-rose-600'}`}>
+                netto {a.netto >= 0 ? '+' : ''}{formatAccounting(a.netto)} €
+              </div>
+            )}
+          </div>
+          <ChevronDown className={`h-4 w-4 text-slate-500 shrink-0 transition-transform ${offen ? "rotate-180" : ""}`} />
+        </button>
+        {offen && (
+          <div className="ml-3 pl-2 border-l-2 border-slate-300 divide-y divide-slate-200 animate-fade-in">
+            {a.kinder.map((tx: any) => renderTxZeile(tx, true))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const gliederung = (() => {
-    if (txGliederung === 'keine') return [{ titel: '', zeilen: gruppierteTransaktionen }];
+    if (txGliederung === 'keine') return [{ titel: '', zeilen: gruppierteTransaktionen, eintraege: aktienLeisten('alle', gruppierteTransaktionen) }];
     const feld = (t: any) =>
       txGliederung === 'depot' ? (t.depot || 'Standard Depot')
       : txGliederung === 'besitzer' ? (t.besitzerName || 'Standard Besitzer')
@@ -1062,7 +1143,9 @@ export function CombinedJournal({
         const kaeufe = zeilen.filter((t: any) => t.type === 'buy').reduce((s2: number, t: any) => s2 + (Number(t.volumen) || 0), 0);
         const netto = zeilen.filter((t: any) => t.type === 'sell').reduce((s2: number, t: any) => s2 + (Number(t.nettoGewinn) || 0), 0);
         const anzVerk = zeilen.filter((t: any) => t.type === 'sell').length;
-        return { titel, zeilen, kaeufe, netto, anzVerk };
+        // Bei „Wertpapier“ ist der Abschnitt schon das Wertpapier → keine zweite Leiste
+        const eintraege = txGliederung === 'wertpapier' ? zeilen : aktienLeisten(titel, zeilen);
+        return { titel, zeilen, kaeufe, netto, anzVerk, eintraege };
       });
   })();
 
@@ -2085,7 +2168,10 @@ export function CombinedJournal({
               >
                 {txSortAsc ? "▲ aufsteigend" : "▼ absteigend"}
               </button>
-              {gruppierteTransaktionen.length > 0 && alleKnopf(gruppierteTransaktionen.map((t: any) => t.id))}
+              {gruppierteTransaktionen.length > 0 && alleKnopf([
+                ...gruppierteTransaktionen.map((t: any) => t.id),
+                ...gliederung.flatMap((ab: any) => ab.eintraege.filter((e: any) => e.istAktie).map((e: any) => e.id)),
+              ])}
             </div>
             <div className="flex flex-wrap items-center gap-2 mb-3">
               <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Gliedern nach</span>
@@ -2113,18 +2199,18 @@ export function CombinedJournal({
                 {gliederung.map((ab: any) => (
                   <div key={ab.titel || 'alle'}>
                     {ab.titel && (
-                      <div className="flex items-center justify-between gap-2 bg-slate-800 text-white rounded-xl px-3 py-2 mb-1">
-                        <span className="text-[14px] font-extrabold tracking-wide truncate">{ab.titel}</span>
-                        <span className="text-right shrink-0 leading-tight">
-                          <span className="block text-[12px] font-mono font-bold">{ab.zeilen.length} {ab.zeilen.length === 1 ? 'Buchung' : 'Buchungen'}</span>
-                          <span className="block text-[11px] font-mono text-slate-200">
-                            Käufe {formatAccounting(ab.kaeufe)} €{ab.anzVerk > 0 ? ` · Netto ${ab.netto >= 0 ? '+' : ''}${formatAccounting(ab.netto)} €` : ''}
-                          </span>
-                        </span>
+                      <div className="bg-slate-800 text-white rounded-xl px-3 py-2 mb-1">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <span className="text-[15px] font-extrabold tracking-wide leading-tight break-words min-w-0">{ab.titel}</span>
+                          <span className="text-[12px] font-mono font-bold shrink-0">{ab.zeilen.length} {ab.zeilen.length === 1 ? 'Buchung' : 'Buchungen'}</span>
+                        </div>
+                        <div className="text-[12px] font-mono text-slate-200 mt-0.5">
+                          Käufe {formatAccounting(ab.kaeufe)} €{ab.anzVerk > 0 ? ` · Netto ${ab.netto >= 0 ? '+' : ''}${formatAccounting(ab.netto)} €` : ''}
+                        </div>
                       </div>
                     )}
                     <div className="divide-y divide-slate-200 border-t border-b border-slate-200">
-                      {ab.zeilen.map((tx: any) => renderTxZeile(tx))}
+                      {ab.eintraege.map((e: any) => (e.istAktie ? renderAktienLeiste(e) : renderTxZeile(e)))}
                     </div>
                   </div>
                 ))}
@@ -2188,8 +2274,8 @@ export function CombinedJournal({
                         ticker: String(purchase.key).toUpperCase(),
                         unter: `${formatToGermanDate(purchase.kaufDatum)} · ${purchase.depot || "Standard Depot"} · ${purchase.besitzerName || "Standard Besitzer"}`,
                         gross: `${formatAccounting(purchase.tatsaechlicheKosten)} €`,
-                        klein: `${stk(purchase.anzahlAktien)} × ${formatAccounting(purchase.kaufKurs)}${!isActive ? " · realisiert" : teil ? ` · aktiv ${stk(purchase.verbleibendeAnzahlAktien)}` : ""}`,
-                        kleinFarbe: teil ? "text-amber-700" : "text-slate-500",
+                        klein: `${stk(purchase.anzahlAktien)} × ${formatAccounting(purchase.kaufKurs)}`,
+                        hinweis: !isActive ? "vollständig verkauft" : teil ? `noch ${stk(purchase.verbleibendeAnzahlAktien)} aktiv` : undefined,
                       })}
                       {offen && (
                         <div className="mt-2.5 ml-8 space-y-2.5 animate-fade-in text-[12px]">
