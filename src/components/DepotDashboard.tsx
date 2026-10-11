@@ -33,11 +33,19 @@ type Sicht = "aktie" | "depot" | "besitzer";
 
 const MAX_ZEILEN = 8; // mehr Zeilen → Rest wird zu „Sonstige“
 
+/** Kuchen-Farben in fester Reihenfolge (nie zyklisch); geprüft mit dem
+ *  Paletten-Validator. „Sonstige“ ist immer grau. Da einige Töne auf Weiß
+ *  unter 3:1 Kontrast liegen, steht jede Farbe neben Name, % und € in der Legende. */
+const KUCHEN_FARBEN = ["#2a78d6", "#eb6834", "#1baf7a", "#eda100", "#e87ba4", "#008300", "#6250d6"];
+const SONSTIGE_FARBE = "#94a3b8";
+
 const pct = (v: number, nk = 1) =>
   v.toLocaleString("de-DE", { minimumFractionDigits: nk, maximumFractionDigits: nk });
 
 export default function DepotDashboard({ holdings, livePrices }: Props) {
   const [sicht, setSicht] = useState<Sicht>("aktie");
+  /** Angetipptes Kuchenstück (Label) — zeigt Name und % in der Mitte. */
+  const [gewaehlt, setGewaehlt] = useState<string | null>(null);
 
   // Je Position: Wert, Einstand, Gewinn, Tagesänderung
   const positionen = useMemo(() => {
@@ -65,7 +73,8 @@ export default function DepotDashboard({ holdings, livePrices }: Props) {
     const rest = sortiert.slice(MAX_ZEILEN - 1).reduce((s, [, w]) => s + w, 0);
     return [...kopf, [`Sonstige (${sortiert.length - MAX_ZEILEN + 1})`, rest] as [string, number]];
   }, [positionen, sicht]);
-  const maxAnteil = Math.max(...aufteilung.map(([, w]) => w), 1);
+  const farbeFuer = (label: string, i: number) =>
+    label.startsWith("Sonstige") ? SONSTIGE_FARBE : KUCHEN_FARBEN[i % KUCHEN_FARBEN.length];
 
   // 2) Gewinn/Verlust je Aktie (über alle Depots zusammengefasst)
   const gewinnJeAktie = useMemo(() => {
@@ -115,7 +124,7 @@ export default function DepotDashboard({ holdings, livePrices }: Props) {
                 type="button"
                 role="tab"
                 aria-selected={sicht === v}
-                onClick={() => setSicht(v)}
+                onClick={() => { setSicht(v); setGewaehlt(null); }}
                 className={`px-2.5 h-7 rounded-md text-[12px] font-bold cursor-pointer ${sicht === v ? "bg-slate-800 text-white" : "text-slate-600 hover:text-slate-900"}`}
               >
                 {l}
@@ -123,24 +132,70 @@ export default function DepotDashboard({ holdings, livePrices }: Props) {
             ))}
           </div>
         </div>
-        <div className="space-y-2">
-          {aufteilung.map(([label, wert]) => {
-            const anteil = gesamt > 0 ? (wert / gesamt) * 100 : 0;
-            return (
-              <div key={label}>
-                <div className="flex items-baseline justify-between gap-2 text-[13px]">
-                  <span className="font-semibold text-slate-800 truncate min-w-0">{label}</span>
-                  <span className="font-mono tabular-nums text-slate-900 shrink-0">
-                    <b>{pct(anteil)} %</b> <span className="text-slate-500">· {formatAccounting(wert)} €</span>
-                  </span>
-                </div>
-                <div className="h-2.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
-                  <div className="h-full bg-sky-700 rounded-full" style={{ width: `${(wert / maxAnteil) * 100}%` }} />
-                </div>
+        {(() => {
+          // Ring-Diagramm (Donut) als SVG: Kreisumfang = 100, Stücke per stroke-dasharray
+          const R = 15.915; // Umfang ≈ 100
+          const LUECKE = aufteilung.length > 1 ? 0.6 : 0; // weiße Fuge zwischen Stücken
+          let offset = 0;
+          const auswahl = gewaehlt ? aufteilung.find(([l]) => l === gewaehlt) : null;
+          return (
+            <div className="flex flex-col items-center gap-3">
+              <svg viewBox="0 0 42 42" className="w-48 h-48" role="img" aria-label="Aufteilung des Depotwerts als Kuchendiagramm">
+                <circle cx="21" cy="21" r={R} fill="none" stroke="#f1f5f9" strokeWidth="7" />
+                {aufteilung.map(([label, wert], i) => {
+                  const anteil = gesamt > 0 ? (wert / gesamt) * 100 : 0;
+                  const laenge = Math.max(anteil - LUECKE, 0.001);
+                  const el = (
+                    <circle
+                      key={label}
+                      cx="21" cy="21" r={R}
+                      fill="none"
+                      stroke={farbeFuer(label, i)}
+                      strokeWidth={gewaehlt === label ? 8.5 : 7}
+                      strokeDasharray={`${laenge} ${100 - laenge}`}
+                      strokeDashoffset={25 - offset}
+                      opacity={gewaehlt && gewaehlt !== label ? 0.35 : 1}
+                      onClick={() => setGewaehlt(gewaehlt === label ? null : label)}
+                      style={{ cursor: "pointer", transition: "opacity .2s, stroke-width .2s" }}
+                    >
+                      <title>{`${label}: ${pct(anteil)} % · ${formatAccounting(wert)} €`}</title>
+                    </circle>
+                  );
+                  offset += anteil;
+                  return el;
+                })}
+                {/* Mitte: Gesamt oder gewähltes Stück */}
+                <text x="21" y="19.5" textAnchor="middle" fontSize="3" fill="#475569" fontWeight="700">
+                  {auswahl ? (auswahl[0].length > 16 ? auswahl[0].slice(0, 15) + "…" : auswahl[0]) : "Depotwert"}
+                </text>
+                <text x="21" y="24.5" textAnchor="middle" fontSize="4.2" fill="#0f172a" fontWeight="800">
+                  {auswahl ? `${pct(gesamt > 0 ? (auswahl[1] / gesamt) * 100 : 0)} %` : `${Math.round(gesamt / 1000).toLocaleString("de-DE")} T€`}
+                </text>
+              </svg>
+
+              {/* Legende: Farbe + Name + % + € — antippen hebt das Stück hervor */}
+              <div className="w-full divide-y divide-slate-100">
+                {aufteilung.map(([label, wert], i) => {
+                  const anteil = gesamt > 0 ? (wert / gesamt) * 100 : 0;
+                  return (
+                    <button
+                      key={label}
+                      type="button"
+                      onClick={() => setGewaehlt(gewaehlt === label ? null : label)}
+                      className={`w-full flex items-center gap-2 py-1.5 text-left text-[13px] cursor-pointer rounded ${gewaehlt === label ? "bg-slate-100" : ""}`}
+                    >
+                      <span className="w-3 h-3 rounded-sm shrink-0" style={{ background: farbeFuer(label, i) }} aria-hidden="true" />
+                      <span className="flex-1 min-w-0 font-semibold text-slate-800 truncate">{label}</span>
+                      <span className="font-mono tabular-nums shrink-0">
+                        <b className="text-slate-900">{pct(anteil)} %</b> <span className="text-slate-500">· {formatAccounting(wert)} €</span>
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-            );
-          })}
-        </div>
+            </div>
+          );
+        })()}
       </section>
 
       {/* ── 2. Gewinn/Verlust je Aktie ── */}
