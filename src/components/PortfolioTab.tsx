@@ -2135,16 +2135,58 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-4 text-xs font-bold font-mono">
-            <div className="bg-slate-50 border border-slate-150 rounded-xl px-4 py-2">
-              <span className="text-slate-400 text-[10px] block uppercase">Gesamtwert Aktive Aktien</span>
-              <span className="text-slate-800 text-sm font-extrabold">E: € {formatAccounting(derivedActivePortfolio.reduce((sum, item) => sum + (item.totalShares * (livePrices[item.key as keyof typeof livePrices]?.price || item.averageKaufkurs)), 0))}</span>
-            </div>
-            <div className="bg-slate-50 border border-slate-150 rounded-xl px-4 py-2">
-              <span className="text-slate-400 text-[10px] block uppercase">Gesamtanschaffungskosten</span>
-              <span className="text-slate-800 text-sm font-extrabold">K: € {formatAccounting(derivedActivePortfolio.reduce((sum, item) => sum + item.totalCost, 0))}</span>
-            </div>
-          </div>
+          {(() => {
+            // Gleiche Kurs-Quelle wie bisher bei E: Live-Kurs, sonst Ø-Kaufkurs
+            const preis = (item: any) => livePrices[item.key as keyof typeof livePrices]?.price || item.averageKaufkurs;
+            const wert = derivedActivePortfolio.reduce((sum, item) => sum + item.totalShares * preis(item), 0);
+            const kosten = derivedActivePortfolio.reduce((sum, item) => sum + item.totalCost, 0);
+            const gewinn = wert - kosten;
+            const gewinnPct = kosten > 0 ? (gewinn / kosten) * 100 : 0;
+            // Heute: nur Werte mit Live-Kurs und Tagesänderung; Vortag = Kurs ÷ (1 + %/100)
+            let heute = 0, vortagWert = 0;
+            for (const item of derivedActivePortfolio) {
+              const lp = livePrices[item.key as keyof typeof livePrices];
+              const pct = lp?.changePct;
+              if (!lp?.price || typeof pct !== "number") continue;
+              const w = item.totalShares * lp.price;
+              const v = w / (1 + pct / 100);
+              heute += w - v;
+              vortagWert += v;
+            }
+            const heutePct = vortagWert > 0 ? (heute / vortagWert) * 100 : null;
+            const pfeil = (v: number) => (v > 0 ? "▲" : v < 0 ? "▼" : "▶");
+            const farbe = (v: number) => (v > 0 ? "text-emerald-600" : v < 0 ? "text-rose-600" : "text-slate-600");
+            const vz = (v: number) => (v > 0 ? "+" : "");
+            const pct = (v: number) => v.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return (
+              <div className="grid grid-cols-2 gap-x-4 gap-y-3 w-full sm:w-auto font-mono">
+                <div>
+                  <span className="text-slate-500 text-[11px] font-bold block uppercase font-sans">Depotwert</span>
+                  <span className="text-slate-900 text-[16px] font-extrabold tabular-nums">€ {formatAccounting(wert)}</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-500 text-[11px] font-bold block uppercase font-sans">Einstand</span>
+                  <span className="text-slate-900 text-[16px] font-extrabold tabular-nums">€ {formatAccounting(kosten)}</span>
+                </div>
+                <div>
+                  <span className="text-slate-500 text-[11px] font-bold block uppercase font-sans">Gewinn gesamt</span>
+                  <span className={`text-[16px] font-extrabold tabular-nums ${farbe(gewinn)}`}>{pfeil(gewinn)} {vz(gewinn)}{formatAccounting(gewinn)} €</span>
+                  <span className={`block text-[13px] font-bold tabular-nums ${farbe(gewinn)}`}>{vz(gewinn)}{pct(gewinnPct)} %</span>
+                </div>
+                <div className="text-right">
+                  <span className="text-slate-500 text-[11px] font-bold block uppercase font-sans">Heute</span>
+                  {heutePct === null ? (
+                    <span className="text-slate-500 text-[13px] font-bold">— (Marktwerte holen)</span>
+                  ) : (
+                    <>
+                      <span className={`text-[16px] font-extrabold tabular-nums ${farbe(heute)}`}>{pfeil(heute)} {vz(heute)}{formatAccounting(heute)} €</span>
+                      <span className={`block text-[13px] font-bold tabular-nums ${farbe(heute)}`}>{vz(heute)}{pct(heutePct)} %</span>
+                    </>
+                  )}
+                </div>
+              </div>
+            );
+          })()}
         </div>
 
 
