@@ -201,6 +201,42 @@ export const HANDBUCH: HandbuchAbschnitt[] = [
     ],
   },
   {
+    id: "blasen-ampel",
+    titel: "Blasen-Ampel — Sektoren mit Rückschlagrisiko",
+    icon: "🫧",
+    kurz: "Verdoppelt sich ein Sektor in 2 Jahren, crasht danach jeder zweite. Risiko drosseln, nicht shorten.",
+    schlagworte: ["blase", "bubble", "sektor", "etf", "halbleiter", "harvard", "fama", "greenwood", "shleifer", "run-up", "trendfilter", "sma", "gelb", "rot"],
+    punkte: [
+      {
+        titel: "Woher die Regel kommt",
+        text: "Harvard-Studie „Bubbles for Fama“ (Greenwood, Shleifer & You, 2019): 49 US-Branchen 1926–2014 plus 31 Länder. Steigt eine Branche in zwei Jahren um mehr als 100 %, absolut und relativ zum Markt, fällt sie in 53 % der Fälle innerhalb der nächsten zwei Jahre um mindestens 40 %. Ab 150 % Anstieg sind es 80 %. Die Studie gilt für Branchen — bei Einzelaktien kommt das Monatssignal oft erst nach dem Hoch.",
+      },
+      {
+        titel: "Gelb — Blasen-Signal",
+        text: "2-Jahres-Anstieg ≥ 100 % absolut und ≥ 100 % über dem S&P 500, 5-Jahres-Rendite ≥ 50 % (keine Erholungs-Rally), Kurs höchstens 25 % unter dem 2-Jahres-Hoch. Das Signal gilt 24 Monate.",
+        regel: "Gelb → Risikobudget im Sektor halbieren, keine neuen Hebelpositionen, Stopps nachziehen. Kein Short.",
+      },
+      {
+        titel: "Rot — Trendbruch",
+        text: "Gelb und der Monatsschluss liegt unter dem 10-Monats-Durchschnitt. Im Backtest (42 Branchen-Episoden 1926–2018, 44 ETF-Episoden 1996–2026) gab es mit diesem Filter keinen einzigen Fall unter −40 %; ohne Filter in jedem fünften Fall.",
+        regel: "Rot → Exposure im Sektor stark reduzieren, Wiedereinstieg erst nach Monatsschluss über dem Durchschnitt.",
+      },
+      {
+        titel: "Warum nicht sofort verkaufen",
+        text: "Nach dem Gelb-Signal stiegen die Kurse im Schnitt noch 5–6 Monate und 25–60 % weiter. Nicht-Crash-Fälle legten in zwei Jahren +44 % zu. Wer beim Signal aussteigt, verpasst das. Die Ampel steuert Größe und Stopps, nicht das Timing.",
+        regel: "Die Ampel sperrt nichts — die Kaufsperre kommt nur aus den Kaufschranken.",
+      },
+      {
+        titel: "Zurücksetzen",
+        text: "Fällt ein Sektor 40 % unter sein 2-Jahres-Hoch, ist der Crash eingetreten. Das Fenster endet, die Ampel springt auf Grün. Vorsicht: Signale verfallen nicht nach zwei Jahren von selbst — Nikkei 1987 oder Energie 2005 crashten erst im dritten Jahr.",
+      },
+      {
+        titel: "Daten",
+        text: "Bereinigte Monatsschlusskurse der Sektor-ETFs von Yahoo (10 Jahre), Benchmark SPY. Der laufende Monat zählt erst nach Monatsende. Es sind bewusst Sektor-ETFs und Indizes, keine Einzelaktien.",
+      },
+    ],
+  },
+  {
     id: "denkfehler",
     titel: "Die 7 Denkfehler (René Berteit)",
     icon: "🧠",

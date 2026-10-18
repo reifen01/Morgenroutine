@@ -3,6 +3,7 @@ import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs";
+import { BLASEN_SEKTOREN, BLASEN_BENCHMARK } from "./src/utils/blasenAmpel";
 
 dotenv.config();
 
@@ -1036,6 +1037,77 @@ app.post("/api/market-history", async (req, res) => {
   } catch (err: any) {
     console.error("[market-history] failed:", err?.message || err);
     res.status(500).json({ error: "Markt-Historie konnte nicht geladen werden.", message: err?.message || String(err) });
+  }
+});
+
+// ── BLASEN-AMPEL: Monatsschlusskurse der Sektor-ETFs ───────────────────
+// Liefert je Sektor (Liste in src/utils/blasenAmpel.ts) die bereinigten
+// Monatsschlusskurse der letzten 10 Jahre. Die Ampel-Regel selbst rechnet
+// der Client (eine Stelle: berechneBlasenAmpel). Der laufende Monat wird
+// weggelassen, weil sein Schlusskurs erst am Monatsende feststeht.
+// Marktdaten sind nicht persoenlich → Server-Cache 12 Stunden.
+interface MonatsReihe { kurse: Record<string, number>; laufend: { monat: string; kurs: number } | null }
+let blasenCache: { ts: number; data: any } | null = null;
+const BLASEN_TTL = 12 * 60 * 60 * 1000;
+
+async function fetchYahooMonatskurse(symbol: string): Promise<MonatsReihe> {
+  const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+  let lastError: any = null;
+  for (const host of hosts) {
+    const url = `https://${host}/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1mo&range=10y`;
+    try {
+      const response = await fetch(url, {
+        headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36" },
+      });
+      if (!response.ok) throw new Error(`HTTP-Error: ${response.status}`);
+      const data = await response.json() as any;
+      const result = data?.chart?.result?.[0];
+      if (!result) throw new Error("Kein chart.result");
+      const ts: number[] = result.timestamp || [];
+      const close: (number | null)[] = result.indicators?.quote?.[0]?.close || [];
+      const adj: (number | null)[] = result.indicators?.adjclose?.[0]?.adjclose || [];
+      const laufendMonat = new Date().toISOString().slice(0, 7);
+      const kurse: Record<string, number> = {};
+      let laufend: MonatsReihe["laufend"] = null;
+      for (let i = 0; i < ts.length; i++) {
+        const v = adj[i] ?? close[i];
+        if (v === null || v === undefined || !isFinite(Number(v)) || Number(v) <= 0) continue;
+        // Yahoo stempelt Monatskerzen auf den ersten Handelstag; UTC-Datum → "JJJJ-MM"
+        const monat = new Date(ts[i] * 1000).toISOString().slice(0, 7);
+        if (monat >= laufendMonat) { laufend = { monat, kurs: Number(v) }; continue; }
+        kurse[monat] = Number(v);
+      }
+      if (Object.keys(kurse).length < 12) throw new Error("Zu wenige Monatskurse");
+      return { kurse, laufend };
+    } catch (err: any) {
+      console.warn(`[Blasen-Ampel] ${symbol} via ${host} fehlgeschlagen:`, err?.message || err);
+      lastError = err;
+    }
+  }
+  throw lastError || new Error(`Monatskurse fuer ${symbol} nicht ladbar`);
+}
+
+app.post("/api/blasen-monatskurse", async (_req, res) => {
+  try {
+    if (blasenCache && Date.now() - blasenCache.ts < BLASEN_TTL) {
+      return res.json({ ...blasenCache.data, cached: true });
+    }
+    const symbole = Array.from(new Set([BLASEN_BENCHMARK, ...BLASEN_SEKTOREN.map((s) => s.id)]));
+    const reihen: Record<string, MonatsReihe> = {};
+    const fehler: Record<string, string> = {};
+    await Promise.all(symbole.map(async (sym) => {
+      try { reihen[sym] = await fetchYahooMonatskurse(sym); }
+      catch (e: any) { fehler[sym] = e?.message || String(e); }
+    }));
+    if (!reihen[BLASEN_BENCHMARK]) {
+      return res.status(502).json({ error: "Benchmark (S&P 500) nicht ladbar — Blasen-Ampel ohne Vergleich nicht sinnvoll.", fehler });
+    }
+    const data = { reihen, fehler, source: "yahoo", generatedAt: new Date().toISOString() };
+    blasenCache = { ts: Date.now(), data };
+    res.json(data);
+  } catch (err: any) {
+    console.error("[blasen-monatskurse] failed:", err?.message || err);
+    res.status(500).json({ error: "Monatskurse konnten nicht geladen werden.", message: err?.message || String(err) });
   }
 });
 
