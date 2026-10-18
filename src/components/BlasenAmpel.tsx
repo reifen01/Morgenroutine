@@ -17,7 +17,7 @@ import { ChevronDown, ChevronUp, HelpCircle, Info, Loader2, RefreshCw } from "lu
 import HilfeLink from "./HilfeLink";
 import { TrendArrow } from "./TrendBarometer";
 import {
-  BLASEN_BENCHMARK, BLASEN_REGEL, BLASEN_SEKTOREN, BlasenErgebnis, BlasenZustand, MonatsKurse,
+  BLASEN_BENCHMARK, BLASEN_RANG, BLASEN_REGEL, BLASEN_SEKTOREN, BlasenErgebnis, BlasenZustand, MonatsKurse,
   berechneBlasenAmpel, blasenTrend,
 } from "../utils/blasenAmpel";
 
@@ -98,9 +98,13 @@ export default function BlasenAmpel() {
   const ergebnisse = useMemo(() => {
     if (!daten?.reihen) return [] as (BlasenErgebnis & { kurz: string; lang: string })[];
     const bench = daten.reihen[BLASEN_BENCHMARK]?.kurse ?? null;
-    return BLASEN_SEKTOREN
+    const liste = BLASEN_SEKTOREN
       .filter((s) => daten.reihen[s.id]?.kurse)
-      .map((s) => ({ ...berechneBlasenAmpel(s.id, daten.reihen[s.id].kurse, s.relativ ? bench : null), kurz: s.kurz, lang: s.lang }));
+      .map((s, reihe) => ({ ...berechneBlasenAmpel(s.id, daten.reihen[s.id].kurse, s.relativ ? bench : null), kurz: s.kurz, lang: s.lang, reihe }));
+    // Sortierung: Rot oben, dann Gelb, dann Gruen; innerhalb einer Farbe die
+    // feste Reihenfolge der Sektorliste, damit nichts hin- und herspringt.
+    const rang = (e: typeof liste[number]) => (e.aktuell ? BLASEN_RANG[e.aktuell.zustand] : -1);
+    return liste.sort((a, b) => rang(b) - rang(a) || a.reihe - b.reihe);
   }, [daten]);
 
   const ids = ergebnisse.map((e) => e.id);
@@ -296,7 +300,7 @@ export default function BlasenAmpel() {
         )}
 
         <div className="flex items-center justify-between gap-2 flex-wrap px-1">
-          <p className="text-[11px] text-slate-500 m-0">Zeile antippen → Verlauf (36 Monate), Schwellen und Hilfe. Monatsregel — kein Tagessignal.</p>
+          <p className="text-[11px] text-slate-500 m-0">Sortiert: Rot, Gelb, Grün. Zeile antippen → Verlauf (36 Monate), Schwellen und Hilfe. Monatsregel — kein Tagessignal.</p>
           <button type="button" onClick={() => laden_(true)} disabled={laden} className="inline-flex items-center gap-1 px-2 h-6 rounded-lg bg-slate-50 border border-slate-200 text-slate-600 hover:bg-slate-100 disabled:opacity-50 text-[10px] font-bold uppercase tracking-wide cursor-pointer" title="Monatskurse neu laden (Yahoo)">
             {laden ? <Loader2 className="h-3 w-3 animate-spin" /> : <RefreshCw className="h-3 w-3" />} Aktualisieren
           </button>
