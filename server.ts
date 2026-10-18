@@ -1229,9 +1229,10 @@ async function fetchYahooTageskurse(symbol: string, range: string): Promise<Reco
   throw lastError || new Error(`Tageskurse fuer ${symbol} nicht ladbar`);
 }
 
-app.post("/api/bitcoin-kurzfrist", async (req, res) => {
+// POST mit JSON-Body (App) oder GET mit ?perp=&kurs=&range= (Browser/Debug) — ein Handler.
+const bitcoinKurzfristHandler = async (req: express.Request, res: express.Response) => {
   try {
-    const body = (req.body ?? {}) as { perp?: unknown; kurs?: unknown; range?: unknown };
+    const body = (req.method === "GET" ? req.query : req.body ?? {}) as { perp?: unknown; kurs?: unknown; range?: unknown };
     const perp = typeof body.perp === "string" && BITCOIN_INST_RE.test(body.perp) ? body.perp : null;
     const kurs = typeof body.kurs === "string" && BLASEN_SYMBOL_RE.test(body.kurs) ? body.kurs : null;
     const range = typeof body.range === "string" && /^(1|2|3|5)y$/.test(body.range) ? body.range : "3y";
@@ -1266,7 +1267,9 @@ app.post("/api/bitcoin-kurzfrist", async (req, res) => {
     console.error("[bitcoin-kurzfrist] failed:", err?.message || err);
     res.status(500).json({ error: "Bitcoin-Daten konnten nicht geladen werden.", message: err?.message || String(err) });
   }
-});
+};
+app.post("/api/bitcoin-kurzfrist", bitcoinKurzfristHandler);
+app.get("/api/bitcoin-kurzfrist", bitcoinKurzfristHandler);
 
 // Endpoint to calculate the distribution days dynamically using Gemini Search Grounding
 app.post("/api/calculate-distribution-days", async (req, res) => {
