@@ -5,7 +5,8 @@
  * Sektor-ETF (Ampelpunkt, Name + Status, Trendpfeil, Wert rechts), antippen
  * klappt Verlauf (36 Monate), Schwellen und Hilfe auf.
  *
- * Daten: /api/blasen-monatskurse (Yahoo-Monatsschluesse, Server-Cache 12 h),
+ * Daten: /api/blasen-monatskurse (Yahoo-Monatsschluesse, Server-Cache 12 h;
+ * der Client schickt die Symbolliste aus utils/blasenAmpel.ts mit),
  * im Browser zusaetzlich 12 h in localStorage gehalten. Die Regel selbst
  * steht NUR in utils/blasenAmpel.ts.
  *
@@ -77,7 +78,11 @@ export default function BlasenAmpel() {
     } catch { /* Cache kaputt → neu laden */ }
     setLaden(true); setFehler(null);
     try {
-      const r = await fetch("/api/blasen-monatskurse", { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
+      const r = await fetch("/api/blasen-monatskurse", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ benchmark: BLASEN_BENCHMARK, symbole: BLASEN_SEKTOREN.map((s) => s.id) }),
+      });
       const d = await r.json();
       if (!r.ok || !d?.reihen) throw new Error(d?.error || `HTTP ${r.status}`);
       setDaten(d);

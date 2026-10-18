@@ -3,7 +3,6 @@ import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs";
-import { BLASEN_SEKTOREN, BLASEN_BENCHMARK } from "./src/utils/blasenAmpel";
 
 dotenv.config();
 
@@ -1041,14 +1040,17 @@ app.post("/api/market-history", async (req, res) => {
 });
 
 // ── BLASEN-AMPEL: Monatsschlusskurse der Sektor-ETFs ───────────────────
-// Liefert je Sektor (Liste in src/utils/blasenAmpel.ts) die bereinigten
-// Monatsschlusskurse der letzten 10 Jahre. Die Ampel-Regel selbst rechnet
-// der Client (eine Stelle: berechneBlasenAmpel). Der laufende Monat wird
-// weggelassen, weil sein Schlusskurs erst am Monatsende feststeht.
-// Marktdaten sind nicht persoenlich → Server-Cache 12 Stunden.
+// Liefert fuer die vom Client gesendeten Symbole (Liste lebt NUR in
+// src/utils/blasenAmpel.ts — kein Import von dort, weil Vercel relative
+// TS-Imports in server.ts nicht aufloest) die bereinigten Monatsschluss-
+// kurse der letzten 10 Jahre. Die Ampel-Regel rechnet der Client. Der
+// laufende Monat wird weggelassen, weil sein Schlusskurs erst am Monats-
+// ende feststeht. Marktdaten sind nicht persoenlich → Server-Cache 12 h.
 interface MonatsReihe { kurse: Record<string, number>; laufend: { monat: string; kurs: number } | null }
-let blasenCache: { ts: number; data: any } | null = null;
+let blasenCache: { ts: number; key: string; data: any } | null = null;
 const BLASEN_TTL = 12 * 60 * 60 * 1000;
+const BLASEN_SYMBOL_RE = /^[A-Za-z0-9^.=\-]{1,12}$/;
+const BLASEN_MAX_SYMBOLE = 30;
 
 async function fetchYahooMonatskurse(symbol: string): Promise<MonatsReihe> {
   const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
@@ -1087,23 +1089,30 @@ async function fetchYahooMonatskurse(symbol: string): Promise<MonatsReihe> {
   throw lastError || new Error(`Monatskurse fuer ${symbol} nicht ladbar`);
 }
 
-app.post("/api/blasen-monatskurse", async (_req, res) => {
+app.post("/api/blasen-monatskurse", async (req, res) => {
   try {
-    if (blasenCache && Date.now() - blasenCache.ts < BLASEN_TTL) {
+    const body = (req.body ?? {}) as { symbole?: unknown; benchmark?: unknown };
+    const benchmark = typeof body.benchmark === "string" && BLASEN_SYMBOL_RE.test(body.benchmark) ? body.benchmark : null;
+    const gewuenscht = Array.isArray(body.symbole) ? body.symbole.filter((x): x is string => typeof x === "string" && BLASEN_SYMBOL_RE.test(x)) : [];
+    if (!benchmark || gewuenscht.length === 0) {
+      return res.status(400).json({ error: "Es fehlen 'symbole' (Liste) und 'benchmark' (Symbol)." });
+    }
+    const symbole = Array.from(new Set([benchmark, ...gewuenscht])).slice(0, BLASEN_MAX_SYMBOLE);
+    const key = symbole.join(",");
+    if (blasenCache && blasenCache.key === key && Date.now() - blasenCache.ts < BLASEN_TTL) {
       return res.json({ ...blasenCache.data, cached: true });
     }
-    const symbole = Array.from(new Set([BLASEN_BENCHMARK, ...BLASEN_SEKTOREN.map((s) => s.id)]));
     const reihen: Record<string, MonatsReihe> = {};
     const fehler: Record<string, string> = {};
     await Promise.all(symbole.map(async (sym) => {
       try { reihen[sym] = await fetchYahooMonatskurse(sym); }
       catch (e: any) { fehler[sym] = e?.message || String(e); }
     }));
-    if (!reihen[BLASEN_BENCHMARK]) {
+    if (!reihen[benchmark]) {
       return res.status(502).json({ error: "Benchmark (S&P 500) nicht ladbar — Blasen-Ampel ohne Vergleich nicht sinnvoll.", fehler });
     }
     const data = { reihen, fehler, source: "yahoo", generatedAt: new Date().toISOString() };
-    blasenCache = { ts: Date.now(), data };
+    blasenCache = { ts: Date.now(), key, data };
     res.json(data);
   } catch (err: any) {
     console.error("[blasen-monatskurse] failed:", err?.message || err);
