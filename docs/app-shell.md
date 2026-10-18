@@ -1,64 +1,61 @@
-# App Shell & Navigation
+# App-Hülle & Navigation
 
-> The app-wide map of **the frame every feature is shown inside** — navigation, layout regions, and the patterns each page repeats.
->
-> - Created by `/init` (the first holistic pass: top-level areas + layout).
-> - Refined by `/architecture` as each feature is designed.
-> - **Altitude:** structure, not styling. Which areas exist, where they live, who sees them, what every page shares. Colors, fonts, and component styling belong in `docs/design-system.md`; a single page's internals belong in that feature's `design.md`.
->
-> Without this map the shell grows by accretion — every feature adds a nav item and a header variant in its own `design.md`, and nobody owns the whole. Rebuilding it later is then expensive, because no acceptance criterion says what it is supposed to do.
+_Von `/init` am 18.10.2026 aus `docs/codebase/architecture.md` → Shared shell übernommen (Stand `ef921bc`). Struktur, nicht Gestaltung; Farben und Schrift stehen in `docs/design-system.md`._
 
 ## Owning feature
 
-_The feature whose `spec.md` carries the shell's acceptance criteria (e.g. `PROJ-1 App Shell & Navigation`), or "none — shell is trivial" for a single-screen app. Changes to the shell are refined there, not invented per feature._
-
-Owner: _PROJ-X — always a feature: the App Shell feature if one exists, otherwise the feature that builds the screen the frame sits on. Changes to the frame go through `/refine` on this feature._
+Owner: **MR-12 App-Hülle, Onboarding & PWA** — trägt die Akzeptanzkriterien der Hülle. Änderungen am Rahmen laufen über `/refine MR-12`.
 
 ## Top-Level Areas
 
-_The places a user can navigate to. One row per nav entry — not one row per page._
+Eine Seite, kein Router; der aktive Bereich ist ein Zustand in `src/App.tsx`. Vier Haupt-Tabs in der Leiste (`src/App.tsx:700-753`), zwei davon mit einer zweiten Reiterzeile.
 
-| Area | What the user does there | Visible to | Owning feature |
-|------|--------------------------|------------|----------------|
-| _Dashboard_ | _Overview after login_ | _signed-in users_ | _PROJ-2_ |
-| _..._ | _..._ | _..._ | _..._ |
+| Bereich | Was der Nutzer dort tut | Sichtbar für | Owning feature |
+|---|---|---|---|
+| **Morgen** (`morgenroutine`) | Tageswerte holen, Kaufampel und Blasen-Ampel lesen, Snapshot schreiben | alle | MR-2 (Screen), MR-1, MR-13 |
+| **Depot** (`journal`) | Bestand, Aufteilung, Journal, Depots/Besitzer, Watchlist-Block | alle | MR-3 (Screen), MR-4, MR-7 |
+| **Analyse** → 🔎 Screener (`screener`) | Externen Screener nutzen, Treffer in Watchlist | alle | MR-8 |
+| **Analyse** → 📊 Auswertung (`auswertung`) | Wochen/Monate auswerten, Notizen, Erträge | alle | MR-9 |
+| **Analyse** → 🎯 Kaufziele (`kaufziele`) | Wächter-Positionen und Stops pflegen | alle | MR-5 |
+| **Analyse** → 💵 Cash (`cash`) | Cash je Depot prüfen | alle | MR-6 |
+| **Analyse** → 🧮 Rechner (`rechner`) | Positionsgröße und Stop rechnen | alle | MR-7 |
+| **System** → 🎓 Regeln & Coach (`regelwerk`) | Handbuch lesen, Coach fragen | alle | MR-10 |
+| **System** → 🗂️ Workspace & Backup (`workspace`) | Backup, Demo, Reset, App-Link | alle | MR-11 |
+
+Reihenfolge der zweiten Zeile unter Analyse: Screener · Auswertung · Kaufziele · Cash · Rechner (`ANALYSE_REITER`, `src/App.tsx:51-57`). Klick auf „Analyse" öffnet Screener, Klick auf „System" öffnet Regeln & Coach.
 
 ## Layout Regions
 
-_The fixed frame. Name each region and what belongs in it._
-
-- **Sidebar:** _the top-level areas, logo at the top, account menu at the bottom_
-- **Header:** _page title, primary action for that page_
-- **Content:** _the feature's own UI_
-- **Mobile:** _how the sidebar behaves below `md` (burger / drawer / bottom bar)_
+- **Header** (`src/components/CompactHeader.tsx`): Logo-Button (Update-Check), Titel, Badge „Update verfügbar", Backup-Badge (ab 7 Tagen), Routine-Datum, „?"-Hilfe, Bereitschafts-Punkt.
+- **Tab-Leiste** (`<nav>`, `src/App.tsx:700-753`): vier Buttons mit Icon, aktiv = `border-b-2 border-slate-800`; zweite Reiterzeile als Pillen unter Analyse und System.
+- **Content** (`<main>`, `max-w-7xl`, scrollt): der aktive Tab.
+- **Mobile:** gleiche Leiste, kein Burger, Karten randlos bis zum Bildschirmrand; PWA `display: standalone` mit Safe-Area-Padding.
 
 ## Page Pattern
 
-_What every page repeats, so features don't each invent their own. `/build` follows this instead of guessing._
-
-- **Page header:** _title, optional subtitle, primary action on the right_
-- **Loading state:** _skeleton / spinner, and where_
-- **Empty state:** _what an area with no data shows_
-- **Error state:** _how a failed load is presented_
-- **Toasts / feedback:** _where confirmations appear_
+- **Seitenkopf:** Block-Titel `uppercase tracking-wide` mit Emoji-Präfix; primäre Aktion als Button im Block (z. B. „🌐 Jetzt abrufen").
+- **Ladezustand:** Spinner-Icon im Button bzw. in der Karte (`Loader2`), Text „lädt…".
+- **Leerzustand:** Hinweistext in der Karte („Noch keine Käufe"), Demo-Daten über System → Workspace.
+- **Fehlerzustand:** globaler Toast oben rechts (`src/App.tsx:557-568`, 4 s, Typen success/warning/error); Render-Fehler → `ErrorBoundary` mit Neuladen und „Caches leeren".
+- **Feedback:** derselbe Toast; irreversible Aktionen über `window.confirm`.
+- **Tab-übergreifende Sprünge:** `rechnerVorlage` (Kaufziele/Watchlist → Rechner), `verkaufVorlage` (Kaufziele → Depot), Ereignis `morgenroutine:handbuch` (Hilfe-Buch → Handbuch mit Zurück), `helpSectionForTab` (Header-„?" → passender Abschnitt).
 
 ## Auth States
 
-_The shell usually differs by who is looking. Say how._
-
-- **Signed out:** _which areas are reachable, what the shell shows_
-- **Signed in:** _..._
-- **Roles (if any):** _which areas each role sees_
+- **Kein Login, keine Rollen.** Die Hülle ist für alle gleich. Einziger Zustandsunterschied: das Onboarding-Overlay vor dem ersten Durchlauf (`morgenroutine_onboarding_done`).
 
 ## Shell Components
 
-_The shared building blocks and where they live, so nothing gets rebuilt per feature._
-
-| Component | File | Purpose |
-|-----------|------|---------|
-| _AppSidebar_ | _`src/components/app-sidebar.tsx`_ | _top-level navigation_ |
-| _..._ | _..._ | _..._ |
+| Komponente | Datei | Zweck |
+|---|---|---|
+| `App` | `src/App.tsx` | Zustand, Persistenz, Tab-Leiste, Overlays, Modals |
+| `CompactHeader` | `src/components/CompactHeader.tsx` | Kopfzeile |
+| `HelpModal` | `src/components/HelpModal.tsx` | Handbuch-Hilfe (`HANDBUCH.md`) |
+| `OnboardingScreen` | `src/components/OnboardingScreen.tsx` | Erststart-Tour |
+| `PWAInstallPrompt` / `PWAUpdatePrompt` | `src/components/PWA*.tsx` | Install- und Update-Banner |
+| `ErrorBoundary` | `src/components/ErrorBoundary.tsx` | Fehlerseite |
+| `HilfeLink` | `src/components/HilfeLink.tsx` | Buch-Button → Handbuch |
 
 ---
 
-_This is a living document. When `/architecture` designs a feature that adds a nav entry, a layout region, or a new page pattern, it updates this map first, so later features build against an accurate frame. Behavior changes to the shell go through `/refine` on the owning feature — never straight into a feature's `design.md`._
+_Lebendes Dokument. Fügt `/architecture` einen Nav-Eintrag oder ein Muster hinzu, wird diese Karte zuerst aktualisiert; Verhaltensänderungen der Hülle gehen über `/refine MR-12`._

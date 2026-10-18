@@ -1,38 +1,58 @@
-# Data Model
+# Datenmodell
 
-> The app-wide map of **what data this product stores and how it connects** — the shared blueprint every feature's tables conform to.
->
-> - Created by `/init` (the first holistic pass: entities + relationships).
-> - Refined by `/architecture` as each feature is designed.
-> - **Altitude:** entities, relationships, and ownership live here (product-level, anyone can read them). Column types, indexes, and exact foreign keys are decided per feature in that feature's `design.md` — not here.
+_Source: `src/types.ts` (führend; die `localStorage`-Schlüssel in `src/App.tsx` speichern genau diese Typen als JSON), ergänzt um `src/utils/backupFile.ts` (Backup-Format) — read by /init on 2026-10-18, aus `docs/codebase/architecture.md` → Data._
 
-## Entities
+> Produkt-Höhe: Entitäten, Beziehungen, Eigentümer. Feldtypen und Details stehen je Feature in dessen `design.md`. Es gibt keine Datenbank: jede Entität ist ein `localStorage`-Schlüssel im Browser des Geräts (Präfix `morgenroutine_`), und alle zusammen bilden den `BackupPayload`, der verschlüsselt als Datei exportiert wird. Der Server hält nichts davon.
 
-_Each entity is a kind of thing the app stores (a real-world noun). List the ones you know so far with a one-line purpose and who owns or can see it. No column types — just the thing and what it's for._
+## Entitäten
 
-| Entity | What it represents | Owned by / who can see it |
-|--------|--------------------|---------------------------|
-| _profiles_ | _A user's account profile_ | _the user themselves_ |
-| _..._ | _..._ | _..._ |
+| Entität | Was sie darstellt | Gehört zu / wer sieht sie |
+|---|---|---|
+| `MarketState` | Die Ampel-Indikatoren des Tages (VIX, VXV, VVIX, SPX, WTI, Gas, Distribution Days mit Quelle) | MR-2; nur dieses Gerät |
+| `DailySnapshot` | Ein Datensatz pro Handelstag: Indikatoren, Ratio, Status GREEN/RED | MR-2 schreibt, MR-9 liest |
+| `LivePrices` | Aktueller Kurs, ATR und Tagesänderung je Asset-Schlüssel (offener Schlüsselraum) | MR-1 schreibt, alle lesen |
+| `PortfolioItem` | Eine Wächter-Position: Harter Anker, Limit, Tranche, Stop-Kurs, Status | MR-5 |
+| `PortfolioPurchase` | Ein Kauf als Los: Datum, Kurs, Stück, Kosten, verbleibende Stück, Depot, Besitzer | MR-4 |
+| `SoldTradeItem` | Ein realisierter Verkauf mit Gewinn, KESt, Netto, Steuermethode und den verbrauchten Losen | MR-4 schreibt, MR-9 liest |
+| `WatchlistItem` | Ein beobachtetes Wertpapier mit Kurs, ATR, Tagesänderung, Quelle | MR-7; MR-8 fügt hinzu |
+| `ChecklistItem` | Eine Tranchen-Aufgabe mit Status und Kategorie | MR-3 |
+| Depots (`string[]`) | Namen der Broker/Depots | MR-3 |
+| Besitzer (`string[]`) | Namen der Depotinhaber | MR-3 |
+| Startkapital je Depot (`Record<string, number>`) | Startcash je Depotname | MR-6 |
+| `PeriodLearning` | Eine Pareto-Notiz je Woche oder Monat | MR-9 |
+| ATR-Parameter (Multiplikator, Länge, Glättung) | Einstellungen des Stop-Rechners | MR-5 |
+| Blasen-Monatskurse (Cache) | Monatsschlüsse der Sektor-ETFs, 12 h gültig | MR-13 |
+| Import-Cache, Zeitstempel (letzter Abruf, letzte Änderung, letztes Backup) | Technische Merker | MR-1, MR-11 |
+| Onboarding-Flag, PWA-Install-Sperre | Technische Merker der Hülle | MR-12 |
+| `BackupPayload` → Backup-Datei `MR-BACKUP-1` | Alle obigen Nutzer-Entitäten gebündelt, AES-GCM-verschlüsselt mit PIN oder Passwort | MR-11; die Datei gehört dem Nutzer |
 
-## Relationships
+Serverseitig existiert nur `cloud_profiles.json` (Reste der entfernten Google-Anbindung, ohne Aufrufer) sowie flüchtige Caches — beides kein Teil des Produkt-Datenmodells.
 
-_How the entities connect, in plain language. This is where coherence comes from — get the connections right once, up front._
+## Beziehungen
 
-- _A profile has many ..._
-- _Each ... belongs to exactly one ..._
-- _A ... can have many ..._
+- Ein **Asset-Schlüssel** (z. B. `tsla`, `btc`) verbindet `LivePrices`, `PortfolioItem`, `PortfolioPurchase`, `SoldTradeItem` und `WatchlistItem`; es gibt keine eigene Asset-Tabelle, nur die Stammdaten in `src/utils/assetRegistry.ts`.
+- Ein **Verkauf** verbraucht ein oder mehrere **Käufe** (Lose) über `consumedLots` → `PortfolioPurchase.id`; beim Bearbeiten werden die Lose zurückgegeben.
+- Käufe und Verkäufe gehören je zu genau einem **Depot** und einem **Besitzer** (Namen als Referenz); fehlende Depots werden beim Laden aus den Buchungen rekonstruiert.
+- **Startkapital je Depot** plus Käufe und Verkäufe ergeben das Cash-Cockpit (MR-6); das geplante Cash-Konto (MR-18) wird hier Ein- und Auszahlungen als eigene Entität ergänzen.
+- Ein **DailySnapshot** entsteht aus dem **MarketState** eines Tages; **PeriodLearning** hängt an einer Woche oder einem Monat von Snapshots.
+- Der **BackupPayload** enthält alle Nutzer-Entitäten außer `MarketState`, Import-Cache und ATR-Parametern.
 
-## Diagram (optional)
-
-_A simple text sketch of the model, filled in as it firms up._
+## Diagramm
 
 ```
-profiles
-  └─ owns many ...
-        └─ has many ...
+Asset-Schlüssel (tsla, btc, …)
+  ├─ LivePrices            (Kurs, ATR, Tagesänderung)
+  ├─ PortfolioItem         (Wächter-Position, Stop)
+  ├─ WatchlistItem
+  ├─ PortfolioPurchase ──┐ (Los)
+  └─ SoldTradeItem ──────┘ verbraucht Lose
+        └─ Depot · Besitzer ── Startkapital je Depot
+
+MarketState (heute) → DailySnapshot (je Tag) → PeriodLearning (je Woche/Monat)
+
+BackupPayload = alle Nutzer-Entitäten → Backup-Datei (verschlüsselt)
 ```
 
 ---
 
-_This is a living document. When `/architecture` designs a feature that introduces or changes an entity, it updates this map first, so later features build against an accurate picture. Run `/init` to create the first version from your feature map._
+_Lebendes Dokument. Wenn `/architecture` ein Feature entwirft, das eine Entität einführt oder ändert, wird diese Karte zuerst aktualisiert._

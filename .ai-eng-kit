@@ -10,11 +10,11 @@
   "platform": "web",
   "stack": {
     "framework": "express",
-    "backend": null,
+    "backend": "localstorage",
     "test": null,
     "e2e": null,
     "ui": "tailwind",
-    "deploy": null,
+    "deploy": "vercel",
     "packageManager": "npm"
   },
   "commands": {
@@ -26,12 +26,16 @@
   },
   "checkLayers": [],
   "probe": {
-    "kind": null,
-    "baseUrl": null
+    "kind": "http",
+    "baseUrl": "http://localhost:3000"
   },
   "layers": [],
-  "law": null,
-  "quality": null,
+  "law": [
+    "gdpr",
+    "ai-act",
+    "dsg"
+  ],
+  "quality": "standard",
   "featurePrefix": "MR",
   "managed": {
     ".claude/skills": [

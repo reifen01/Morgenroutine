@@ -33,15 +33,16 @@ This project uses the AI Engineering Kit — a spec-driven workflow. Development
 
 ## How This Project Runs
 
-_Recorded by `/init`. Until then, do not guess these — ask._
+_Aufgezeichnet von `/init` am 18.10.2026 (Stand `ef921bc` + PR #46). Bestätigt vom Nutzer; Start, Probe, Lint und Build wurden in der Session selbst ausgeführt._
 
-- **Platform:** _web / mobile / desktop / mcp / cli / extension / other_
-- **Stack:** _framework, backend, tests, deploy_
-- **Start:** _the command that runs the app locally_
-- **Verify:** _how to probe a running instance (HTTP, stdio/JSON-RPC, …)_
-- **Layers:** _additional runtimes beside the app — name → root, start, test, packs under `docs/stacks/`; or "none"_
-- **Closing check:** _aggregate command, or individual lint/test/build commands; included layer names_
-- **Codebase map:** `docs/codebase/` — written by `/map`, read before designing anything; `/map` again after large changes
+- **Platform:** web — React 19 + Vite PWA im Browser, Express-Server in `server.ts`, auf Vercel als eine Serverless-Function (`api/index.ts`)
+- **Stack:** Framework Express 4 (Server) + React 19/Vite 6 (Client), Backend **localstorage** (keine Datenbank; alle Nutzerdaten im Browser des Geräts), Tests **keine** (kein Runner, offener Punkt TD-26), Deploy **vercel**, Paketmanager npm, UI Tailwind v4
+- **Start:** `npm run dev` (Express mit Vite-Middleware, Port 3000 fest). Ohne `GEMINI_API_KEY` startet der Server, die KI-Routen antworten 503.
+- **Verify:** HTTP gegen `http://localhost:3000` — `GET /api/ping` → 200 mit `"ok": true`; Startseite `/` → 200
+- **Layers:** none (`layers: []`)
+- **Closing check:** kein Aggregat (`commands.check: null`); einzeln `npm run lint` (= `tsc --noEmit`) und `npm run build`; **Test-Befehl fehlt** — jede `/qa` prüft gegen die laufende Instanz und per Code-Lesen, bis ein Runner existiert
+- **Go-live:** Merge auf `main` → Vercel baut automatisch (`vercel.json`, `vite build`); Live-Adresse `morgenroutine.vercel.app`; Kontrolle durch den Nutzer über die Build-Version im App-Logo (PWA-Update-Prüfung). Keine menschliche Freigabe außer dem Merge selbst.
+- **Codebase map:** `docs/codebase/` — Stand `ef921bc` plus Nachtrag MR-13 (`3d39c89`); vor jedem `/architecture` lesen, `/map` nach größeren Änderungen erneut
 
 ## Product Context
 
