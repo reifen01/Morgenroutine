@@ -114,9 +114,19 @@ Grundlage: 14 Server-Zeilen (11 Routen in `server.ts`, SPA-Fallback, Vite-Middle
 - **Ebene:** app · **AC-Schätzung:** 8 (Onboarding einmalig, Install-Hinweis je Plattform, 7-Tage-Sperre, Update-Prompt, Hilfe springt zum Abschnitt, Fehlerseite leert nur SW-Caches, Ping-Antwort)
 - **Reihenfolge:** 10 — querschnittlich.
 
+### MR-13 · Blasen-Ampel (Sektoren)
+_Nachtrag: gemergt in Commit `3d39c89` (PR #46) nach dem Stand dieser Karte; die Zeilen unten stammen aus den neuen Dateien selbst, die übrigen Dokumente kennen sie noch nicht — der nächste `/map`-Refresh holt sie nach._
+**Was es tut:** Prüft je Sektor-ETF nach der Regel aus der Studie „Bubbles for Fama" (Greenwood, Shleifer & You 2019), ob eine Branche sich in zwei Jahren verdoppelt hat und damit Rückschlagrisiko trägt; zeigt GRÜN/GELB/ROT mit Verlauf und steuert Risikobudget, Hebel und Stopps, sperrt aber keinen Kauf.
+- **Routen:** `POST /api/blasen-monatskurse` (`server.ts:1092`, Yahoo-Monatsschlüsse, Server-Cache 12 h, max. 30 Symbole)
+- **Screens:** Karte „Blasen-Ampel" im Tab „Morgen" (`src/components/BlasenAmpel.tsx`, eingebunden `MorgenroutineTab.tsx:1282`)
+- **Entitäten:** `morgenroutine_blasen_monatskurse` (localStorage-Cache 12 h, `BlasenAmpel.tsx:25`), Server-Cache `blasenCache` (`server.ts:1050`)
+- **Funktionen:** `berechneBlasenAmpel`, `blasenTrend` (`src/utils/blasenAmpel.ts`, reine Funktionen, „einzige Stelle für die Regel")
+- **Ebene:** app · **AC-Schätzung:** 9 (2J-Rendite absolut und relativ, 5J-Filter, Abstand zum Hoch, 10-Monats-Durchschnitt, Reset bei −40 %, 24-Monate-Fenster, Cache, Symbol-Validierung, Fehlerfall je ETF)
+- **Reihenfolge:** 4 — ergänzt MR-2 direkt; die Regel ist dokumentiert und isoliert, daher gut als eine der ersten zu verifizieren.
+
 ## Vorgeschlagene Reihenfolge
 
-MR-1 → MR-2 → MR-5 → MR-4 → MR-3 → MR-6 → MR-7 → MR-9 → MR-11 → MR-12 → MR-10 → MR-8
+MR-1 → MR-2 → MR-5 → MR-13 → MR-4 → MR-3 → MR-6 → MR-7 → MR-9 → MR-11 → MR-12 → MR-10 → MR-8
 
 Kernfluss zuerst (Kurse → Ampel → Stop-Schutz), dann die Geld-Tabellen (Journal, Depot, Cash), dann Rechner und Auswertung, dann Backup und Hülle; Coach und Screener zuletzt.
 
