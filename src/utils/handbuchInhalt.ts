@@ -237,6 +237,41 @@ export const HANDBUCH: HandbuchAbschnitt[] = [
     ],
   },
   {
+    id: "bitcoin-kurzfrist",
+    titel: "Bitcoin-Kurzfrist — Hebel und Zone beim Power-Law-Hold",
+    icon: "₿",
+    kurz: "Zwei Tageszeilen für Bitcoin: Ist der Perp-Markt überladen (Hebel)? Wo steht der Kurs im Power-Law-Kanal (Zone)? Steuert Nachkauf und Stopps, sperrt nichts.",
+    schlagworte: ["bitcoin", "btc", "krypto", "power law", "powerlaw", "funding", "open interest", "perp", "perpetual", "hebel", "liquidation", "flash crash", "mayer", "fear and greed", "okx", "zone", "kaufzone"],
+    punkte: [
+      {
+        titel: "Warum zwei Zeilen",
+        text: "Die Blasen-Ampel rechnet mit Monatsschlusskursen — bei Bitcoin kommt ihr Signal oft erst nach dem Hoch. Die Flash-Crashs vom 10.10.2025 (−14 % in Stunden, 19 Mrd USD Liquidationen) und vom 17./18.10.2026 entstanden nicht aus der Bewertung, sondern aus überladenen Hebelpositionen. Deshalb fragt „Hebel“ nach dem Perp-Markt und „Zone“ nach der Bewertung im Langfristtrend. Beide gehören zum Power-Law-Hold: Der Kern bleibt liegen, die Zeilen steuern nur, wie schnell nachgekauft wird und wie eng die Stopps für kurzfristige Positionen sind.",
+      },
+      {
+        titel: "Hebel — Funding, Open Interest, Long-Quote",
+        text: "Ewige Futures (Perps) gleichen Perp- und Spotkurs über die Funding-Rate aus: Steht der Perp über Spot, zahlen Longs alle 8 Stunden an Shorts. 0,01 % je 8 h ist der Normalwert (≈ 11 % p. a.). Ab 0,03 % drängen sich Longs, ab 0,06 % ist der Markt heiß — vor dem 10.10.2025 lag Funding bei 0,05–0,10 %. Open Interest ist das offene Hebelkapital; ein Sprung von 8 % in 24 h heißt, frisches Hebelgeld ist drin, das bei einem Rutsch zwangsliquidiert wird und ihn verstärkt (Liquidationskaskade). Die Long-Quote zählt Konten, nicht Kapital, und schwankt stark — erst ab 70 % Long gilt die Seite als überfüllt.",
+        regel: "Gelb (ein Signal) → Nachkauf halbieren, Stopps enger, keine eigenen Perps. Rot (Funding ≥ 0,06 % oder OI-Sprung plus Funding ≥ 0,03 %) → kein Nachkauf, Rücksetzer von 10–20 % einplanen.",
+      },
+      {
+        titel: "Zone — Power-Law-Kanal",
+        text: "Bitcoin folgt seit 2010 einem Potenzgesetz: log10 Kurs = 5,64 · log10 Tage seit Genesis + c. Das erklärt 96 % der Kursvarianz und schlägt auf 12–24 Monate alle anderen Modelle (Stock-to-Flow, Metcalfe, Halving-Zyklen); auf 1–3 Monate ist nichts besser als der Zufall. Der Kanal ist Faktor 2 nach oben und unten (eine Standardabweichung der Abweichungen). Unter dem Fit: 2015, 2016, 2022/23, seit November 2025. Über dem doppelten Fit: 2017/18 (bis 7×) und 2021 (3,2×), jedes Mal vor einem Minus von 70–80 %. Der Fit steigt rund 30 % pro Jahr — die Zonen wandern mit. Nebenwerte: Mayer Multiple (Kurs / 200-Tage-Schnitt; unter 0,8 günstig, über 2,4 überhitzt) und Fear & Greed (unter 25 bestätigt die Kaufzone, über 75 die Blasenzone).",
+        regel: "Grün (unter 1× Fit) → Rücksetzer sind Gelegenheiten, unter 0,5× Fit Nachkauf verdoppeln. Gelb (1–2× Fit) → Nachkauf nach Plan, keine Hebel. Rot (ab 2× Fit) → Nachkauf stoppen, Teilverkäufe nach Plan.",
+      },
+      {
+        titel: "Was die Zeilen nicht können",
+        text: "Sie sagen nicht, wann es dreht. Kurzfristige Bitcoin-Prognosen aus Netzwerkdaten (Hashrate, Transaktionen, Adressen) haben in Tests außerhalb der Stichprobe keine Vorhersagekraft. Die Zeilen sagen nur, wie groß ein Rutsch werden kann (Hebel) und ob er eine Gelegenheit ist (Zone). Beide sperren nichts — die Kaufsperre kommt ausschließlich aus den Kaufschranken.",
+      },
+      {
+        titel: "Daten",
+        text: "Perp-Daten von OKX (BTC-USDT-SWAP: Funding-Rate aktuell und Historie, Open Interest und Long/Short-Konten je Tag, 30 Tage). Binance und Bybit blockieren Server in den USA, OKX trägt rund 10 % des Perp-Volumens und läuft parallel zu den großen Börsen. Fear & Greed von alternative.me. Tagesschlusskurse BTC-USD von Yahoo (3 Jahre) für Fit, 200-Tage-Schnitt und den 36-Monats-Verlauf. Power-Law-Achsenabschnitt c auf Coinbase-Tagesdaten 2014–2026 (FRED CBBTCUSD) mit festem α = 5,64 gelegt. Server-Cache 30 Minuten, Aktualisieren-Knopf lädt neu.",
+      },
+      {
+        titel: "Quellen",
+        text: "Power Law: „A Power Law for Bitcoin“, arXiv 2605.21316 (2026) — α ≈ 5,64, R² 0,96, Residuen-Streuung ≈ Faktor 2. Kurzfrist-Rauschen: arXiv 2606.00071 (2026) — Netzwerkmetriken ohne Vorhersagekraft außerhalb der Stichprobe. Carry und Crashs: BIS Working Paper 1087 „Crypto carry“ (2023) — hohe Funding-Phasen liegen systematisch vor Crashs, getrieben von Hebel-Kleinanlegern. Mayer Multiple: Trace Mayer, 2017. Fear & Greed: alternative.me/crypto/fear-and-greed-index. OKX-API: okx.com/docs-v5 (public/funding-rate, rubik/stat/contracts). Liquidationskaskaden: Nachberichte zum 10.10.2025 (CoinGlass, 19 Mrd USD Liquidationen in 24 h).",
+      },
+    ],
+  },
+  {
     id: "denkfehler",
     titel: "Die 7 Denkfehler (René Berteit)",
     icon: "🧠",

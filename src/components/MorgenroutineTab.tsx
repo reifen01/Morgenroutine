@@ -25,6 +25,7 @@ import {
 import { MarketState, LivePrices, PortfolioItem, WatchlistItem, DailySnapshot, PortfolioPurchase, emptyLivePrice } from "../types";
 import HilfeLink from "./HilfeLink";
 import BlasenAmpel from "./BlasenAmpel";
+import BitcoinKurzfrist from "./BitcoinKurzfrist";
 import { statusFuerSnapshot } from "../utils/historyBackfill";
 import { computeTrend, TrendArrow, TrendHistory, TrendKey } from "./TrendBarometer";
 import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist, waehleEuroKurs, EUR_USD_SYMBOL } from "../utils/yahooMapping";
@@ -1280,6 +1281,9 @@ export default function MorgenroutineTab({
 
         {/* Blasen-Ampel (Sektoren) — Risikofilter, keine Kaufsperre. Regel in utils/blasenAmpel.ts */}
         <BlasenAmpel />
+
+        {/* Bitcoin-Kurzfrist (Hebel + Zone) — steuert Nachkauf/Stopps beim Power-Law-Hold, keine Kaufsperre. Regel in utils/bitcoinKurzfrist.ts */}
+        <BitcoinKurzfrist />
 
         {/* 🛟 NOTFALL: Manuelle Tages-Eingaben (nur bei Bedarf aufklappen) */}
         <details className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/20 group">
