@@ -1120,6 +1120,154 @@ app.post("/api/blasen-monatskurse", async (req, res) => {
   }
 });
 
+// ── BITCOIN-KURZFRIST: Rohdaten fuer die Zeilen "Hebel" und "Zone" ─────
+// Liefert nur Rohdaten (OKX-Perp, Fear & Greed, Yahoo-Tagesschluss); die
+// Regel rechnet der Client in src/utils/bitcoinKurzfrist.ts (kein Import
+// von dort, weil Vercel relative TS-Imports in server.ts nicht aufloest —
+// Instrument und Symbol kommen deshalb vom Client mit, wie bei der
+// Blasen-Ampel). Jede Quelle faellt einzeln aus: Fehlt OKX, bleibt die
+// Zone-Zeile trotzdem berechenbar. Marktdaten sind nicht persoenlich →
+// Server-Cache 30 Minuten (Funding aendert sich alle 8 h, OI laufend).
+const BITCOIN_TTL = 30 * 60 * 1000;
+const BITCOIN_INST_RE = /^[A-Z0-9\-]{3,24}$/;
+let bitcoinCache: { ts: number; key: string; data: any } | null = null;
+
+async function fetchJson(url: string, timeoutMs = 8000): Promise<any> {
+  const ctrl = new AbortController();
+  const t = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const r = await fetch(url, {
+      signal: ctrl.signal,
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/100.0.0.0 Safari/537.36", Accept: "application/json" },
+    });
+    if (!r.ok) throw new Error(`HTTP-Error: ${r.status}`);
+    return await r.json();
+  } finally {
+    clearTimeout(t);
+  }
+}
+
+const utcTag = (ms: number) => new Date(ms).toISOString().slice(0, 10);
+
+/** OKX: aktuelle Funding-Rate, Funding-Historie (Tagesmittel), Open Interest und Long/Short-Konten je Tag. */
+async function fetchOkxHebel(instId: string) {
+  const ccy = instId.split("-")[0];
+  const base = "https://www.okx.com/api/v5";
+  const [aktuell, historie, oi, ls] = await Promise.all([
+    fetchJson(`${base}/public/funding-rate?instId=${encodeURIComponent(instId)}`),
+    fetchJson(`${base}/public/funding-rate-history?instId=${encodeURIComponent(instId)}&limit=100`),
+    fetchJson(`${base}/rubik/stat/contracts/open-interest-volume?ccy=${encodeURIComponent(ccy)}&period=1D`),
+    fetchJson(`${base}/rubik/stat/contracts/long-short-account-ratio?ccy=${encodeURIComponent(ccy)}&period=1D`),
+  ]);
+  for (const [name, d] of [["funding-rate", aktuell], ["funding-rate-history", historie], ["open-interest", oi], ["long-short", ls]] as const) {
+    if (!d || d.code !== "0" || !Array.isArray(d.data)) throw new Error(`OKX ${name}: ${d?.msg || "keine Daten"}`);
+  }
+  const tage: Record<string, { datum: string; funding: number | null; oiUsd: number | null; longShort: number | null; _n?: number }> = {};
+  const tag = (datum: string) => (tage[datum] ??= { datum, funding: null, oiUsd: null, longShort: null, _n: 0 });
+  for (const h of historie.data as any[]) {
+    const rate = Number(h.realizedRate ?? h.fundingRate);
+    if (!isFinite(rate)) continue;
+    const t = tag(utcTag(Number(h.fundingTime)));
+    t.funding = ((t.funding ?? 0) * (t._n ?? 0) + rate) / ((t._n ?? 0) + 1);
+    t._n = (t._n ?? 0) + 1;
+  }
+  for (const [ts, oiUsd] of oi.data as [string, string, string][]) {
+    const v = Number(oiUsd);
+    if (isFinite(v) && v > 0) tag(utcTag(Number(ts))).oiUsd = v;
+  }
+  for (const [ts, ratio] of ls.data as [string, string][]) {
+    const v = Number(ratio);
+    if (isFinite(v) && v > 0) tag(utcTag(Number(ts))).longShort = v;
+  }
+  const hebelTage = Object.values(tage)
+    .filter((t) => t.oiUsd !== null || t.longShort !== null)
+    .sort((a, b) => a.datum.localeCompare(b.datum))
+    .slice(-30)
+    .map(({ _n, ...t }) => t);
+  const a = aktuell.data[0] ?? {};
+  const rate = Number(a.fundingRate);
+  const fundingAktuell = isFinite(rate) ? { rate, naechste: new Date(Number(a.nextFundingTime || a.fundingTime || Date.now())).toISOString() } : null;
+  if (hebelTage.length < 8) throw new Error("OKX: zu wenige Tageswerte");
+  return { fundingAktuell, hebelTage };
+}
+
+/** alternative.me: Fear & Greed heute und gestern. */
+async function fetchFearGreed() {
+  const d = await fetchJson("https://api.alternative.me/fng/?limit=2");
+  const liste = Array.isArray(d?.data) ? d.data : [];
+  const fng = liste
+    .map((x: any) => ({ wert: Number(x.value), text: String(x.value_classification || ""), datum: utcTag(Number(x.timestamp) * 1000) }))
+    .filter((x: any) => isFinite(x.wert));
+  if (fng.length === 0) throw new Error("Fear & Greed: keine Daten");
+  return fng;
+}
+
+/** Yahoo: Tagesschlusskurse "JJJJ-MM-TT" → USD (Krypto handelt 7 Tage, der laufende Tag zaehlt mit). */
+async function fetchYahooTageskurse(symbol: string, range: string): Promise<Record<string, number>> {
+  const hosts = ["query1.finance.yahoo.com", "query2.finance.yahoo.com"];
+  let lastError: any = null;
+  for (const host of hosts) {
+    try {
+      const data = await fetchJson(`https://${host}/v8/finance/chart/${encodeURIComponent(symbol)}?interval=1d&range=${encodeURIComponent(range)}`, 10000);
+      const result = data?.chart?.result?.[0];
+      if (!result) throw new Error("Kein chart.result");
+      const ts: number[] = result.timestamp || [];
+      const close: (number | null)[] = result.indicators?.quote?.[0]?.close || [];
+      const kurse: Record<string, number> = {};
+      for (let i = 0; i < ts.length; i++) {
+        const v = close[i];
+        if (v === null || v === undefined || !isFinite(Number(v)) || Number(v) <= 0) continue;
+        kurse[utcTag(ts[i] * 1000)] = Number(v);
+      }
+      if (Object.keys(kurse).length < 250) throw new Error("Zu wenige Tageskurse");
+      return kurse;
+    } catch (err: any) {
+      console.warn(`[Bitcoin-Kurzfrist] ${symbol} via ${host} fehlgeschlagen:`, err?.message || err);
+      lastError = err;
+    }
+  }
+  throw lastError || new Error(`Tageskurse fuer ${symbol} nicht ladbar`);
+}
+
+app.post("/api/bitcoin-kurzfrist", async (req, res) => {
+  try {
+    const body = (req.body ?? {}) as { perp?: unknown; kurs?: unknown; range?: unknown };
+    const perp = typeof body.perp === "string" && BITCOIN_INST_RE.test(body.perp) ? body.perp : null;
+    const kurs = typeof body.kurs === "string" && BLASEN_SYMBOL_RE.test(body.kurs) ? body.kurs : null;
+    const range = typeof body.range === "string" && /^(1|2|3|5)y$/.test(body.range) ? body.range : "3y";
+    if (!perp || !kurs) {
+      return res.status(400).json({ error: "Es fehlen 'perp' (OKX-Instrument) und 'kurs' (Yahoo-Symbol)." });
+    }
+    const key = `${perp}|${kurs}|${range}`;
+    if (bitcoinCache && bitcoinCache.key === key && Date.now() - bitcoinCache.ts < BITCOIN_TTL) {
+      return res.json({ ...bitcoinCache.data, cached: true });
+    }
+    const fehler: Record<string, string> = {};
+    const [okx, fng, kurse] = await Promise.all([
+      fetchOkxHebel(perp).catch((e: any) => { fehler.okx = e?.message || String(e); return null; }),
+      fetchFearGreed().catch((e: any) => { fehler.fng = e?.message || String(e); return [] as any[]; }),
+      fetchYahooTageskurse(kurs, range).catch((e: any) => { fehler.kurs = e?.message || String(e); return null; }),
+    ]);
+    if (!okx && !kurse) {
+      return res.status(502).json({ error: "Weder OKX noch Yahoo erreichbar — Bitcoin-Kurzfrist ohne Daten.", fehler });
+    }
+    const data = {
+      fundingAktuell: okx?.fundingAktuell ?? null,
+      hebelTage: okx?.hebelTage ?? [],
+      kurse: kurse ?? {},
+      fng,
+      fehler,
+      source: "okx+alternative.me+yahoo",
+      generatedAt: new Date().toISOString(),
+    };
+    bitcoinCache = { ts: Date.now(), key, data };
+    res.json(data);
+  } catch (err: any) {
+    console.error("[bitcoin-kurzfrist] failed:", err?.message || err);
+    res.status(500).json({ error: "Bitcoin-Daten konnten nicht geladen werden.", message: err?.message || String(err) });
+  }
+});
+
 // Endpoint to calculate the distribution days dynamically using Gemini Search Grounding
 app.post("/api/calculate-distribution-days", async (req, res) => {
   const currentDateStr = new Date().toISOString().split('T')[0];
