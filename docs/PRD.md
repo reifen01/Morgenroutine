@@ -14,7 +14,7 @@ Privatanleger, die nach festen Regeln handeln wollen, statt nach Gefühl. Die St
 
 ## Kernfunktionen (Roadmap)
 
-Die Feature-Karte mit Name, Beschreibung, Status und Reihenfolge lebt in **`features/INDEX.md`** und nur dort. Kurz gesagt: Das Produkt ist mit 13 Features vollständig nutzbar (Marktdaten, Kaufampel, Depot, Journal, Kaufziele, Cash, Rechner, Screener, Auswertung, Regelwerk, Backup, App-Hülle, Blasen-Ampel). Geplant und noch nicht gebaut sind fünf Ergänzungen, die aus dem Tagesablauf des Nutzers kommen: Schwellen-Warnung, Depotstand-Verlauf, Handbuch mit Quellen, Stop-Assistent und ein Cash-Konto mit Ein- und Auszahlungen.
+Die Feature-Karte mit Name, Beschreibung, Status und Reihenfolge lebt in **`features/INDEX.md`** und nur dort. Kurz gesagt: Das Produkt ist mit 14 Features vollständig nutzbar (Marktdaten, Kaufampel, Depot, Journal, Kaufziele, Cash, Rechner, Screener, Auswertung, Regelwerk, Backup, App-Hülle, Blasen-Ampel, Bitcoin-Kurzfrist). Geplant und noch nicht gebaut sind fünf Ergänzungen, die aus dem Tagesablauf des Nutzers kommen: Schwellen-Warnung, Depotstand-Verlauf, Handbuch mit Quellen, Stop-Assistent und ein Cash-Konto mit Ein- und Auszahlungen.
 
 ## Erfolgskriterien
 
@@ -60,6 +60,7 @@ _Aus dem Code gelesen, nicht verifiziert — `/reverse-spec` schreibt die Spezif
 - **MR-10 Regelwerk & KI-Coach** — `RegelwerkTab`, `Handbuch`, `AICoachTab`, `POST /api/chat`.
 - **MR-11 Backup, Demo & Reset** — `BackupSetupModal`, `BackupRestoreModal`, `encryption.ts`, `backupFile.ts`, Reset in `App.tsx`.
 - **MR-12 App-Hülle, Onboarding & PWA** — `App.tsx`, `CompactHeader`, `OnboardingScreen`, PWA-Prompts, `ErrorBoundary`, `GET /api/ping`.
-- **MR-13 Blasen-Ampel (Sektoren)** — `src/utils/blasenAmpel.ts`, `BlasenAmpel.tsx`, `POST /api/blasen-monatskurse` (PR #46, Nachtrag zur Karte).
+- **MR-13 Blasen-Ampel (Sektoren)** — `src/utils/blasenAmpel.ts`, `BlasenAmpel.tsx`, `POST /api/blasen-monatskurse` (PR #46/#47, Nachtrag zur Karte).
+- **MR-19 Bitcoin-Kurzfrist (Hebel & Zone)** — `src/utils/bitcoinKurzfrist.ts`, `BitcoinKurzfrist.tsx`, `/api/bitcoin-kurzfrist` mit OKX, alternative.me und Yahoo (PR #48, Nachtrag zur Karte).
 
 **Aufräumliste (kein Feature):** `GET /auth/callback`, `POST /api/profiles/save|load` samt `cloud_profiles.json`, `POST /api/parse-screenshot`, `public/anleitung.html` — ohne Aufrufer im Client; Entscheidung „entfernen" steht in `docs/tech-debt.md` (TD-39, TD-41, TD-45, TD-65).

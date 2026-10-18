@@ -124,9 +124,19 @@ _Nachtrag: gemergt in Commit `3d39c89` (PR #46) nach dem Stand dieser Karte; die
 - **Ebene:** app · **AC-Schätzung:** 9 (2J-Rendite absolut und relativ, 5J-Filter, Abstand zum Hoch, 10-Monats-Durchschnitt, Reset bei −40 %, 24-Monate-Fenster, Cache, Symbol-Validierung, Fehlerfall je ETF)
 - **Reihenfolge:** 4 — ergänzt MR-2 direkt; die Regel ist dokumentiert und isoliert, daher gut als eine der ersten zu verifizieren.
 
+### MR-19 · Bitcoin-Kurzfrist (Hebel & Zone)
+_Nachtrag: gemergt in Commit `f81b07b` (PR #48) nach dem Stand dieser Karte; Zeilen aus den neuen Dateien selbst. Im selben Zug sortiert die Blasen-Ampel (MR-13) ihre Zeilen jetzt nach Rot, Gelb, Grün (PR #47)._
+**Was es tut:** Zwei Zeilen in der Morgenroutine für Bitcoin: **Hebel** fragt, ob der Perp-Markt überladen ist (Funding-Rate, Open Interest, Long-Quote von OKX); **Zone** zeigt, wo der Kurs im Power-Law-Kanal steht (Yahoo-Tagesschluss, Mayer Multiple, Fear & Greed als Bestätigung). GRÜN/GELB/ROT steuern Nachkauf-Tempo und Stopps beim Power-Law-Hold, sperren aber keinen Kauf.
+- **Routen:** `POST`/`GET /api/bitcoin-kurzfrist` (`server.ts:1123` ff., Rohdaten von OKX, alternative.me, Yahoo; Server-Cache 30 min; jede Quelle fällt einzeln aus)
+- **Screens:** Karte „Bitcoin-Kurzfrist" im Tab „Morgen" (`src/components/BitcoinKurzfrist.tsx`, eingebunden `MorgenroutineTab.tsx:1286`)
+- **Entitäten:** `morgenroutine_bitcoin_kurzfrist` (localStorage-Cache 30 min, `BitcoinKurzfrist.tsx:23`), Server-Cache `bitcoinCache` (`server.ts:1133`)
+- **Funktionen:** `berechneHebel`, `berechneZone`, `bitcoinTrend` (`src/utils/bitcoinKurzfrist.ts`, reine Funktionen, „einzige Stelle für die Regel")
+- **Ebene:** app · **AC-Schätzung:** 10 (Funding-Schwellen 0,03/0,06 %, OI +8 %, Long-Quote 70 %, Power-Law-Fit α = 5,64, Zonen 0,5×/1×/2×, Mayer, Fear & Greed nur Bestätigung, Teilausfall je Quelle, Cache)
+- **Reihenfolge:** 5 — direkt nach der Blasen-Ampel, gleiche Bauart.
+
 ## Vorgeschlagene Reihenfolge
 
-MR-1 → MR-2 → MR-5 → MR-13 → MR-4 → MR-3 → MR-6 → MR-7 → MR-9 → MR-11 → MR-12 → MR-10 → MR-8
+MR-1 → MR-2 → MR-5 → MR-13 → MR-19 → MR-4 → MR-3 → MR-6 → MR-7 → MR-9 → MR-11 → MR-12 → MR-10 → MR-8
 
 Kernfluss zuerst (Kurse → Ampel → Stop-Schutz), dann die Geld-Tabellen (Journal, Depot, Cash), dann Rechner und Auswertung, dann Backup und Hülle; Coach und Screener zuletzt.
 

@@ -22,6 +22,7 @@ _Source: `src/types.ts` (führend; die `localStorage`-Schlüssel in `src/App.tsx
 | `PeriodLearning` | Eine Pareto-Notiz je Woche oder Monat | MR-9 |
 | ATR-Parameter (Multiplikator, Länge, Glättung) | Einstellungen des Stop-Rechners | MR-5 |
 | Blasen-Monatskurse (Cache) | Monatsschlüsse der Sektor-ETFs, 12 h gültig | MR-13 |
+| Bitcoin-Kurzfrist-Rohdaten (Cache) | OKX-Funding, Open Interest, Long-Quote, Tagesschlüsse, Fear & Greed, 30 min gültig | MR-19 |
 | Import-Cache, Zeitstempel (letzter Abruf, letzte Änderung, letztes Backup) | Technische Merker | MR-1, MR-11 |
 | Onboarding-Flag, PWA-Install-Sperre | Technische Merker der Hülle | MR-12 |
 | `BackupPayload` → Backup-Datei `MR-BACKUP-1` | Alle obigen Nutzer-Entitäten gebündelt, AES-GCM-verschlüsselt mit PIN oder Passwort | MR-11; die Datei gehört dem Nutzer |

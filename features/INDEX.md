@@ -43,8 +43,9 @@
 | MR-16 | Handbuch mit Hintergrund & Quellen | Jede Regel mit dem Warum und der Studie dahinter, wie es die Blasen-Ampel bereits macht. | Roadmap | — | 2026-10-18 |
 | MR-17 | Stop-Assistent | Schlägt Stops automatisch vor, mit Verlauf, Warnung und Varianten wie Limit oder Trailing Stop. | Roadmap | — | 2026-10-18 |
 | MR-18 | Cash-Konto mit Ein- & Auszahlungen | Führt das Verrechnungskonto wie bei der Bank: Einzahlung vom Referenzkonto, Käufe ziehen ab, Verkäufe buchen zu, Auszahlung zurück. | Roadmap | — | 2026-10-18 |
+| MR-19 | Bitcoin-Kurzfrist (Hebel & Zone) | Zwei Zeilen für Bitcoin: ob der Perp-Markt überladen ist (OKX-Funding, Open Interest, Long-Quote) und wo der Kurs im Power-Law-Kanal steht; steuert Nachkauf und Stopps, sperrt nichts. | Mapped | | 2026-10-18 |
 
-**Build order:** _Bestand (`/reverse-spec` → `/qa`): MR-1 → MR-2 → MR-5 → MR-13 → MR-4 → MR-3 → MR-6 → MR-7 → MR-9 → MR-11 → MR-12 → MR-10 → MR-8 · Geplant (`/write-spec`): P0: MR-17 (needs MR-5), MR-14 (needs MR-2) · P1: MR-18 (needs MR-6, MR-4), MR-15 (needs MR-3) · P2: MR-16 (needs MR-10)_
+**Build order:** _Bestand (`/reverse-spec` → `/qa`): MR-1 → MR-2 → MR-5 → MR-13 → MR-19 → MR-4 → MR-3 → MR-6 → MR-7 → MR-9 → MR-11 → MR-12 → MR-10 → MR-8 · Geplant (`/write-spec`): P0: MR-17 (needs MR-5), MR-14 (needs MR-2) · P1: MR-18 (needs MR-6, MR-4), MR-15 (needs MR-3) · P2: MR-16 (needs MR-10)_
 
 <!-- Add features above this line -->
 
@@ -52,6 +53,6 @@
 
 > One line per release, written by `/deploy` — **the single deployment record**: tag · date · production URL · the features it shipped. `/security-check` reads the production URL here, `/audit` expects every Deployed feature on one line. A feature that was live before the kit arrived (reconstructed from code) gets its line from `/qa`: `live before the kit — verified by /qa on <date> · MR-X`.
 
-- _Live vor dem Kit · Build `3d39c89` (PR #46, 18.10.2026) · https://morgenroutine.vercel.app · MR-1 bis MR-13 — noch nicht durch `/qa` verifiziert_
+- _Live vor dem Kit · Build `f81b07b` (PR #48, 18.10.2026) · https://morgenroutine.vercel.app · MR-1 bis MR-13, MR-19 — noch nicht durch `/qa` verifiziert_
 
-## Next Available ID: MR-19
+## Next Available ID: MR-20

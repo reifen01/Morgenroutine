@@ -42,7 +42,7 @@ _Aufgezeichnet von `/init` am 18.10.2026 (Stand `ef921bc` + PR #46). Bestätigt 
 - **Layers:** none (`layers: []`)
 - **Closing check:** kein Aggregat (`commands.check: null`); einzeln `npm run lint` (= `tsc --noEmit`) und `npm run build`; **Test-Befehl fehlt** — jede `/qa` prüft gegen die laufende Instanz und per Code-Lesen, bis ein Runner existiert
 - **Go-live:** Merge auf `main` → Vercel baut automatisch (`vercel.json`, `vite build`); Live-Adresse `morgenroutine.vercel.app`; Kontrolle durch den Nutzer über die Build-Version im App-Logo (PWA-Update-Prüfung). Keine menschliche Freigabe außer dem Merge selbst.
-- **Codebase map:** `docs/codebase/` — Stand `ef921bc` plus Nachtrag MR-13 (`3d39c89`); vor jedem `/architecture` lesen, `/map` nach größeren Änderungen erneut
+- **Codebase map:** `docs/codebase/` — Stand `ef921bc` plus Nachträge MR-13 (`3d39c89`) und MR-19 (`f81b07b`); vor jedem `/architecture` lesen, `/map` nach größeren Änderungen erneut
 
 ## Product Context
 
