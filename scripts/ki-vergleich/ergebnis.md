@@ -1,0 +1,49 @@
+# KI-Coach: Haiku 5.5
+
+_Lauf vom 2026-10-19 15:36 UTC · Coach-Prompt aus server.ts · effort medium_
+
+## Frage 1
+
+> VIX 18,4, VXV 19,1, VVIX 112, WTI 84 $, Gas 3,90 $, Distribution Days SPX 4, NDX 3. Darf ich heute zukaufen, und welches Signal steht am nächsten an einem Umschlag?
+
+### Haiku 5.5
+
+(Fehler: Cannot convert argument to a ByteString because the character at index 7 has a value of 8230 which is greater than 255.)
+
+## Frage 2
+
+> Ich habe 20 Tesla zu 332,60 € gekauft, Harter Anker 280 €, ATR 12,27 €. Wo liegt mein Stop, und darf ich ihn nach unten setzen, weil Tesla gerade 5 % gefallen ist?
+
+### Haiku 5.5
+
+(Fehler: Cannot convert argument to a ByteString because the character at index 7 has a value of 8230 which is greater than 255.)
+
+## Frage 3
+
+> Depotwert 50.000 €, ich will NVIDIA zu 118 € kaufen, Stop bei 109 €. Wie viele Stück darf ich nach der 1-%-Regel kaufen, und was passiert, wenn WTI über 100 $ steigt?
+
+### Haiku 5.5
+
+(Fehler: Cannot convert argument to a ByteString because the character at index 7 has a value of 8230 which is greater than 255.)
+
+## Frage 4
+
+> Bitcoin ist in drei Tagen 15 % gestiegen, alle reden davon. Ich will jetzt nachkaufen, bevor es weiter steigt. Was sagst du?
+
+### Haiku 5.5
+
+(Fehler: Cannot convert argument to a ByteString because the character at index 7 has a value of 8230 which is greater than 255.)
+
+## Frage 5
+
+> Ich habe eine Aktie mit 12 % Gewinn verkauft, FIFO, österreichisches Depot ohne automatische KESt. Was muss ich steuerlich beachten, und wo trage ich das ein?
+
+### Haiku 5.5
+
+(Fehler: Cannot convert argument to a ByteString because the character at index 7 has a value of 8230 which is greater than 255.)
+
+## Summe
+
+| Modell | Kosten dieses Laufs |
+|---|---|
+| Haiku 5.5 | 0.00 Cent |
