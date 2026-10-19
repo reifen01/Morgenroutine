@@ -1,0 +1,12 @@
+{
+  "name": "ki-vergleich",
+  "private": true,
+  "type": "module",
+  "description": "Einmaliger Vergleich Haiku 5.5 gegen Sonnet 5.5 als KI-Coach. Eigenes Paket, damit die App-Abhaengigkeiten unberuehrt bleiben.",
+  "scripts": {
+    "vergleich": "node vergleich.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.135.0"
+  }
+}

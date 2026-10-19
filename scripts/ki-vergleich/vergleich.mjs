@@ -1,0 +1,98 @@
+// Vergleich Haiku 5.5 gegen Sonnet 5.5 als KI-Coach der Morgenroutine.
+//
+// Nimmt den echten Coach-System-Prompt aus server.ts (Konstante
+// `systemInstruction`), stellt beiden Modellen dieselben Fragen aus
+// fragen.json und schreibt Antworten, Tokens und Kosten nach ergebnis.md.
+//
+// Aufruf (im Ordner scripts/ki-vergleich):
+//   npm install
+//   npm run vergleich
+//
+// Braucht ANTHROPIC_API_KEY als Umgebungsvariable (in der Cloud-Umgebung
+// unter Edit -> Network secrets bzw. Umgebungsvariablen). Der Schluessel wird
+// nie ausgegeben oder gespeichert. Kosten: pro Lauf grob unter 0,50 $.
+
+import Anthropic from "@anthropic-ai/sdk";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const here = path.dirname(fileURLToPath(import.meta.url));
+const serverTs = fs.readFileSync(path.join(here, "..", "..", "server.ts"), "utf8");
+const match = serverTs.match(/const systemInstruction = `([\s\S]*?)`;/);
+if (!match) {
+  console.error("Coach-Prompt in server.ts nicht gefunden (const systemInstruction = `...`).");
+  process.exit(1);
+}
+const SYSTEM = match[1].trim();
+const FRAGEN = JSON.parse(fs.readFileSync(path.join(here, "fragen.json"), "utf8"));
+
+// Preise je 1 Mio. Tokens (Eingabe / Ausgabe), Stand Skill-Tabelle 2026-10-06.
+const MODELLE = [
+  { id: "claude-haiku-5-5", name: "Haiku 5.5", ein: 0.10, aus: 0.50 },
+  { id: "claude-sonnet-5-5", name: "Sonnet 5.5", ein: 2.00, aus: 10.00 },
+];
+
+const client = new Anthropic();
+
+async function frage(modell, text) {
+  const start = Date.now();
+  const params = {
+    model: modell.id,
+    max_tokens: 16000,
+    system: SYSTEM,
+    output_config: { effort: "medium" },
+    messages: [{ role: "user", content: text }],
+  };
+  // Sonnet 5.5: serverseitiger Fallback bei Ablehnung (Haiku hat keinen).
+  const response =
+    modell.id === "claude-sonnet-5-5"
+      ? await client.beta.messages.create({
+          ...params,
+          betas: ["server-side-fallback-2026-07-01"],
+          fallbacks: "default",
+        })
+      : await client.messages.create(params);
+
+  const sekunden = ((Date.now() - start) / 1000).toFixed(1);
+  if (response.stop_reason === "refusal") {
+    return { antwort: `(abgelehnt: ${response.stop_details?.category ?? "ohne Kategorie"})`, sekunden, usage: response.usage };
+  }
+  const antwort = response.content
+    .filter((b) => b.type === "text")
+    .map((b) => b.text)
+    .join("\n")
+    .trim();
+  return { antwort, sekunden, usage: response.usage };
+}
+
+function kosten(modell, usage) {
+  return (usage.input_tokens * modell.ein + usage.output_tokens * modell.aus) / 1_000_000;
+}
+
+let md = `# KI-Coach: Haiku 5.5 gegen Sonnet 5.5\n\n_Lauf vom ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC · Coach-Prompt aus server.ts · effort medium_\n\n`;
+const summe = Object.fromEntries(MODELLE.map((m) => [m.id, 0]));
+
+for (const [i, text] of FRAGEN.entries()) {
+  md += `## Frage ${i + 1}\n\n> ${text}\n\n`;
+  for (const modell of MODELLE) {
+    process.stdout.write(`Frage ${i + 1} · ${modell.name} ... `);
+    try {
+      const r = await frage(modell, text);
+      const k = kosten(modell, r.usage);
+      summe[modell.id] += k;
+      md += `### ${modell.name} · ${r.sekunden} s · ${r.usage.input_tokens} ein / ${r.usage.output_tokens} aus · ${(k * 100).toFixed(3)} Cent\n\n${r.antwort}\n\n`;
+      console.log(`ok (${r.sekunden} s)`);
+    } catch (err) {
+      const name = err instanceof Anthropic.APIError ? `API-Fehler ${err.status}` : "Fehler";
+      md += `### ${modell.name}\n\n(${name}: ${err.message})\n\n`;
+      console.log(name);
+    }
+  }
+}
+
+md += `## Summe\n\n| Modell | Kosten dieses Laufs |\n|---|---|\n`;
+for (const m of MODELLE) md += `| ${m.name} | ${(summe[m.id] * 100).toFixed(2)} Cent |\n`;
+
+fs.writeFileSync(path.join(here, "ergebnis.md"), md);
+console.log(`\nFertig: ${path.join(here, "ergebnis.md")}`);
