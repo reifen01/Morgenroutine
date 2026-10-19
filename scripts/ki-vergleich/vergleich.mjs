@@ -57,6 +57,16 @@ if (!apiKey || !apiKey.startsWith("sk-ant-")) {
   );
   process.exit(1);
 }
+// Ein echter Schluessel besteht nur aus Buchstaben, Ziffern, - und _.
+// Haeufigster Fehler: ein mitkopierter Platzhalter wie "…" oder ein Leerzeichen.
+const fremd = [...apiKey].findIndex((c) => !/[A-Za-z0-9_-]/.test(c));
+if (fremd !== -1) {
+  console.error(
+    `Schluessel enthaelt an Stelle ${fremd + 1} ein unerlaubtes Zeichen ` +
+      `(z. B. "…", Leerzeichen oder Anfuehrungszeichen). Zeile in der Umgebung neu eintragen.`,
+  );
+  process.exit(1);
+}
 const client = new Anthropic({ apiKey, baseURL: "https://api.anthropic.com" });
 
 async function frage(modell, text) {
