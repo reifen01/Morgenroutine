@@ -6,7 +6,8 @@
 //
 // Aufruf (im Ordner scripts/ki-vergleich):
 //   npm install
-//   npm run vergleich
+//   npm run vergleich                    nur Haiku (Standard)
+//   npm run vergleich -- haiku sonnet    beide nebeneinander
 //
 // Braucht ANTHROPIC_API_KEY als Umgebungsvariable (in der Cloud-Umgebung
 // unter Edit -> Network secrets bzw. Umgebungsvariablen). Der Schluessel wird
@@ -28,10 +29,20 @@ const SYSTEM = match[1].trim();
 const FRAGEN = JSON.parse(fs.readFileSync(path.join(here, "fragen.json"), "utf8"));
 
 // Preise je 1 Mio. Tokens (Eingabe / Ausgabe), Stand Skill-Tabelle 2026-10-06.
-const MODELLE = [
-  { id: "claude-haiku-5-5", name: "Haiku 5.5", ein: 0.10, aus: 0.50 },
-  { id: "claude-sonnet-5-5", name: "Sonnet 5.5", ein: 2.00, aus: 10.00 },
+const ALLE_MODELLE = [
+  { kurz: "haiku", id: "claude-haiku-5-5", name: "Haiku 5.5", ein: 0.10, aus: 0.50 },
+  { kurz: "sonnet", id: "claude-sonnet-5-5", name: "Sonnet 5.5", ein: 2.00, aus: 10.00 },
 ];
+
+// Standard: nur Haiku. Weitere Modelle per Argument, z. B.
+//   npm run vergleich -- sonnet          nur Sonnet
+//   npm run vergleich -- haiku sonnet    beide nebeneinander
+const gewuenscht = process.argv.slice(2).map((a) => a.toLowerCase());
+const MODELLE = ALLE_MODELLE.filter((m) => (gewuenscht.length ? gewuenscht.includes(m.kurz) : m.kurz === "haiku"));
+if (MODELLE.length === 0) {
+  console.error(`Unbekanntes Modell. Erlaubt: ${ALLE_MODELLE.map((m) => m.kurz).join(", ")}`);
+  process.exit(1);
+}
 
 const client = new Anthropic();
 
@@ -70,7 +81,7 @@ function kosten(modell, usage) {
   return (usage.input_tokens * modell.ein + usage.output_tokens * modell.aus) / 1_000_000;
 }
 
-let md = `# KI-Coach: Haiku 5.5 gegen Sonnet 5.5\n\n_Lauf vom ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC · Coach-Prompt aus server.ts · effort medium_\n\n`;
+let md = `# KI-Coach: ${MODELLE.map((m) => m.name).join(" gegen ")}\n\n_Lauf vom ${new Date().toISOString().slice(0, 16).replace("T", " ")} UTC · Coach-Prompt aus server.ts · effort medium_\n\n`;
 const summe = Object.fromEntries(MODELLE.map((m) => [m.id, 0]));
 
 for (const [i, text] of FRAGEN.entries()) {
