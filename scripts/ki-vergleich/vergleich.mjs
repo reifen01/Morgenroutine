@@ -9,9 +9,9 @@
 //   npm run vergleich                    nur Haiku (Standard)
 //   npm run vergleich -- haiku sonnet    beide nebeneinander
 //
-// Braucht ANTHROPIC_API_KEY als Umgebungsvariable (in der Cloud-Umgebung
-// unter Edit -> Network secrets bzw. Umgebungsvariablen). Der Schluessel wird
-// nie ausgegeben oder gespeichert. Kosten: pro Lauf grob unter 0,50 $.
+// Braucht MR_CLAUDE_API_KEY als Umgebungsvariable (Cloud-Umgebung -> Edit ->
+// Umgebungsvariablen). Der Schluessel wird nie ausgegeben oder gespeichert.
+// Kosten: ein Haiku-Lauf deutlich unter 1 Cent.
 
 import Anthropic from "@anthropic-ai/sdk";
 import fs from "node:fs";
@@ -44,7 +44,20 @@ if (MODELLE.length === 0) {
   process.exit(1);
 }
 
-const client = new Anthropic();
+// Eigener Variablenname, weil die Claude-Code-Cloud-Umgebung ANTHROPIC_API_KEY
+// nicht an Sitzungen weiterreicht (reserviert fuer Claude Code selbst) und
+// ANTHROPIC_BASE_URL auf ihren eigenen Proxy setzt. Deshalb Schluessel und
+// Adresse hier ausdruecklich.
+const apiKey = process.env.MR_CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+if (!apiKey || !apiKey.startsWith("sk-ant-")) {
+  console.error(
+    apiKey
+      ? "Schluessel hat das falsche Format (muss mit sk-ant- beginnen)."
+      : "Kein Schluessel: MR_CLAUDE_API_KEY in der Umgebung eintragen.",
+  );
+  process.exit(1);
+}
+const client = new Anthropic({ apiKey, baseURL: "https://api.anthropic.com" });
 
 async function frage(modell, text) {
   const start = Date.now();
