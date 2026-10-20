@@ -16,6 +16,7 @@ import { FileText, ChevronDown, ChevronRight } from "lucide-react";
 import HilfeLink from "./HilfeLink";
 import type { SoldTradeItem } from "../types";
 import { formatAccounting, istSteuereinfach } from "../utils/mathUtils";
+import ModulKopf from "./ModulKopf";
 
 interface Props {
   soldTrades: SoldTradeItem[];
@@ -127,11 +128,12 @@ export default function Ertraegnisaufstellung({ soldTrades }: Props) {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <FileText className="h-4 w-4 text-slate-700" />
-        <h3 className="text-[13px] font-extrabold text-slate-800">Erträgnisaufstellung (realisiert, pro Jahr &amp; Depot)</h3>
-        <HilfeLink abschnitt="steuern" titel="KESt-Regeln im Handbuch nachlesen" />
-      </div>
+      <ModulKopf
+        symbol="🧾"
+        titel="Erträgnisaufstellung"
+        untertitel="Realisiert, pro Jahr & Depot"
+        hilfe={<HilfeLink abschnitt="steuern" titel="KESt-Regeln im Handbuch nachlesen" />}
+      />
 
       {jahre.map((y) => {
         const offen = offenesJahr === y.jahr;

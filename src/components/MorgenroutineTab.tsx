@@ -36,6 +36,7 @@ import {
   formatAccounting, 
   formatToGermanDate 
 } from "../utils/mathUtils";
+import ModulKopf from "./ModulKopf";
 
 interface DecimalInputProps {
   value: number | null;
@@ -853,9 +854,7 @@ export default function MorgenroutineTab({
           Aufgeteilt in zwei Aktionen: öffentliche Marktwerte vs. private Aktien-Liste. */}
       <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-md space-y-3">
         <div>
-          <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
-            🌐 Heute starten
-          </h3>
+          <ModulKopf strich={false} symbol="🌐" titel="Heute starten" untertitel="Marktwerte holen · Ampel lesen" />
           {lastLiveFetchAt && (() => {
             const t = new Date(lastLiveFetchAt);
             const alterMin = (Date.now() - t.getTime()) / 60000;
@@ -988,11 +987,12 @@ export default function MorgenroutineTab({
 
         {/* Marktstimmung & Kaufschranken (inkl. Distribution Days) */}
           <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-              <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
-              📊 Marktstimmung &amp; Kaufschranken
-              <HilfeLink abschnitt="kaufampel" titel="Kaufampel im Handbuch nachlesen" />
-            </h3>
+            <ModulKopf
+              symbol="📊"
+              titel="Marktstimmung & Kaufschranken"
+              untertitel="VIX/VXV · VVIX · SPX · Öl · Gas · Distribution Days"
+              hilfe={<HilfeLink abschnitt="kaufampel" titel="Kaufampel im Handbuch nachlesen" />}
+            />
             
             {/* ── Indikator-Karten (handyfreundlich, kein Querscrollen) ── */}
             <div className="space-y-2.5">
@@ -1233,11 +1233,12 @@ export default function MorgenroutineTab({
               Normalerweise nicht nötig — die Werte kommen automatisch über „Marktwerte holen". Nutze diese Felder nur, falls ein Wert beim Live-Abruf einmal fehlt.
             </p>
             <div id="daily-inputs-card" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-            <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest pb-3 border-b border-slate-50 flex items-center gap-2">
-              <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
-              Tages-Eingaben
-              <HilfeLink abschnitt="kaufampel" titel="Schwellenwerte im Handbuch nachlesen" />
-            </h3>
+            <ModulKopf
+              symbol="✍️"
+              titel="Tages-Eingaben"
+              untertitel="Nur nötig, wenn beim Abruf ein Wert fehlt"
+              hilfe={<HilfeLink abschnitt="kaufampel" titel="Schwellenwerte im Handbuch nachlesen" />}
+            />
             
             <div className="space-y-6">
               {/* Macro Values Inputs */}

@@ -10,6 +10,7 @@ import HilfeLink from "./HilfeLink";
 import type { DailySnapshot, PeriodLearning, SoldTradeItem } from "../types";
 import Ertraegnisaufstellung from "./Ertraegnisaufstellung";
 import { buildPeriods, type PeriodKind, type PeriodStats } from "../utils/periodStats";
+import ModulKopf from "./ModulKopf";
 
 interface Props {
   dailyHistory: DailySnapshot[];
@@ -96,16 +97,14 @@ export default function AuswertungTab({ dailyHistory, periodLearnings, onSaveLea
       <>
       <div className="bg-white border border-slate-100 rounded-3xl p-6 shadow-md">
         <div className="flex items-center justify-between flex-wrap gap-3">
-          <div>
-            <h2 className="text-base sm:text-lg font-bold text-slate-900 font-display flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-slate-800" />
-              Routine-Auswertung
-              <HilfeLink abschnitt="disziplin" titel="Disziplin-Quote im Handbuch nachlesen" />
-            </h2>
-            <p className="text-xs text-slate-500 mt-1">
-              Aus deinen täglichen Live-Abrufen entsteht automatisch eine Wochen- und Monatsübersicht.
-              Die KI fasst nach dem Pareto-Prinzip zusammen, was am Markt wichtig war.
-            </p>
+          <div className="w-full">
+            <ModulKopf
+              strich={false}
+              symbol="📊"
+              titel="Routine-Auswertung"
+              untertitel="Wochen- und Monatsübersicht aus deinen täglichen Abrufen · KI fasst nach Pareto zusammen"
+              hilfe={<HilfeLink abschnitt="disziplin" titel="Disziplin-Quote im Handbuch nachlesen" />}
+            />
           </div>
           <div className="flex bg-slate-100 p-1 rounded-xl border border-slate-200">
             <button
