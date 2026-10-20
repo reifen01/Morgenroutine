@@ -460,10 +460,10 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           
           {ansicht === "rechner" && (<>
           {/* CALCULATOR CARD */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
+          <div data-modul="rechner" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex items-center justify-between gap-2 border-b-2 border-slate-800 pb-3">
               <div className="flex-1 min-w-0">
-                <ModulKopf
+                <ModulKopf modulId="rechner"
                   strich={false}
                   symbol="🧮"
                   titel="Positionsgröße & Risiko"
@@ -701,8 +701,8 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           </div>
 
           {/* PSYCHOLOGY DISCIPLINE FORM */}
-          <div className="bg-[#FFFDF9] border border-amber-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-amber-100/30 space-y-4">
-            <ModulKopf symbol="🧠" titel="Disziplin-Filter" untertitel="Renes Psychologie-Check vor jedem Kauf" />
+          <div data-modul="disziplin" className="bg-[#FFFDF9] border border-amber-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-amber-100/30 space-y-4">
+            <ModulKopf modulId="disziplin" symbol="🧠" titel="Disziplin-Filter" untertitel="Renes Psychologie-Check vor jedem Kauf" />
             
             <p className="text-xs text-amber-800/90 font-medium leading-relaxed">
               Gemäß dem René-Psychologiehandbuch "Die 7 größten Denkfehler": Du darfst erst dann handeln, wenn du deine Emotionen gnadenlos analysierst und schriftlich festhältst!
@@ -767,9 +767,9 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           </div>
 
           {/* ATR STOP-LOSS FINDER (PINE SCRIPT SYNC) */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
+          <div data-modul="atr-stop" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
             <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
-              <ModulKopf
+              <ModulKopf modulId="atr-stop"
                 strich={false}
                 symbol="🛑"
                 titel="ATR Stop-Loss-Finder"
@@ -1287,8 +1287,8 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
         {/* Right Column: Dynamic Outputs */}
         {ansicht === "rechner" && (
-        <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6 h-fit lg:sticky lg:top-8 animate-fade-in">
-          <ModulKopf symbol="⚖️" titel="Risikoanalyse" untertitel="Stückzahl, Stop und Risiko nach der 1-%-Regel" />
+        <div data-modul="risikoanalyse" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6 h-fit lg:sticky lg:top-8 animate-fade-in">
+          <ModulKopf modulId="risikoanalyse" symbol="⚖️" titel="Risikoanalyse" untertitel="Stückzahl, Stop und Risiko nach der 1-%-Regel" />
 
           {/* Logic warnings */}
           {logicWarning && (

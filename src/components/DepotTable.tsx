@@ -204,8 +204,9 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
           Grenzen klar sind. Gewinne/Verluste = NICHT realisierte Kursgewinne
           bzw. -verluste der Bestände; die Steuer steht nur in „KESt-Vorschau". */}
       {rows.length > 0 && (
-        <div className="mb-5 space-y-4">
+        <div data-modul="steuer" className="mb-6 space-y-4">
           <ModulKopf
+            modulId="steuer"
             symbol="🧾"
             titel="Steuer-Vorschau je Depot"
             untertitel="Unrealisierte (noch nicht verkaufte) Gewinne und Verluste · KESt erst bei Verkauf"
@@ -259,11 +260,12 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
               Depotübergreifender Verlustausgleich nur über die Steuererklärung.
             </div>
           )}
-          <div className="pt-4">
-            <ModulKopf symbol="📋" titel="Positionen" untertitel="Je Depot oder Gesamt · antippen für Details und Käufe" />
-          </div>
         </div>
       )}
+
+      {/* ═══ Positionen (eigenes, zuklappbares Modul) ═══ */}
+      <div data-modul="positionen" className="space-y-3">
+      <ModulKopf modulId="positionen" symbol="📋" titel="Positionen" untertitel="Je Depot oder Gesamt · antippen für Details und Käufe" />
 
       {/* ═══ Werkzeugleiste ═══ */}
       {rows.length > 0 && (
@@ -520,6 +522,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
           {" "}<span className="text-amber-600 font-bold">*</span> beim Kurs = kein Live-Kurs, Ø-Kaufkurs eingesetzt (Erklärung steht in der Karte).
         </p>
       )}
+      </div>
     </div>
   );
 }

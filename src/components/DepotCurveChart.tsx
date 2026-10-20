@@ -219,10 +219,10 @@ export default function DepotCurveChart({
   }
 
   return (
-    <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+    <div data-modul="depot-entwicklung" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
       {/* Title & View Selector */}
       <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
-        <ModulKopf
+        <ModulKopf modulId="depot-entwicklung"
           strich={false}
           symbol="📈"
           titel="Depotwert-Entwicklung & Statistik"

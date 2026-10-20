@@ -35,6 +35,7 @@ import { mergeBackfill, BackfillRow } from "./utils/historyBackfill";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 import BackupSetupModal from "./components/BackupSetupModal";
 import { holeDepotKurse } from "./utils/kursAbruf";
+import { useModulOffen } from "./components/ModulKopf";
 import BackupRestoreModal from "./components/BackupRestoreModal";
 import type { BackupPayload } from "./utils/backupFile";
 
@@ -564,6 +565,8 @@ export default function App() {
   // Depot „Aktualisieren": nur Kurse für Depot, Journal-Bestände und Watchlist
   // (gemeinsame Logik mit „Marktwerte holen", utils/kursAbruf). Ampel-Werte,
   // Distribution Days und Tages-Snapshot holt weiterhin nur der Morgen-Tab.
+  // Watchlist-Leiste im Depot: Auf/Zu wird gemerkt (Standard offen)
+  const [watchlistOffen, setWatchlistOffen] = useModulOffen("watchlist", true);
   const [depotKurseLaden, setDepotKurseLaden] = useState(false);
   const [depotKurseStand, setDepotKurseStand] = useState<string | null>(null);
   const handleDepotKurseAktualisieren = async () => {
@@ -895,7 +898,7 @@ export default function App() {
 
           {/* ⭐ Watchlist — im Depot ganz unten, eingeklappt */}
           {activeTab === "journal" && (
-            <details open className="mt-6 bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
+            <details open={watchlistOffen} onToggle={(e) => setWatchlistOffen((e.currentTarget as HTMLDetailsElement).open)} className="mt-6 bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
               <summary className="cursor-pointer list-none px-4 py-3.5 sm:px-6 flex items-center justify-between gap-2 select-none bg-slate-800 text-white rounded-3xl group-open:rounded-b-none">
                 <div>
                   <span className="text-[15px] font-extrabold uppercase tracking-wide block whitespace-nowrap">
