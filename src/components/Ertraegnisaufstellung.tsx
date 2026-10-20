@@ -127,8 +127,8 @@ export default function Ertraegnisaufstellung({ soldTrades }: Props) {
   }
 
   return (
-    <div className="space-y-3">
-      <ModulKopf
+    <div data-modul="ertraege" className="space-y-3">
+      <ModulKopf modulId="ertraege"
         symbol="🧾"
         titel="Erträgnisaufstellung"
         untertitel="Realisiert, pro Jahr & Depot"

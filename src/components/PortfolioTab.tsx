@@ -30,7 +30,7 @@ import { evaluateMarketHealth } from "../utils/marketHealth";
 import DepotCurveChart from "./DepotCurveChart";
 import DepotDashboard from "./DepotDashboard";
 import DepotKopf from "./DepotKopf";
-import ModulKopf from "./ModulKopf";
+import ModulKopf, { useModulOffen } from "./ModulKopf";
 
 interface PortfolioTabProps {
   routineDate: string;
@@ -105,6 +105,9 @@ export default function PortfolioTab({
   kurseLaden,
   kurseStand,
 }: PortfolioTabProps) {
+  // Klapp-Leisten: Auf/Zu wird gemerkt
+  const [verwaltungOffen, setVerwaltungOffen] = useModulOffen("depots-besitzer", false);
+  const [uebersichtOffen, setUebersichtOffen] = useModulOffen("depot-uebersicht", true);
   const setCustomDepots = onCustomDepotsChange;
   const setCustomBesitzer = onCustomBesitzerChange;
   const setDepotStartingCash = onDepotStartingCashChange;
@@ -1515,9 +1518,9 @@ export default function PortfolioTab({
   const cashBlock = (
     <>
       {/* Dynamic Cash Cockpit (Sticky visual helper) */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/15 space-y-6">
+      <div data-modul="cash" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/15 space-y-6">
         <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
-          <ModulKopf
+          <ModulKopf modulId="cash"
             strich={false}
             symbol="💵"
             titel="Cash-Cockpit"
@@ -1596,9 +1599,9 @@ export default function PortfolioTab({
   const kaufzieleBlock = (
     <>
       {/* PORTFOLIO ACCORDION */}
-      <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+      <div data-modul="kaufziele" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
-          <ModulKopf
+          <ModulKopf modulId="kaufziele"
             strich={false}
             symbol="🎯"
             titel="Kaufziele & Stop-Schutz"
@@ -1963,7 +1966,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
       />
 
       {/* 🏢 Depots & Besitzer — eingeklappt */}
-      <details className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
+      <details open={verwaltungOffen} onToggle={(e) => setVerwaltungOffen((e.currentTarget as HTMLDetailsElement).open)} className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/10 group">
         <summary className="cursor-pointer list-none px-4 py-3.5 sm:px-6 flex items-center justify-between gap-2 select-none bg-slate-800 text-white rounded-3xl group-open:rounded-b-none">
           <div>
             <span className="text-[15px] font-extrabold uppercase tracking-wide block whitespace-nowrap">
@@ -1976,9 +1979,9 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
         </summary>
         <div className="px-2 sm:px-3 pb-3">
       {/* DEPOT & BESITZER VERWALTUNG (Stammdaten — selten gebraucht, daher unten) */}
-      <div id="depot-consolidation-summary" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+      <div data-modul="depot-verwaltung" id="depot-consolidation-summary" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
-          <ModulKopf
+          <ModulKopf modulId="depot-verwaltung"
             strich={false}
             symbol="🏢"
             titel="Depot- & Besitzer-Verwaltung"
@@ -2125,8 +2128,8 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
 
       {/* ═══ 1. MEIN DEPOT — sofort sichtbar ═══ */}
       {/* 💼 BIOMETRISCH/REALE PORTFOLIO-BESTÄNDE (AUS ANSCHAFFUNGEN KALKULIERT) */}
-      <div id="derived-active-portfolio-section" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
-        <ModulKopf
+      <div data-modul="bestaende" id="derived-active-portfolio-section" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
+        <ModulKopf modulId="bestaende"
           symbol="💼"
           titel="Bestände"
           untertitel="Aus dem Journal berechnet, nach Abzug aller Verkäufe"
@@ -2135,7 +2138,7 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
 
 
         {/* 📊 Depot-Übersicht (Dashboard) — offen, zuklappbar */}
-        <details open className="group border border-slate-200 rounded-2xl">
+        <details open={uebersichtOffen} onToggle={(e) => setUebersichtOffen((e.currentTarget as HTMLDetailsElement).open)} className="group border border-slate-200 rounded-2xl">
           <summary className="cursor-pointer list-none px-3 py-2.5 flex items-center justify-between gap-2 select-none bg-slate-800 text-white rounded-2xl group-open:rounded-b-none">
             <span className="text-[14px] font-extrabold uppercase tracking-wide whitespace-nowrap">📊 Depot-Übersicht</span>
             <span className="text-[12px] font-bold bg-white/15 px-2.5 py-1 rounded-lg shrink-0 group-open:hidden">Öffnen ▾</span>

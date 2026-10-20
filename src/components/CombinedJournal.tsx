@@ -1152,12 +1152,12 @@ export function CombinedJournal({
 
 
   return (
-    <div id="transaction-journal-section" className="space-y-6">
+    <div data-modul="journal" id="transaction-journal-section" className="space-y-6">
       
       {/* HEADER BAR FOR COMBINED TRANSACTION JOURNAL */}
       <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
         <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
-          <ModulKopf
+          <ModulKopf modulId="journal"
             strich={false}
             symbol="🔄"
             titel="Transaktions-Journal"

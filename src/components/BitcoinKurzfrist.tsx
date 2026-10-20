@@ -133,8 +133,8 @@ export default function BitcoinKurzfrist() {
   );
 
   return (
-    <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-      <ModulKopf
+    <div data-modul="bitcoin-kurzfrist" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
+      <ModulKopf modulId="bitcoin-kurzfrist"
         symbol="₿"
         titel="Bitcoin-Kurzfrist"
         untertitel="Hebel im Perp-Markt · Zone im Power-Law-Kanal"

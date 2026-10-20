@@ -36,7 +36,7 @@ import {
   formatAccounting, 
   formatToGermanDate 
 } from "../utils/mathUtils";
-import ModulKopf from "./ModulKopf";
+import ModulKopf, { useModulOffen } from "./ModulKopf";
 
 interface DecimalInputProps {
   value: number | null;
@@ -121,6 +121,8 @@ export default function MorgenroutineTab({
   onRecordDailySnapshot,
   dailyHistory = [],
 }: MorgenroutineTabProps) {
+  // Klapp-Leiste Tages-Eingaben: Auf/Zu wird gemerkt (Standard zu)
+  const [eingabenOffen, setEingabenOffen] = useModulOffen("tages-eingaben-leiste", false);
    // Help tooltips visibility state
   const [helpId, setHelpId] = useState<string | null>(null);
   /** Aufgeklappte Watchlist-Zeilen (IDs). */
@@ -852,9 +854,9 @@ export default function MorgenroutineTab({
 
       {/* 🌐 QUICK-ACTION: Live-Daten in einem Klick — der Daily-Driver.
           Aufgeteilt in zwei Aktionen: öffentliche Marktwerte vs. private Aktien-Liste. */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-md space-y-3">
+      <div data-modul="heute-starten" className="bg-white border border-slate-200 rounded-3xl p-4 sm:p-5 shadow-md space-y-3">
         <div>
-          <ModulKopf strich={false} symbol="🌐" titel="Heute starten" untertitel="Marktwerte holen · Ampel lesen" />
+          <ModulKopf modulId="heute-starten" strich={false} symbol="🌐" titel="Heute starten" untertitel="Marktwerte holen · Ampel lesen" />
           {lastLiveFetchAt && (() => {
             const t = new Date(lastLiveFetchAt);
             const alterMin = (Date.now() - t.getTime()) / 60000;
@@ -948,13 +950,18 @@ export default function MorgenroutineTab({
             <button
               type="button"
               onClick={() => {
-                const element = document.getElementById("daily-inputs-card");
-                if (element) {
-                  element.scrollIntoView({ behavior: "smooth", block: "center" });
-                  if (onShowToast) {
-                    onShowToast("Manuelle Eingaben", "Fokus auf die Tages-Eingaben für weitere Details und Einzelaktien gelegt.", "success");
+                // Zugeklappte Leiste bzw. Modul vorher öffnen, sonst springt man ins Leere
+                setEingabenOffen(true);
+                // Nach dem Aufklappen springen (ein Frame später, wenn sichtbar)
+                setTimeout(() => {
+                  const element = document.getElementById("daily-inputs-card");
+                  if (element) {
+                    element.scrollIntoView({ behavior: "smooth", block: "center" });
+                    if (onShowToast) {
+                      onShowToast("Manuelle Eingaben", "Fokus auf die Tages-Eingaben für weitere Details und Einzelaktien gelegt.", "success");
+                    }
                   }
-                }
+                }, 50);
               }}
               className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white font-extrabold text-xs uppercase tracking-wider rounded-xl transition-all self-start shrink-0 cursor-pointer shadow-sm shadow-amber-500/15 inline-flex items-center gap-1.5"
             >
@@ -986,8 +993,8 @@ export default function MorgenroutineTab({
       <div className="space-y-6">
 
         {/* Marktstimmung & Kaufschranken (inkl. Distribution Days) */}
-          <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-            <ModulKopf
+          <div data-modul="marktstimmung" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
+            <ModulKopf modulId="marktstimmung"
               symbol="📊"
               titel="Marktstimmung & Kaufschranken"
               untertitel="VIX/VXV · VVIX · SPX · Öl · Gas · Distribution Days"
@@ -1219,7 +1226,7 @@ export default function MorgenroutineTab({
         <BitcoinKurzfrist />
 
         {/* 🛟 NOTFALL: Manuelle Tages-Eingaben (nur bei Bedarf aufklappen) */}
-        <details className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/20 group">
+        <details open={eingabenOffen} onToggle={(e) => setEingabenOffen((e.currentTarget as HTMLDetailsElement).open)} className="bg-white border border-slate-100 rounded-3xl shadow-md shadow-slate-200/20 group">
           <summary className="cursor-pointer list-none p-5 sm:p-6 flex items-center justify-between gap-2 select-none">
             <span className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
               <span className="w-1.5 h-4 rounded bg-slate-400 block"></span>
@@ -1232,8 +1239,8 @@ export default function MorgenroutineTab({
             <p className="text-[11px] text-slate-500 mb-4 leading-relaxed">
               Normalerweise nicht nötig — die Werte kommen automatisch über „Marktwerte holen". Nutze diese Felder nur, falls ein Wert beim Live-Abruf einmal fehlt.
             </p>
-            <div id="daily-inputs-card" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-            <ModulKopf
+            <div data-modul="tages-eingaben" id="daily-inputs-card" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
+            <ModulKopf modulId="tages-eingaben"
               symbol="✍️"
               titel="Tages-Eingaben"
               untertitel="Nur nötig, wenn beim Abruf ein Wert fehlt"

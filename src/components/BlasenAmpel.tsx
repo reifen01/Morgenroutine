@@ -118,8 +118,8 @@ export default function BlasenAmpel() {
   const stand = ergebnisse[0]?.aktuell?.monat ?? null;
 
   return (
-    <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-      <ModulKopf
+    <div data-modul="blasen-ampel" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
+      <ModulKopf modulId="blasen-ampel"
         symbol="🫧"
         titel="Blasen-Ampel (Sektoren)"
         untertitel="Verdoppelt in zwei Jahren? · sperrt keinen Kauf"
