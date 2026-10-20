@@ -19,6 +19,7 @@ import {
   BITCOIN_QUELLEN, BITCOIN_RANG, BitcoinRohdaten, BitcoinZustand, HEBEL_REGEL, ZONE_REGEL,
   berechneHebel, berechneZone, bitcoinTrend,
 } from "../utils/bitcoinKurzfrist";
+import ModulKopf from "./ModulKopf";
 
 const CACHE_KEY = "morgenroutine_bitcoin_kurzfrist";
 const CACHE_TTL = 30 * 60 * 1000;
@@ -133,11 +134,12 @@ export default function BitcoinKurzfrist() {
 
   return (
     <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-      <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-        <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
-        ₿ Bitcoin-Kurzfrist
-        <HilfeLink abschnitt="bitcoin-kurzfrist" titel="Bitcoin-Kurzfrist im Handbuch nachlesen" />
-      </h3>
+      <ModulKopf
+        symbol="₿"
+        titel="Bitcoin-Kurzfrist"
+        untertitel="Hebel im Perp-Markt · Zone im Power-Law-Kanal"
+        hilfe={<HilfeLink abschnitt="bitcoin-kurzfrist" titel="Bitcoin-Kurzfrist im Handbuch nachlesen" />}
+      />
 
       {(hebel || zone) && (
         <div className="flex flex-wrap gap-1.5">

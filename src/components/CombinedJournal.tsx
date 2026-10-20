@@ -20,6 +20,7 @@ import { CORE_ASSETS } from "../utils/assetRegistry";
 import { useStockSearch, symbolToKey } from "../utils/useStockSearch";
 import { parseTabelle, importId } from "../utils/importParser";
 import AICoachTab from "./AICoachTab";
+import ModulKopf from "./ModulKopf";
 
 interface CombinedJournalProps {
   routineDate: string;
@@ -1155,21 +1156,14 @@ export function CombinedJournal({
       
       {/* HEADER BAR FOR COMBINED TRANSACTION JOURNAL */}
       <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-100 pb-4 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-slate-50 border border-slate-100/70 rounded-xl text-slate-800">
-              <History className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
-                🔄 Kombiniertes Transaktions-Journal
-                <HilfeLink abschnitt="steuern" titel="Steuermatching im Handbuch nachlesen" />
-              </h3>
-              <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Kombinierte Buchführung aller Käufe und Verkäufe mit Steuermatching &amp; Tranchenverfolgung
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
+          <ModulKopf
+            strich={false}
+            symbol="🔄"
+            titel="Transaktions-Journal"
+            untertitel="Alle Käufe & Verkäufe · KESt-Matching · Tranchen"
+            hilfe={<HilfeLink abschnitt="steuern" titel="Steuermatching im Handbuch nachlesen" />}
+          />
           
           <div className="flex flex-wrap items-center gap-2 sm:ml-auto">
             <button

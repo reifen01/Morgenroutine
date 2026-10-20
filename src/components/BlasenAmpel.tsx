@@ -20,6 +20,7 @@ import {
   BLASEN_BENCHMARK, BLASEN_RANG, BLASEN_REGEL, BLASEN_SEKTOREN, BlasenErgebnis, BlasenZustand, MonatsKurse,
   berechneBlasenAmpel, blasenTrend,
 } from "../utils/blasenAmpel";
+import ModulKopf from "./ModulKopf";
 
 const CACHE_KEY = "morgenroutine_blasen_monatskurse";
 const CACHE_TTL = 12 * 60 * 60 * 1000;
@@ -118,11 +119,12 @@ export default function BlasenAmpel() {
 
   return (
     <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/20">
-      <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest flex items-center gap-2">
-        <span className="w-1.5 h-4 rounded bg-slate-800 block"></span>
-        🫧 Blasen-Ampel (Sektoren)
-        <HilfeLink abschnitt="blasen-ampel" titel="Blasen-Ampel im Handbuch nachlesen" />
-      </h3>
+      <ModulKopf
+        symbol="🫧"
+        titel="Blasen-Ampel (Sektoren)"
+        untertitel="Verdoppelt in zwei Jahren? · sperrt keinen Kauf"
+        hilfe={<HilfeLink abschnitt="blasen-ampel" titel="Blasen-Ampel im Handbuch nachlesen" />}
+      />
 
       {ergebnisse.length > 0 && (
         <div className="flex flex-wrap gap-1.5">

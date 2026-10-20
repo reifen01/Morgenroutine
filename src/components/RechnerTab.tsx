@@ -26,6 +26,7 @@ import {
 import { parseCleanFloat, formatAccounting } from "../utils/mathUtils";
 import HilfeLink from "./HilfeLink";
 import { LivePrices, PortfolioItem, WatchlistItem, getLivePrice } from "../types";
+import ModulKopf from "./ModulKopf";
 
 /**
  * Werte, die von außerhalb in den Rechner geladen werden (Watchlist im Depot,
@@ -460,12 +461,16 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
           {ansicht === "rechner" && (<>
           {/* CALCULATOR CARD */}
           <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
-            <div className="flex items-center justify-between border-b border-slate-50 pb-4">
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
-                <Calculator className="h-5 w-5 text-slate-800" />
-                Aktien-Positionsgrößen &amp; Risiko-Rechner
-                <HilfeLink abschnitt="position-sizing" titel="1%-Regel im Handbuch nachlesen" gross />
-              </h2>
+            <div className="flex items-center justify-between gap-2 border-b-2 border-slate-800 pb-3">
+              <div className="flex-1 min-w-0">
+                <ModulKopf
+                  strich={false}
+                  symbol="🧮"
+                  titel="Positionsgröße & Risiko"
+                  untertitel="Stückzahl und Stop nach der 1-%-Regel"
+                  hilfe={<HilfeLink abschnitt="position-sizing" titel="1%-Regel im Handbuch nachlesen" gross />}
+                />
+              </div>
               <button
                 onClick={handleResetForm}
                 className="text-slate-400 hover:text-slate-800 p-2 rounded-xl hover:bg-slate-50 transition-colors"
@@ -697,10 +702,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
           {/* PSYCHOLOGY DISCIPLINE FORM */}
           <div className="bg-[#FFFDF9] border border-amber-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-amber-100/30 space-y-4">
-            <h3 className="text-base font-bold text-amber-950 border-b border-amber-50 pb-2.5 flex items-center gap-2 font-display">
-              <Brain className="h-5 w-5 text-amber-600" />
-              Renes unbestechlicher Disziplin-Filter (Psychologie)
-            </h3>
+            <ModulKopf symbol="🧠" titel="Disziplin-Filter" untertitel="Renes Psychologie-Check vor jedem Kauf" />
             
             <p className="text-xs text-amber-800/90 font-medium leading-relaxed">
               Gemäß dem René-Psychologiehandbuch "Die 7 größten Denkfehler": Du darfst erst dann handeln, wenn du deine Emotionen gnadenlos analysierst und schriftlich festhältst!
@@ -766,12 +768,14 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
 
           {/* ATR STOP-LOSS FINDER (PINE SCRIPT SYNC) */}
           <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-2">
-              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2 font-display uppercase tracking-widest">
-                <TrendingDown className="h-5 w-5 text-slate-800 animate-pulse" />
-                🖥️ Pine Script ATR Stop-Loss Finder (TradingView Sync)
-                <HilfeLink abschnitt="stop-loss" titel="Stop-Loss-Regel im Handbuch nachlesen" gross />
-              </h3>
+            <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
+              <ModulKopf
+                strich={false}
+                symbol="🛑"
+                titel="ATR Stop-Loss-Finder"
+                untertitel="Wie der Pine-Script-Indikator in TradingView"
+                hilfe={<HilfeLink abschnitt="stop-loss" titel="Stop-Loss-Regel im Handbuch nachlesen" gross />}
+              />
               <span className="text-[10px] bg-slate-50 text-slate-900 px-2.5 py-1 rounded-xl font-mono font-bold uppercase whitespace-nowrap border border-slate-100 shadow-3xs">
                 m = {atrCalcMult.toFixed(1)}x
               </span>
@@ -1284,9 +1288,7 @@ export default function RechnerTab({ routineDate, livePrices, portfolioData, wat
         {/* Right Column: Dynamic Outputs */}
         {ansicht === "rechner" && (
         <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/10 space-y-6 h-fit lg:sticky lg:top-8 animate-fade-in">
-          <h3 className="text-xs sm:text-sm font-bold text-slate-500 uppercase tracking-widest border-b border-slate-50 pb-3 font-display">
-            Mathematische Risikoanalyse
-          </h3>
+          <ModulKopf symbol="⚖️" titel="Risikoanalyse" untertitel="Stückzahl, Stop und Risiko nach der 1-%-Regel" />
 
           {/* Logic warnings */}
           {logicWarning && (

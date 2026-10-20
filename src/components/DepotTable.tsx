@@ -19,6 +19,7 @@ import { LivePrices, PortfolioPurchase, getLivePrice } from "../types";
 import { formatAccounting, formatToGermanDate, KEST_SATZ, kestAuf, istSteuereinfach } from "../utils/mathUtils";
 import { RegisteredAsset, limitFor, resolveAssetMeta, canonicalAssetKey } from "../utils/assetRegistry";
 import HilfeLink from "./HilfeLink";
+import ModulKopf from "./ModulKopf";
 import { yahooTickerForPortfolio } from "../utils/yahooMapping";
 import { MarketHealth } from "../utils/marketHealth";
 
@@ -204,15 +205,12 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
           bzw. -verluste der Bestände; die Steuer steht nur in „KESt-Vorschau". */}
       {rows.length > 0 && (
         <div className="mb-5 space-y-4">
-          <div className="px-1">
-            <div className="text-[13px] font-extrabold text-slate-900 uppercase tracking-wide">
-              🧾 Steuer-Vorschau je Depot
-              <HilfeLink abschnitt="steuern" titel="KESt, Verlustausgleich und Berechnungsmethode nachlesen" />
-            </div>
-            <div className="text-[11px] font-semibold text-slate-600">
-              Unrealisierte (noch nicht verkaufte) Gewinne und Verluste der Bestände · KESt erst bei Verkauf
-            </div>
-          </div>
+          <ModulKopf
+            symbol="🧾"
+            titel="Steuer-Vorschau je Depot"
+            untertitel="Unrealisierte (noch nicht verkaufte) Gewinne und Verluste · KESt erst bei Verkauf"
+            hilfe={<HilfeLink abschnitt="steuern" titel="KESt, Verlustausgleich und Berechnungsmethode nachlesen" />}
+          />
           {steuerProDepot.map((d) => (
             <div key={`steuer-${d.depot}`} className="border-2 border-slate-300 rounded-2xl overflow-hidden bg-white shadow-sm">
               <div className="bg-slate-800 text-white px-3 py-2 flex items-center justify-between gap-2 flex-wrap">
@@ -261,8 +259,8 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
               Depotübergreifender Verlustausgleich nur über die Steuererklärung.
             </div>
           )}
-          <div className="pt-1 border-t-2 border-slate-800">
-            <div className="px-1 pt-3 text-[13px] font-extrabold text-slate-900 uppercase tracking-wide">📋 Positionen</div>
+          <div className="pt-4">
+            <ModulKopf symbol="📋" titel="Positionen" untertitel="Je Depot oder Gesamt · antippen für Details und Käufe" />
           </div>
         </div>
       )}

@@ -30,6 +30,7 @@ import { evaluateMarketHealth } from "../utils/marketHealth";
 import DepotCurveChart from "./DepotCurveChart";
 import DepotDashboard from "./DepotDashboard";
 import DepotKopf from "./DepotKopf";
+import ModulKopf from "./ModulKopf";
 
 interface PortfolioTabProps {
   routineDate: string;
@@ -1515,20 +1516,13 @@ export default function PortfolioTab({
     <>
       {/* Dynamic Cash Cockpit (Sticky visual helper) */}
       <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 shadow-md shadow-slate-200/15 space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between border-b border-slate-50 pb-4 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-slate-50 border border-slate-100/70 rounded-xl text-slate-800">
-              <Wallet className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display">
-                💵 Cash-Cockpit (Eiserne Sachwert-Absicherung)
-              </h3>
-              <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Schutzschild gegen Gier • Depotkapital: {formatAccounting(START_CASH)} €
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
+          <ModulKopf
+            strich={false}
+            symbol="💵"
+            titel="Cash-Cockpit"
+            untertitel={<>Eiserne Sachwert-Absicherung · Depotkapital: {formatAccounting(START_CASH)} €</>}
+          />
           
           <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-xl self-start md:self-auto transition-colors">
             <span className="text-[10px] font-bold text-slate-450 uppercase font-sans">Eiserne Reserve:</span>
@@ -1603,11 +1597,13 @@ export default function PortfolioTab({
     <>
       {/* PORTFOLIO ACCORDION */}
       <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-2">
-          <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
-            <TrendingUp className="h-5 w-5 text-slate-800 shrink-0" />
-            💼 Aktives Portfolio ({atrMultiplier.toFixed(1)}x ATR Stop-Schutzmechanismus)
-          </h3>
+        <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
+          <ModulKopf
+            strich={false}
+            symbol="🎯"
+            titel="Kaufziele & Stop-Schutz"
+            untertitel={<>Aktives Portfolio · Stop = {atrMultiplier.toFixed(1)}× ATR</>}
+          />
           <div id="portfolio-alarm-banner">
             {/* Will show dynamically calculated alarms */}
           </div>
@@ -1981,20 +1977,13 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
         <div className="px-2 sm:px-3 pb-3">
       {/* DEPOT & BESITZER VERWALTUNG (Stammdaten — selten gebraucht, daher unten) */}
       <div id="depot-consolidation-summary" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
-        <div className="flex items-center justify-between border-b border-slate-50 pb-4 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-slate-100 border border-slate-250 rounded-xl text-slate-700">
-              <Wallet className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
-                🏢 Depot- &amp; Besitzer-Verwaltung
-              </h3>
-              <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Eigene Depot-/Broker-Namen und Besitzer anlegen — sie stehen dann in den Formularen zur Auswahl
-              </p>
-            </div>
-          </div>
+        <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
+          <ModulKopf
+            strich={false}
+            symbol="🏢"
+            titel="Depot- & Besitzer-Verwaltung"
+            untertitel="Eigene Depot-/Broker-Namen und Besitzer anlegen — sie stehen dann in den Formularen zur Auswahl"
+          />
           <button
             onClick={() => setShowDepotManagement(!showDepotManagement)}
             className="h-9 px-3.5 bg-slate-50 hover:bg-slate-100 text-slate-705 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer border border-slate-205 shadow-2xs active:scale-95"
@@ -2137,23 +2126,12 @@ plot(x2, title="ATR Long Stop Loss", color=color.teal, linewidth=1)`}
       {/* ═══ 1. MEIN DEPOT — sofort sichtbar ═══ */}
       {/* 💼 BIOMETRISCH/REALE PORTFOLIO-BESTÄNDE (AUS ANSCHAFFUNGEN KALKULIERT) */}
       <div id="derived-active-portfolio-section" className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-slate-50 pb-4 gap-4">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 bg-emerald-50 border border-emerald-100/70 rounded-xl text-emerald-600">
-              <Scale className="h-5 w-5" />
-            </div>
-            <div>
-              <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
-                💼 Reale Portfolio-Bestände (Aus Anschaffungen)
-                <HilfeLink abschnitt="steuern" titel="KESt und Verlustausgleich im Handbuch nachlesen" />
-              </h3>
-              <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-                Aktive Wertpapiere berechnet aus dem Transaktions-Journal nach Abzug aller realisierten Verkäufe
-              </p>
-            </div>
-          </div>
-          
-        </div>
+        <ModulKopf
+          symbol="💼"
+          titel="Bestände"
+          untertitel="Aus dem Journal berechnet, nach Abzug aller Verkäufe"
+          hilfe={<HilfeLink abschnitt="steuern" titel="KESt und Verlustausgleich im Handbuch nachlesen" />}
+        />
 
 
         {/* 📊 Depot-Übersicht (Dashboard) — offen, zuklappbar */}

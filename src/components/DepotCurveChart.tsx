@@ -13,6 +13,7 @@ import {
 import { TrendingUp, TrendingDown, Target, Wallet, Award, Activity, Percent } from "lucide-react";
 import { SoldTradeItem } from "../types";
 import { formatAccounting } from "../utils/mathUtils";
+import ModulKopf from "./ModulKopf";
 
 interface DepotCurveChartProps {
   soldTrades: SoldTradeItem[];
@@ -220,16 +221,13 @@ export default function DepotCurveChart({
   return (
     <div className="bg-white border border-slate-100 rounded-3xl p-3.5 sm:p-8 space-y-6 shadow-md shadow-slate-200/10">
       {/* Title & View Selector */}
-      <div className="flex flex-col sm:flex-row justify-between sm:items-center border-b border-slate-50 pb-4 gap-4">
-        <div>
-          <h3 className="text-xs sm:text-sm font-bold text-slate-900 uppercase tracking-widest font-display flex items-center gap-2">
-            <Activity className="h-5 w-5 text-slate-800 shrink-0" />
-            📊 Depotwert-Entwicklung &amp; Trading-Statistiken
-          </h3>
-          <p className="text-[10px] text-slate-400 font-semibold font-mono mt-0.5">
-            Historischer Kapitalverlauf basierend auf realisierten Trade-Verkäufen
-          </p>
-        </div>
+      <div className="flex flex-col gap-3 border-b-2 border-slate-800 pb-3">
+        <ModulKopf
+          strich={false}
+          symbol="📈"
+          titel="Depotwert-Entwicklung & Statistik"
+          untertitel="Kapitalverlauf aus realisierten Verkäufen"
+        />
 
         <div className="flex items-center bg-slate-50 border border-slate-150 p-1 rounded-xl self-start sm:self-auto shadow-3xs">
           <button
