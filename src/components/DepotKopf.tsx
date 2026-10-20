@@ -42,7 +42,7 @@ export default function DepotKopf({ holdings, livePrices, onAktualisieren, laedt
   const heutePct = vortagWert > 0 ? (heute / vortagWert) * 100 : null;
 
   const pfeil = (v: number) => (v > 0 ? "▲" : v < 0 ? "▼" : "▶");
-  const farbe = (v: number) => (v > 0 ? "text-emerald-400" : v < 0 ? "text-rose-400" : "text-slate-300");
+  const farbe = (v: number) => (v > 0 ? "text-emerald-600" : v < 0 ? "text-rose-600" : "text-slate-600");
   const vz = (v: number) => (v > 0 ? "+" : "");
   const pct = (v: number) => v.toLocaleString("de-DE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -55,10 +55,10 @@ export default function DepotKopf({ holdings, livePrices, onAktualisieren, laedt
   })();
 
   return (
-    <div className="bg-slate-900 text-white sm:rounded-2xl px-3 py-3 font-mono">
+    <div className="bg-white text-slate-900 border-y sm:border border-slate-200 sm:rounded-2xl shadow-md shadow-slate-200/10 px-3 py-3 font-mono">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <div className="text-[11px] font-bold uppercase tracking-wide text-slate-300 font-sans">Depotwert</div>
+          <div className="text-[11px] font-bold uppercase tracking-wide text-slate-500 font-sans">Depotwert</div>
           <div className="text-[26px] leading-tight font-extrabold tabular-nums whitespace-nowrap">€ {formatAccounting(wert)}</div>
         </div>
         {onAktualisieren && (
@@ -67,28 +67,28 @@ export default function DepotKopf({ holdings, livePrices, onAktualisieren, laedt
             onClick={onAktualisieren}
             disabled={laedt}
             className={"shrink-0 flex flex-col items-center gap-0.5 rounded-xl px-3 py-2 font-sans transition-all active:scale-95 " +
-              (laedt ? "bg-white/10 text-slate-400 cursor-not-allowed" : "bg-white text-slate-900 shadow")}
+              (laedt ? "bg-slate-200 text-slate-500 cursor-not-allowed" : "bg-slate-900 text-white shadow-sm")}
             title="Kurse für Depot und Watchlist neu holen (Ampel-Werte holt der Morgen-Tab)"
           >
             <span className="flex items-center gap-1.5 text-[13px] font-extrabold">
               <RefreshCw className={"h-4 w-4 " + (laedt ? "animate-spin" : "")} />
               {laedt ? "Lade…" : "Aktualisieren"}
             </span>
-            {standText && <span className={"text-[11px] font-semibold " + (laedt ? "text-slate-400" : "text-slate-600")}>Stand {standText}</span>}
+            {standText && <span className={"text-[11px] font-semibold " + (laedt ? "text-slate-500" : "text-slate-200")}>Stand {standText}</span>}
           </button>
         )}
       </div>
 
-      <div className="grid grid-cols-2 gap-x-4 mt-2.5 pt-2.5 border-t border-white/15">
+      <div className="grid grid-cols-2 gap-x-4 mt-2.5 pt-2.5 border-t border-slate-200">
         <div>
-          <span className="text-slate-300 text-[11px] font-bold block uppercase font-sans">Gewinn gesamt</span>
+          <span className="text-slate-500 text-[11px] font-bold block uppercase font-sans">Gewinn gesamt</span>
           <span className={`text-[16px] font-extrabold tabular-nums whitespace-nowrap ${farbe(gewinn)}`}>{pfeil(gewinn)} {vz(gewinn)}{formatAccounting(gewinn)} €</span>
           <span className={`block text-[13px] font-bold tabular-nums ${farbe(gewinn)}`}>{vz(gewinn)}{pct(gewinnPct)} %</span>
         </div>
         <div className="text-right">
-          <span className="text-slate-300 text-[11px] font-bold block uppercase font-sans">Heute</span>
+          <span className="text-slate-500 text-[11px] font-bold block uppercase font-sans">Heute</span>
           {heutePct === null ? (
-            <span className="text-slate-300 text-[13px] font-bold font-sans">— (Aktualisieren)</span>
+            <span className="text-slate-500 text-[13px] font-bold font-sans">— (Aktualisieren)</span>
           ) : (
             <>
               <span className={`text-[16px] font-extrabold tabular-nums whitespace-nowrap ${farbe(heute)}`}>{pfeil(heute)} {vz(heute)}{formatAccounting(heute)} €</span>
@@ -97,7 +97,7 @@ export default function DepotKopf({ holdings, livePrices, onAktualisieren, laedt
           )}
         </div>
       </div>
-      <div className="mt-1.5 text-[11px] font-semibold text-slate-300">
+      <div className="mt-1.5 text-[11px] font-semibold text-slate-600">
         Einstand € {formatAccounting(kosten)}
       </div>
     </div>
