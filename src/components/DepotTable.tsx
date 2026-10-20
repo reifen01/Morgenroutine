@@ -210,7 +210,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
               <HilfeLink abschnitt="steuern" titel="KESt, Verlustausgleich und Berechnungsmethode nachlesen" />
             </div>
             <div className="text-[11px] font-semibold text-slate-600">
-              Offene (nicht verkaufte) Kursgewinne und -verluste der Bestände · KESt erst bei Verkauf
+              Unrealisierte (noch nicht verkaufte) Gewinne und Verluste der Bestände · KESt erst bei Verkauf
             </div>
           </div>
           {steuerProDepot.map((d) => (
@@ -228,11 +228,11 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
               )}
               <div className="divide-y divide-slate-100 font-mono">
                 <div className="flex items-baseline justify-between px-3 py-1.5">
-                  <span className="text-[12px] font-bold text-slate-600 font-sans">Offene Gewinne</span>
+                  <span className="text-[12px] font-bold text-slate-600 font-sans">Unrealisierte Gewinne</span>
                   <span className="text-[14px] font-bold text-emerald-600 tabular-nums">+ € {formatAccounting(d.gewinne)}</span>
                 </div>
                 <div className="flex items-baseline justify-between px-3 py-1.5">
-                  <span className="text-[12px] font-bold text-slate-600 font-sans">Offene Verluste <span className="font-semibold text-slate-500">(Kursminus, keine Steuer)</span></span>
+                  <span className="text-[12px] font-bold text-slate-600 font-sans">Unrealisierte Verluste <span className="font-semibold text-slate-500">(keine Steuer)</span></span>
                   <span className="text-[14px] font-bold text-rose-600 tabular-nums">€ {formatAccounting(d.verluste)}</span>
                 </div>
                 <div className="flex items-baseline justify-between px-3 py-1.5">
