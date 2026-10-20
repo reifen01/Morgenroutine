@@ -198,57 +198,72 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
 
   return (
     <div>
-      {/* ═══ Kombinierte Steuer-Übersicht PRO DEPOT (Verlustausgleich) ═══ */}
+      {/* ═══ Kombinierte Steuer-Übersicht PRO DEPOT (Verlustausgleich) ═══
+          Jedes Depot ist ein eigener Block mit dunkler Kopfzeile, damit die
+          Grenzen klar sind. Gewinne/Verluste = NICHT realisierte Kursgewinne
+          bzw. -verluste der Bestände; die Steuer steht nur in „KESt-Vorschau". */}
       {rows.length > 0 && (
-        <div className="mb-3 space-y-2">
+        <div className="mb-5 space-y-4">
+          <div className="px-1">
+            <div className="text-[13px] font-extrabold text-slate-900 uppercase tracking-wide">
+              🧾 Steuer-Vorschau je Depot
+              <HilfeLink abschnitt="steuern" titel="KESt, Verlustausgleich und Berechnungsmethode nachlesen" />
+            </div>
+            <div className="text-[11px] font-semibold text-slate-600">
+              Unrealisierte (noch nicht verkaufte) Gewinne und Verluste der Bestände · KESt erst bei Verkauf
+            </div>
+          </div>
           {steuerProDepot.map((d) => (
-            <div key={`steuer-${d.depot}`} className="bg-white border border-slate-200 rounded-xl px-3 py-2">
-              <div className="flex items-center justify-between mb-1.5 gap-2 flex-wrap">
-                <span className="text-[11px] font-extrabold text-slate-800">
-                  Depot {d.depot}
-                </span>
-                <span className="flex items-center gap-1.5 flex-wrap">
-                  <span className="text-[9px] font-bold text-slate-500 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5" title="Österreich: gleitender Durchschnittspreis. Beim Teilverkauf im Verkaufsformular wählbar (FIFO/Durchschnitt).">
-                    Methode: Durchschnitt (AT)
-                  </span>
-                  {!istSteuereinfach(d.depot) && (
-                    <span className="text-[9px] font-bold text-amber-700 bg-amber-50 border border-amber-200 rounded px-1.5 py-0.5" title="Dieser Broker behält die KESt nicht automatisch ein. Der Gewinn muss selbst über die Steuererklärung erklärt und die KESt abgeführt werden.">
-                      ⚠ nicht steuereinfach · KESt bei Verkauf selbst erklären
-                    </span>
-                  )}
+            <div key={`steuer-${d.depot}`} className="border-2 border-slate-300 rounded-2xl overflow-hidden bg-white shadow-sm">
+              <div className="bg-slate-800 text-white px-3 py-2 flex items-center justify-between gap-2 flex-wrap">
+                <span className="text-[14px] font-extrabold uppercase tracking-wide">🏦 {d.depot}</span>
+                <span className="text-[11px] font-bold bg-white/15 rounded px-1.5 py-0.5" title="Österreich: gleitender Durchschnittspreis. Beim Teilverkauf im Verkaufsformular wählbar (FIFO/Durchschnitt).">
+                  Ø-Methode (AT)
                 </span>
               </div>
-              <div className="flex flex-wrap gap-2">
-                <div className="flex-1 min-w-[90px]">
-                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Gewinne</div>
-                  <div className="text-[12px] font-mono font-bold text-emerald-600">+ € {formatAccounting(d.gewinne)}</div>
+              {!istSteuereinfach(d.depot) && (
+                <div className="px-3 py-1.5 text-[11px] font-bold text-amber-800 bg-amber-50 border-b border-amber-200" title="Dieser Broker behält die KESt nicht automatisch ein. Der Gewinn muss selbst über die Steuererklärung erklärt und die KESt abgeführt werden.">
+                  ⚠ nicht steuereinfach · KESt bei Verkauf selbst erklären
                 </div>
-                <div className="flex-1 min-w-[90px]">
-                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Verluste</div>
-                  <div className="text-[12px] font-mono font-bold text-rose-600">€ {formatAccounting(d.verluste)}</div>
+              )}
+              <div className="divide-y divide-slate-100 font-mono">
+                <div className="flex items-baseline justify-between px-3 py-1.5">
+                  <span className="text-[12px] font-bold text-slate-600 font-sans">Unrealisierte Gewinne</span>
+                  <span className="text-[14px] font-bold text-emerald-600 tabular-nums">+ € {formatAccounting(d.gewinne)}</span>
                 </div>
-                <div className="flex-1 min-w-[90px]">
-                  <div className="text-[9px] font-bold text-slate-500 uppercase tracking-wide">Netto</div>
-                  <div className={`text-[12px] font-mono font-bold ${d.netto >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                <div className="flex items-baseline justify-between px-3 py-1.5">
+                  <span className="text-[12px] font-bold text-slate-600 font-sans">Unrealisierte Verluste <span className="font-semibold text-slate-500">(keine Steuer)</span></span>
+                  <span className="text-[14px] font-bold text-rose-600 tabular-nums">€ {formatAccounting(d.verluste)}</span>
+                </div>
+                <div className="flex items-baseline justify-between px-3 py-1.5">
+                  <span className="text-[12px] font-extrabold text-slate-800 font-sans">Netto (Gewinne − Verluste)</span>
+                  <span className={`text-[14px] font-extrabold tabular-nums ${d.netto >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
                     {d.netto >= 0 ? "+ " : ""}€ {formatAccounting(d.netto)}
-                  </div>
+                  </span>
                 </div>
-                <div className="flex-1 min-w-[110px] bg-slate-50 border border-slate-300 rounded-lg px-2 py-1">
-                  <div className="text-[9px] font-bold text-slate-600 uppercase tracking-wide">
-                    KESt-Vorschau ({(KEST_SATZ * 100).toLocaleString("de-DE")} %)
-                    <HilfeLink abschnitt="steuern" titel="KESt, Verlustausgleich und Berechnungsmethode nachlesen" />
-                  </div>
-                  <div className="text-[12px] font-mono font-extrabold text-slate-900">− € {formatAccounting(d.kestVorschau)}</div>
+                <div className="flex items-baseline justify-between px-3 py-2 bg-slate-100">
+                  <span className="text-[12px] font-extrabold text-slate-900 font-sans">
+                    🧾 KESt-Vorschau ({(KEST_SATZ * 100).toLocaleString("de-DE")} %)
+                  </span>
+                  <span className="text-[15px] font-extrabold text-slate-900 tabular-nums">− € {formatAccounting(d.kestVorschau)}</span>
                 </div>
               </div>
             </div>
           ))}
           {steuerProDepot.length > 1 && (
-            <div className="text-[10px] text-slate-500 font-semibold px-1">
-              Summe KESt-Vorschau über alle Depots: <strong className="text-slate-800">− € {formatAccounting(gesamtKest)}</strong>
-              {" "}· Depotübergreifender Verlustausgleich nur über die Steuererklärung.
+            <div className="flex items-baseline justify-between gap-2 border-2 border-slate-800 rounded-2xl px-3 py-2 bg-white">
+              <span className="text-[12px] font-extrabold text-slate-900 uppercase">Σ KESt-Vorschau alle Depots</span>
+              <span className="font-mono text-[15px] font-extrabold text-slate-900 tabular-nums">− € {formatAccounting(gesamtKest)}</span>
             </div>
           )}
+          {steuerProDepot.length > 1 && (
+            <div className="text-[11px] text-slate-600 font-semibold px-1 -mt-2">
+              Depotübergreifender Verlustausgleich nur über die Steuererklärung.
+            </div>
+          )}
+          <div className="pt-1 border-t-2 border-slate-800">
+            <div className="px-1 pt-3 text-[13px] font-extrabold text-slate-900 uppercase tracking-wide">📋 Positionen</div>
+          </div>
         </div>
       )}
 
