@@ -34,6 +34,14 @@ export interface DepotHolding {
   wkn?: string;
 }
 
+/** Ein Depot-Anteil einer zusammengefassten Position (Gesamt-Ansicht). */
+interface Teil extends DepotHolding {
+  livePrice: number;
+  mktVal: number;
+  pl: number;
+  plPct: number;
+}
+
 type SortField =
   | "name" | "depot" | "besitzer" | "shares"
   | "avg" | "price" | "value" | "pl";
@@ -69,16 +77,50 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
   // Mehrere Positionen können gleichzeitig offen sein (früher nur eine).
   const [offeneRows, setOffeneRows] = useState<Set<string>>(new Set());
 
-  const rows = useMemo(() => {
-    const enriched = holdings.map((h) => {
-      const lp = getLivePrice(livePrices, canonicalAssetKey(h.key, h.name))?.price || h.averageKaufkurs;
-      const mktVal = h.totalShares * lp;
-      const pl = mktVal - h.totalCost;
-      const plPct = h.totalCost > 0 ? (pl / h.totalCost) * 100 : 0;
-      const limit = limitFor(h.key, registry);
-      return { ...h, livePrice: lp, mktVal, pl, plPct, limit };
-    });
+  // „Je Depot" = eine Zeile je Aktie/Depot/Besitzer; „Gesamt" = gleiche Aktie
+  // über alle Depots zu einer Zeile zusammengefasst (Stück, Ø-Kurs, Wert, Gewinn).
+  const [gesamt, setGesamt] = useState(false);
 
+  // Je Depot angereichert — Grundlage für beide Ansichten und für die Steuer pro Depot
+  const proDepot = useMemo(() => holdings.map((h) => {
+    const lp = getLivePrice(livePrices, canonicalAssetKey(h.key, h.name))?.price || h.averageKaufkurs;
+    const mktVal = h.totalShares * lp;
+    const pl = mktVal - h.totalCost;
+    const plPct = h.totalCost > 0 ? (pl / h.totalCost) * 100 : 0;
+    const limit = limitFor(h.key, registry);
+    return { ...h, livePrice: lp, mktVal, pl, plPct, limit, teile: [] as Teil[] };
+  }), [holdings, livePrices, registry]);
+
+  const rows = useMemo(() => {
+    let liste = proDepot;
+    if (gesamt) {
+      const map = new Map<string, (typeof proDepot)[number]>();
+      for (const r of proDepot) {
+        const k = canonicalAssetKey(r.key, r.name);
+        const e = map.get(k);
+        if (!e) { map.set(k, { ...r, teile: [r] }); continue; }
+        e.totalShares += r.totalShares;
+        e.totalCost += r.totalCost;
+        e.mktVal += r.mktVal;
+        e.teile.push(r);
+      }
+      liste = Array.from(map.values()).map((e) => {
+        if (e.teile.length < 2) return { ...e, teile: [] };
+        const depots = Array.from(new Set(e.teile.map((t) => t.depot)));
+        const besitzer = Array.from(new Set(e.teile.map((t) => t.besitzerName)));
+        const pl = e.mktVal - e.totalCost;
+        return {
+          ...e,
+          depot: depots.length === 1 ? depots[0] : `${depots.length} Depots`,
+          besitzerName: besitzer.join(", "),
+          averageKaufkurs: e.totalShares > 0 ? e.totalCost / e.totalShares : 0,
+          pl,
+          plPct: e.totalCost > 0 ? (pl / e.totalCost) * 100 : 0,
+        };
+      });
+    }
+
+    const enriched = [...liste];
     const dir = sortAsc ? 1 : -1;
     enriched.sort((a, b) => {
       switch (sortField) {
@@ -94,15 +136,16 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
       }
     });
     return enriched;
-  }, [holdings, livePrices, registry, sortField, sortAsc]);
+  }, [proDepot, gesamt, sortField, sortAsc]);
 
   // Kombiniertes Steuer-Matching PRO DEPOT (österr. Verlustausgleich):
   // Beim steuereinfachen Broker werden Gewinne/Verluste automatisch nur
   // INNERHALB desselben Depots verrechnet. Depotübergreifend braucht es die
-  // Verlustausgleichsbescheinigung + Steuererklärung — daher pro Depot.
+  // Verlustausgleichsbescheinigung + Steuererklärung — daher pro Depot,
+  // auch in der Gesamt-Ansicht.
   const steuerProDepot = useMemo(() => {
     const map = new Map<string, { depot: string; gewinne: number; verluste: number; netto: number; kestVorschau: number }>();
-    rows.forEach((r) => {
+    proDepot.forEach((r) => {
       const d = r.depot || "—";
       if (!map.has(d)) map.set(d, { depot: d, gewinne: 0, verluste: 0, netto: 0, kestVorschau: 0 });
       const e = map.get(d)!;
@@ -111,7 +154,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
     const list = Array.from(map.values());
     list.forEach((e) => { e.netto = e.gewinne + e.verluste; e.kestVorschau = kestAuf(e.netto); });
     return list.sort((a, b) => a.depot.localeCompare(b.depot, "de"));
-  }, [rows]);
+  }, [proDepot]);
 
   const gesamtKest = steuerProDepot.reduce((s, d) => s + d.kestVorschau, 0);
 
@@ -212,8 +255,22 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
       {/* ═══ Werkzeugleiste ═══ */}
       {rows.length > 0 && (
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-[11px] font-semibold text-slate-500">
-            {rows.length} {rows.length === 1 ? "Position" : "Positionen"}
+          <span className="flex items-center gap-2">
+            <span className="inline-flex rounded-lg border border-slate-300 overflow-hidden" role="group" aria-label="Ansicht">
+              <button
+                onClick={() => setGesamt(false)}
+                className={"px-2.5 py-1 text-[12px] font-bold transition-colors " + (!gesamt ? "bg-slate-800 text-white" : "bg-white text-slate-700")}
+                title="Eine Zeile je Aktie, Depot und Besitzer"
+              >Je Depot</button>
+              <button
+                onClick={() => setGesamt(true)}
+                className={"px-2.5 py-1 text-[12px] font-bold transition-colors border-l border-slate-300 " + (gesamt ? "bg-slate-800 text-white" : "bg-white text-slate-700")}
+                title="Gleiche Aktie über alle Depots zu einer Zeile zusammenfassen"
+              >Gesamt</button>
+            </span>
+            <span className="text-[11px] font-semibold text-slate-500">
+              {rows.length} Pos.
+            </span>
           </span>
           <button
             onClick={toggleAlle}
@@ -246,11 +303,14 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
             const id = rowId(r);
             const istOffen = offeneRows.has(id);
             const sd = stammdaten(r.key, r.name, { isin: r.isin, wkn: r.wkn });
+            const zusammen = r.teile.length > 1;
             const meineKaeufe = purchases.filter(
               (p) =>
-                String(p.key).toLowerCase() === r.key.toLowerCase() &&
-                (p.depot || "") === r.depot &&
-                (p.besitzerName || "") === r.besitzerName
+                (zusammen ? r.teile : [r]).some((t) =>
+                  String(p.key).toLowerCase() === t.key.toLowerCase() &&
+                  (p.depot || "") === t.depot &&
+                  (p.besitzerName || "") === t.besitzerName
+                )
             );
             const kestPos = kestAuf(r.pl);
 
@@ -384,6 +444,7 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                                 <span className="font-mono text-[11px] flex-1 min-w-0">
                                   <span className="font-bold text-slate-800">{formatToGermanDate(String(p.kaufDatum))}</span>
                                   <span className="text-slate-600"> · {Number(p.anzahlAktien).toFixed(2)} × {formatAccounting(Number(p.kaufKurs))}</span>
+                                  {zusammen && <span className="block text-slate-500">{p.depot} · {p.besitzerName}</span>}
                                 </span>
                                 {onEditPurchase && (
                                   <button onClick={(e) => { e.stopPropagation(); onEditPurchase(p); }} className="p-1 text-slate-500" title="Kauf bearbeiten">
@@ -401,12 +462,35 @@ export default function DepotTable({ holdings, livePrices, registry, marketHealt
                       )}
                     </div>
 
+{zusammen ? (
+                      <div className="bg-white rounded-lg border border-slate-200 px-2.5 py-2">
+                        <div className="text-[10px] font-bold text-slate-700 uppercase tracking-wide mb-1.5">Aufteilung je Depot</div>
+                        <div className="divide-y divide-slate-100">
+                          {r.teile.map((t) => (
+                            <div key={`${t.depot}|${t.besitzerName}`} className="py-1.5 flex items-center gap-2">
+                              <span className="flex-1 min-w-0 font-mono text-[11px]">
+                                <span className="font-bold text-slate-800 block truncate">{t.depot} · {t.besitzerName}</span>
+                                <span className="text-slate-600">{t.totalShares.toFixed(2)} Stk. · € {formatAccounting(t.mktVal)} · </span>
+                                <span className={t.pl >= 0 ? "text-emerald-600 font-bold" : "text-rose-600 font-bold"}>{t.pl >= 0 ? "+" : ""}{formatAccounting(t.pl)} €</span>
+                              </span>
+                              <button
+                                onClick={(e) => { e.stopPropagation(); onExit(t, t.livePrice); }}
+                                className="shrink-0 px-2.5 py-1.5 text-[11px] font-bold bg-rose-600 text-white rounded-lg active:scale-95 transition-transform"
+                              >
+                                💸 Verkaufen
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : (
                     <button
                       onClick={(e) => { e.stopPropagation(); onExit(r, r.livePrice); }}
                       className="w-full py-2 text-[12px] font-bold bg-rose-600 text-white rounded-lg active:scale-95 transition-transform"
                     >
                       💸 Position verkaufen
                     </button>
+                    )}
                   </div>
                 )}
               </div>

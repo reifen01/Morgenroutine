@@ -28,7 +28,8 @@ import BlasenAmpel from "./BlasenAmpel";
 import BitcoinKurzfrist from "./BitcoinKurzfrist";
 import { statusFuerSnapshot } from "../utils/historyBackfill";
 import { computeTrend, TrendArrow, TrendHistory, TrendKey } from "./TrendBarometer";
-import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER, yahooCandidatesForPortfolio, yahooCandidatesForWatchlist, waehleEuroKurs, EUR_USD_SYMBOL } from "../utils/yahooMapping";
+import { MARKET_SYMBOLS, YAHOO_TO_MARKET_KEY, SPX_SURROGATE_SYMBOL, SPX_SURROGATE_MULTIPLIER } from "../utils/yahooMapping";
+import { depotSymbole, kurseUebernehmen } from "../utils/kursAbruf";
 import { 
   parseCleanFloat, 
   parseCleanDate,
@@ -261,31 +262,12 @@ export default function MorgenroutineTab({
   const [isFetchingLive, setIsFetchingLive] = useState(false);
   const [lastLiveFetchAt, setLastLiveFetchAt] = useState<string | null>(() => localStorage.getItem("morgenroutine_last_live_fetch") || null);
 
-  // Collect Yahoo tickers from portfolio + watchlist for live fetch.
-  // Includes fallback candidates per item so we can recover when Yahoo
-  // returns no data for the primary listing (e.g. BABA.DE went stale).
-  // SPY is always pulled as a surrogate for ^GSPC (Yahoo flakes on the
-  // bare index quote — see SPX_SURROGATE_SYMBOL in yahooMapping).
-  // Gehaltene Positionen aus dem Journal (verbleibende Stück > 0), je Key einmal.
-  // Damit bekommen auch Werte einen Kurs, die nur im Journal stehen und nicht
-  // im Handels-Wächter angelegt sind (z.B. Alphabet) — vorher blieb dort der
-  // Stern "kein Live-Kurs".
-  const journalHoldings = (): { key: string; name: string }[] => {
-    const seen = new Map<string, string>();
-    for (const p of portfolioPurchases) {
-      if (!(p.verbleibendeAnzahlAktien > 0)) continue;
-      const k = String(p.key || "").trim().toLowerCase();
-      if (k && !seen.has(k)) seen.set(k, p.name);
-    }
-    return Array.from(seen, ([key, name]) => ({ key, name }));
-  };
-
+  // Yahoo-Symbole: Ampel-Indikatoren + SPY (Ersatz für ^GSPC, Yahoo liefert den
+  // Index-Kurs unzuverlässig — siehe SPX_SURROGATE_SYMBOL) + alle Depot-/
+  // Journal-/Watchlist-Werte aus der gemeinsamen Kurs-Logik (utils/kursAbruf).
   const collectLiveSymbols = () => {
     const marketSyms = Object.values(MARKET_SYMBOLS);
-    const portfolioSyms = portfolioData.flatMap(p => yahooCandidatesForPortfolio(p));
-    const journalSyms = journalHoldings().flatMap(h => yahooCandidatesForPortfolio(h));
-    const watchlistSyms = watchlist.flatMap(w => yahooCandidatesForWatchlist(w));
-    return Array.from(new Set([...marketSyms, SPX_SURROGATE_SYMBOL, EUR_USD_SYMBOL, ...portfolioSyms, ...journalSyms, ...watchlistSyms]));
+    return Array.from(new Set([...marketSyms, SPX_SURROGATE_SYMBOL, ...depotSymbole(portfolioData, portfolioPurchases, watchlist)]));
   };
 
   const handleFetchLivePrices = async () => {
@@ -387,63 +369,14 @@ export default function MorgenroutineTab({
         onRecordDailySnapshot({ ...basis, status: statusFuerSnapshot(basis) });
       }
 
-      // 2. Update livePrices for every portfolio item
-      // Offenes Record: ALLE vorhandenen Kurse übernehmen (kein festes Set von
-      // Keys — sonst verlieren neue Positionen still ihren Kurs).
-      const newLive: LivePrices = {};
-      for (const [k, v] of Object.entries(livePrices)) newLive[k] = { ...v };
-      // Kurse IMMER in Euro: aus allen Kandidaten (EUR-Börsen + US-Notierung)
-      // den frischesten wählen, USD per EUR/USD umrechnen — siehe waehleEuroKurs().
-      const eurUsdRaw = data.prices?.[EUR_USD_SYMBOL]?.price;
-      const eurUsd = typeof eurUsdRaw === "number" && eurUsdRaw > 0.5 && eurUsdRaw < 2 ? eurUsdRaw : null;
-      const firstEntryWithPrice = (candidates: string[]) =>
-        waehleEuroKurs(candidates, data.prices, eurUsd);
-
-      // Handels-Wächter-Positionen UND Journal-Holdings versorgen; fehlende
-      // Kurs-Einträge werden angelegt statt übersprungen.
-      const zuVersorgen: { key: string; name?: string; ticker?: string }[] = [
-        ...portfolioData.map(p => ({ key: String(p.key), name: p.name, ticker: p.ticker })),
-        ...journalHoldings(),
-      ];
-      const versorgt = new Set<string>();
-      for (const item of zuVersorgen) {
-        const key = String(item.key || "").trim().toLowerCase();
-        if (!key || versorgt.has(key)) continue;
-        const candidates = yahooCandidatesForPortfolio(item);
-        const entry = firstEntryWithPrice(candidates);
-        if (!entry) continue;
-        if (!newLive[key]) newLive[key] = emptyLivePrice(routineDate);
-        newLive[key].price = entry.price;
-        newLive[key].date = routineDate;
-        newLive[key].quelle = entry.quelle;
-        newLive[key].changePct = entry.changePct;
-        if (typeof entry.atr === "number" && entry.atr > 0) {
-          newLive[key].atr = entry.atr;
-        }
-        versorgt.add(key);
-        updatedCount++;
-      }
+      // 2.+3. Kurse für Depot, Journal-Bestände und Watchlist übernehmen —
+      // gemeinsame Logik mit dem Depot-„Aktualisieren" (utils/kursAbruf).
+      const kurse = kurseUebernehmen(data.prices, livePrices, portfolioData, portfolioPurchases, watchlist, routineDate);
+      const newLive = kurse.livePrices;
+      updatedCount += kurse.anzahl;
       onLivePricesChange(newLive);
-
-      // 3. Update watchlist
-      let watchlistChanged = false;
-      const newWatchlist = watchlist.map(w => {
-        const candidates = yahooCandidatesForWatchlist(w);
-        const entry = firstEntryWithPrice(candidates);
-        if (!entry) return w;
-        const next = { ...w };
-        next.price = entry.price.toFixed(2);
-        next.changePct = entry.changePct;
-        next.quelle = entry.quelle;
-        updatedCount++;
-        watchlistChanged = true;
-        if (typeof entry.atr === "number" && entry.atr > 0) {
-          next.atr = entry.atr.toFixed(2);
-        }
-        return next;
-      });
-      if (watchlistChanged) {
-        onWatchlistChange(newWatchlist);
+      if (kurse.watchlist) {
+        onWatchlistChange(kurse.watchlist);
       }
 
       // 4. Persist cache

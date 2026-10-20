@@ -34,6 +34,7 @@ import { MarketState, LivePrices, PortfolioItem, ChecklistItem, SoldTradeItem, P
 import { mergeBackfill, BackfillRow } from "./utils/historyBackfill";
 import { parseCleanFloat, formatAccounting } from "./utils/mathUtils";
 import BackupSetupModal from "./components/BackupSetupModal";
+import { holeDepotKurse } from "./utils/kursAbruf";
 import BackupRestoreModal from "./components/BackupRestoreModal";
 import type { BackupPayload } from "./utils/backupFile";
 
@@ -560,6 +561,34 @@ export default function App() {
     setToast({ title, msg, type });
   };
 
+  // Depot „Aktualisieren": nur Kurse für Depot, Journal-Bestände und Watchlist
+  // (gemeinsame Logik mit „Marktwerte holen", utils/kursAbruf). Ampel-Werte,
+  // Distribution Days und Tages-Snapshot holt weiterhin nur der Morgen-Tab.
+  const [depotKurseLaden, setDepotKurseLaden] = useState(false);
+  const [depotKurseStand, setDepotKurseStand] = useState<string | null>(null);
+  const handleDepotKurseAktualisieren = async () => {
+    if (depotKurseLaden) return;
+    setDepotKurseLaden(true);
+    try {
+      const r = await holeDepotKurse(livePrices, portfolioData, portfolioPurchases, watchlist, routineDate);
+      setLivePrices(r.livePrices);
+      if (r.watchlist) setWatchlist(r.watchlist);
+      setDepotKurseStand(new Date().toISOString());
+      showToast("Kurse aktualisiert", `✅ ${r.anzahl} Kurse geladen${r.cached ? " (Cache)" : ""}.`, "success");
+    } catch (err: any) {
+      showToast("Kurs-Abruf fehlgeschlagen", err?.message || "Konnte keine Kurse laden.", "error");
+    } finally {
+      setDepotKurseLaden(false);
+    }
+  };
+  // Stand: eigener Abruf im Depot, sonst der letzte „Marktwerte holen" (nur lesen)
+  const kurseStand = (() => {
+    let morgen: string | null = null;
+    try { morgen = localStorage.getItem("morgenroutine_last_live_fetch"); } catch { /* ignorieren */ }
+    if (depotKurseStand && (!morgen || depotKurseStand > morgen)) return depotKurseStand;
+    return morgen;
+  })();
+
   useEffect(() => {
     if (toast) {
       const timer = setTimeout(() => setToast(null), 4000);
@@ -858,6 +887,9 @@ export default function App() {
               onShowToast={showToast}
               verkaufVorlage={verkaufVorlage}
               onVerkaufVorlageVerbraucht={() => setVerkaufVorlage(null)}
+              onKurseAktualisieren={handleDepotKurseAktualisieren}
+              kurseLaden={depotKurseLaden}
+              kurseStand={kurseStand}
             />
           )}
 
