@@ -18,7 +18,6 @@
  *    → App.tsx ergänzt fehlende Ticker in der Morgenroutine-Watchlist
  */
 import { useEffect, useState } from "react";
-import { ExternalLink } from "lucide-react";
 import type { WatchlistItem, PortfolioItem } from "../types";
 import { yahooTickerForPortfolio, yahooTickerForWatchlist } from "../utils/yahooMapping";
 
@@ -105,17 +104,7 @@ export default function AktienScreenerTab({ watchlist, portfolio }: Props) {
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100dvh - 12.5rem)" }}>
-      <div className="flex items-center justify-between px-3 sm:px-0 py-2 text-xs text-slate-500">
-        <span className="font-semibold text-slate-700">Aktien-Screener · Kriterien nach Jens Rabe</span>
-        <a
-          href={SCREENER_PFAD}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900"
-        >
-          Eigenes Fenster <ExternalLink className="h-3.5 w-3.5" />
-        </a>
-      </div>
+      {/* Keine eigene Kopfzeile: der Screener zeigt seinen Titel selbst; „Eigenes Fenster" entfällt (eingebaut). */}
       {umzugLaeuft ? (
         <>
           <div className="flex-1 flex items-center justify-center text-[13px] font-semibold text-slate-600 px-4 text-center">
