@@ -53,6 +53,10 @@ export default defineConfig(() => {
         },
         workbox: {
           globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,woff,woff2}'],
+          // Eingebauter Aktien-Screener: eigene Seite, immer frisch vom Server
+          // (nicht vorladen, nicht auf die App-Startseite umleiten). API ebenso.
+          globIgnores: ['screener/**'],
+          navigateFallbackDenylist: [/^\/screener\//, /^\/api\//],
           skipWaiting: true,
           clientsClaim: true,
           cleanupOutdatedCaches: true,

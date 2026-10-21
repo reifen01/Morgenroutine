@@ -38,6 +38,7 @@ import { holeDepotKurse } from "./utils/kursAbruf";
 import { useModulOffen } from "./components/ModulKopf";
 import BackupRestoreModal from "./components/BackupRestoreModal";
 import type { BackupPayload } from "./utils/backupFile";
+import { screenerDatenLesen, screenerDatenSchreiben } from "./utils/backupFile";
 
 const LAST_MODIFIED_KEY = "morgenroutine_data_last_modified";
 
@@ -521,6 +522,7 @@ export default function App() {
     depotStartingCash,
     dailyHistory,
     periodLearnings,
+    screener: screenerDatenLesen(),
   });
 
   const applyRestoredPayload = (payload: BackupPayload) => {
@@ -537,6 +539,7 @@ export default function App() {
     }
     if (Array.isArray(payload.dailyHistory)) setDailyHistory(payload.dailyHistory);
     if (Array.isArray(payload.periodLearnings)) setPeriodLearnings(payload.periodLearnings);
+    if (payload.screener) screenerDatenSchreiben(payload.screener);
     showToast(
       "Aktien-Liste geladen",
       `🔓 ${payload.portfolio.length} Position(en), ${payload.watchlist.length} Watchlist-Einträge wiederhergestellt.`,
@@ -1024,7 +1027,8 @@ export default function App() {
                 const keys: string[] = [];
                 for (let i = 0; i < localStorage.length; i++) {
                   const k = localStorage.key(i);
-                  if (k && k.startsWith("morgenroutine_")) keys.push(k);
+                  // morgenroutine_* = App-Daten, rabe.* = Daten des eingebauten Aktien-Screeners
+                  if (k && (k.startsWith("morgenroutine_") || k.startsWith("rabe."))) keys.push(k);
                 }
                 keys.forEach((k) => localStorage.removeItem(k));
                 // States explizit auf leer setzen (sofortiger UI-Refresh)

@@ -1,9 +1,15 @@
 /**
  * AKTIEN-SCREENER (Unter-Tab von „Analyse“)
  * -----------------------------------------
- * Bindet den eigenständigen Aktien-Screener (aktien-screener-at.vercel.app)
- * unter Analyse neben „Rechner & Checks“ und „Auswertung“ ein. Eine Codebasis für beide Apps: Änderungen am Screener sind
- * hier sofort sichtbar, ohne die Morgenroutine neu zu bauen.
+ * Der Aktien-Screener ist fest in der Morgenroutine eingebaut: Seite unter
+ * public/screener/index.html, Daten über /api/screener/* (screenerApi.ts).
+ * Er läuft als eigene Seite im iframe (gleiche Adresse wie die App).
+ *
+ * Einmaliger Umzug: Früher lief der Screener unter aktien-screener-at.vercel.app
+ * und hat dort seine Daten (rabe.*: Liste, Verlauf, Basis, Notizen, Filter)
+ * gespeichert. Beim ersten Öffnen holt der Tab sie einmal von dort ab
+ * (?export=1, postMessage nur von dieser Adresse) und merkt sich das in
+ * morgenroutine_screener_umzug.
  *
  * Brücke zur Morgenroutine:
  *  - ?mr=TICKER,… / ?dp=TICKER,… → der Screener bietet an, Morgenroutine-Watchlist
@@ -11,13 +17,22 @@
  *  - postMessage {type:"aks-watchlist-add", symbols:[…]} vom Screener
  *    → App.tsx ergänzt fehlende Ticker in der Morgenroutine-Watchlist
  */
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ExternalLink } from "lucide-react";
 import type { WatchlistItem, PortfolioItem } from "../types";
 import { yahooTickerForPortfolio, yahooTickerForWatchlist } from "../utils/yahooMapping";
 
-export const SCREENER_ORIGIN = "https://aktien-screener-at.vercel.app";
-export const SCREENER_ORIGINS = [SCREENER_ORIGIN, "https://rabe-screener.vercel.app"];
+/** Screener-Seite in der App (gleiche Adresse). */
+export const SCREENER_PFAD = "/screener/index.html";
+/** Nachrichten vom Screener nur von der eigenen Adresse annehmen. */
+export const SCREENER_ORIGINS = [typeof window !== "undefined" ? window.location.origin : ""];
+/** Frühere Adresse — nur noch für die einmalige Datenübernahme. */
+const ALT_SCREENER = "https://aktien-screener-at.vercel.app";
+const UMZUG_MERKER = "morgenroutine_screener_umzug";
+
+function umzugErledigt(): boolean {
+  try { return !!localStorage.getItem(UMZUG_MERKER); } catch { return true; }
+}
 
 interface Props {
   watchlist: WatchlistItem[];
@@ -54,15 +69,46 @@ export default function AktienScreenerTab({ watchlist, portfolio }: Props) {
   const [src] = useState(() => {
     const mr = liste(watchlist.map((w) => usTicker(yahooTickerForWatchlist(w) || w.symbol)));
     const dp = liste(portfolio.filter((p) => p.status !== "sold").map((p) => usTicker(yahooTickerForPortfolio(p))));
-    return `${SCREENER_ORIGIN}/?embed=1${mr ? `&mr=${encodeURIComponent(mr)}` : ""}${dp ? `&dp=${encodeURIComponent(dp)}` : ""}`;
+    return `${SCREENER_PFAD}?embed=1${mr ? `&mr=${encodeURIComponent(mr)}` : ""}${dp ? `&dp=${encodeURIComponent(dp)}` : ""}`;
   });
+
+  // Einmalige Übernahme der alten Screener-Daten (siehe Kopfkommentar).
+  // Der Screener selbst startet erst danach, damit er nichts vorher überschreibt.
+  const [umzugLaeuft, setUmzugLaeuft] = useState(() => !umzugErledigt());
+  useEffect(() => {
+    if (!umzugLaeuft) return;
+    // Alte Seite nicht erreichbar → ohne Übernahme weiter, beim nächsten Öffnen erneut versuchen
+    const abbruch = setTimeout(() => setUmzugLaeuft(false), 12000);
+    const onMsg = (e: MessageEvent) => {
+      if (e.origin !== ALT_SCREENER) return;
+      const d = e.data as { type?: string; data?: unknown };
+      if (d?.type !== "aks-export") return;
+      try {
+        if (d.data && typeof d.data === "object") {
+          for (const [k, v] of Object.entries(d.data as Record<string, unknown>)) {
+            // nur Screener-Schlüssel, nur fehlende ergänzen
+            if (k.startsWith("rabe.") && typeof v === "string" && localStorage.getItem(k) === null) {
+              localStorage.setItem(k, v);
+            }
+          }
+        }
+        localStorage.setItem(UMZUG_MERKER, new Date().toISOString());
+      } catch {
+        /* Speicher nicht verfügbar — beim nächsten Öffnen erneut */
+      }
+      clearTimeout(abbruch);
+      setUmzugLaeuft(false);
+    };
+    window.addEventListener("message", onMsg);
+    return () => { clearTimeout(abbruch); window.removeEventListener("message", onMsg); };
+  }, [umzugLaeuft]);
 
   return (
     <div className="flex flex-col" style={{ height: "calc(100dvh - 12.5rem)" }}>
       <div className="flex items-center justify-between px-3 sm:px-0 py-2 text-xs text-slate-500">
         <span className="font-semibold text-slate-700">Aktien-Screener · Kriterien nach Jens Rabe</span>
         <a
-          href={SCREENER_ORIGIN}
+          href={SCREENER_PFAD}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900"
@@ -70,12 +116,21 @@ export default function AktienScreenerTab({ watchlist, portfolio }: Props) {
           Eigenes Fenster <ExternalLink className="h-3.5 w-3.5" />
         </a>
       </div>
+      {umzugLaeuft ? (
+        <>
+          <div className="flex-1 flex items-center justify-center text-[13px] font-semibold text-slate-600 px-4 text-center">
+            Übernehme deine bisherigen Screener-Daten (Liste, Verlauf, Notizen) …
+          </div>
+          <iframe title="Screener-Datenübernahme" src={`${ALT_SCREENER}/?export=1`} className="hidden" />
+        </>
+      ) : (
       <iframe
         title="Aktien-Screener"
         src={src}
         className="flex-1 w-full border-0 bg-white sm:rounded-xl sm:border sm:border-slate-200"
         allow="clipboard-write"
       />
+      )}
     </div>
   );
 }
