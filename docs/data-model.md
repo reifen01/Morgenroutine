@@ -25,6 +25,7 @@ _Source: `src/types.ts` (führend; die `localStorage`-Schlüssel in `src/App.tsx
 | Bitcoin-Kurzfrist-Rohdaten (Cache) | OKX-Funding, Open Interest, Long-Quote, Tagesschlüsse, Fear & Greed, 30 min gültig | MR-19 |
 | Import-Cache, Zeitstempel (letzter Abruf, letzte Änderung, letztes Backup) | Technische Merker | MR-1, MR-11 |
 | Onboarding-Flag, PWA-Install-Sperre | Technische Merker der Hülle | MR-12 |
+| Screener-Daten (`rabe.*`: Liste, Verlauf, Basis, Notizen, Filter) | Gespeicherte Daten des eingebauten Aktien-Screeners (`public/screener/`), seit 21.10.2026 im Backup | MR-8 |
 | `BackupPayload` → Backup-Datei `MR-BACKUP-1` | Alle obigen Nutzer-Entitäten gebündelt, AES-GCM-verschlüsselt mit PIN oder Passwort | MR-11; die Datei gehört dem Nutzer |
 
 Serverseitig existiert nur `cloud_profiles.json` (Reste der entfernten Google-Anbindung, ohne Aufrufer) sowie flüchtige Caches — beides kein Teil des Produkt-Datenmodells.

@@ -3,6 +3,7 @@ import path from "path";
 import { GoogleGenAI, Type } from "@google/genai";
 import dotenv from "dotenv";
 import fs from "fs";
+import { registerScreenerRoutes } from "./screenerApi.js";
 
 dotenv.config();
 
@@ -11,6 +12,9 @@ const PORT = 3000;
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
+
+// Aktien-Screener (Rabe-Kriterien): /api/screener/screen und /api/screener/scan
+registerScreenerRoutes(app);
 
 // Diagnostic ping endpoint
 app.get("/api/ping", (_req, res) => {

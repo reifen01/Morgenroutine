@@ -59,6 +59,34 @@ export interface BackupPayload {
   dailyHistory?: DailySnapshot[];
   /** User Pareto learnings per period (optional). */
   periodLearnings?: PeriodLearning[];
+  /** Aktien-Screener: seine gespeicherten Daten (Schlüssel rabe.*: Liste,
+   *  Verlauf, Basis, Notizen, Filter) — optional, ältere Backups haben es nicht. */
+  screener?: Record<string, string>;
+}
+
+/** Alle Screener-Schlüssel (rabe.*) aus dem Gerätespeicher lesen. */
+export function screenerDatenLesen(): Record<string, string> {
+  const out: Record<string, string> = {};
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("rabe.")) {
+        const v = localStorage.getItem(k);
+        if (v !== null) out[k] = v;
+      }
+    }
+  } catch { /* Speicher nicht verfügbar */ }
+  return out;
+}
+
+/** Screener-Daten aus einem Backup zurückschreiben (nur rabe.*-Schlüssel). */
+export function screenerDatenSchreiben(daten: unknown) {
+  if (!daten || typeof daten !== "object") return;
+  try {
+    for (const [k, v] of Object.entries(daten as Record<string, unknown>)) {
+      if (k.startsWith("rabe.") && typeof v === "string") localStorage.setItem(k, v);
+    }
+  } catch { /* Speicher nicht verfügbar */ }
 }
 
 function summarize(payload: BackupPayload): BackupSummary {
