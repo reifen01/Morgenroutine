@@ -197,16 +197,16 @@ export default function App() {
   // Map each tab to a fitting Handbuch section slug (substring match works,
   // see HelpModal's parseSections + startsWith logic).
   const helpSectionForTab: Record<typeof activeTab, string> = {
-    morgenroutine: "live-abruf",
-    screener: "stop-loss-berechnung",
-    kaufziele: "stop-loss-berechnung",
-    cash: "position-sizing",
-    rechner: "stop-loss-berechnung",
-    journal: "steuern",
-    auswertung: "tagesablauf",
-    regelwerk: "regel-handbuch",
-    "ai-coach": "disziplin-quote",
-    workspace: "was-die-app-heute-kann",
+    morgenroutine: "morgen",
+    screener: "screener",
+    kaufziele: "kaufziele",
+    cash: "cash-cockpit",
+    rechner: "rechner",
+    journal: "depot",
+    auswertung: "auswertung",
+    regelwerk: "regeln-coach",
+    "ai-coach": "regeln-coach",
+    workspace: "backup",
   };
 
   const handleCheckForUpdate = async () => {
