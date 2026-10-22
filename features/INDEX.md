@@ -25,7 +25,7 @@
 
 | ID | Feature | Description | Status | Spec | Created |
 |----|---------|-------------|--------|------|---------|
-| MR-1 | Marktdaten & Kursabruf | Holt per Klick die sechs Ampel-Indikatoren und die Kurse mit ATR für Depot und Watchlist, lädt beim Start die Historie nach. | Mapped | | 2026-10-18 |
+| MR-1 | Marktdaten & Kursabruf | Holt per Klick die sechs Ampel-Indikatoren und die Kurse mit ATR für Depot und Watchlist, lädt beim Start die Historie nach. | Spec'd | [MR-1-marktdaten-kursabruf](MR-1-marktdaten-kursabruf/) | 2026-10-18 |
 | MR-2 | Kaufampel & Distribution Days | Leitet aus den Marktwerten GREEN/RED ab, zählt die Verteilungstage für SPX und NDX und schreibt pro Tag einen Snapshot. | Mapped | | 2026-10-18 |
 | MR-3 | Depot-Übersicht & Bestand | Bestandstabelle mit KESt-Vorschau, Aufteilung je Aktie, Depot und Besitzer, Depot-/Besitzer-Verwaltung, Checkliste. | Mapped | | 2026-10-18 |
 | MR-4 | Kauf- & Verkaufsjournal mit KESt | Bucht Käufe als Lose und Verkäufe nach FIFO oder Durchschnitt mit KESt 27,5 %, importiert Excel und JSON. | Mapped | | 2026-10-18 |

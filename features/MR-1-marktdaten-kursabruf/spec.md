@@ -35,8 +35,17 @@ Holt per Klick die Tageswerte der sechs Ampel-Indikatoren und die Kurse mit ATR 
 - **AC-13:** Bei Erfolg erscheint „Live-Daten geladen – N Werte aktualisiert“, und der Zeitpunkt des letzten Abrufs wird gespeichert. _(`src/components/MorgenroutineTab.tsx:385–398`)_
 - **AC-14:** „Aktualisieren“ im Depot holt nur Kurse — keine Ampel-Werte, kein Tages-Snapshot. _(`src/utils/kursAbruf.ts:100–120`)_
 
+### Verlauf & lokaler Zwischenspeicher
+
+- **AC-15:** Beim Öffnen der App werden die Marktwerte der letzten 60 Tage geholt; der Server erlaubt 5 bis 120 Tage, Standard 60. _(`src/App.tsx:156–188`, `server.ts:981`)_
+- **AC-16:** Der Server hält den Verlauf 1 Stunde im Zwischenspeicher. _(`server.ts:976–984`)_
+- **AC-17:** In den Verlauf kommen nur Handelstage (Tage mit VIX- oder SPX-Wert); der heutige Tag ist nie dabei, weil sein Schlusskurs noch fehlt. _(`server.ts:1016–1024`, `src/utils/historyBackfill.ts:61`)_
+- **AC-18:** Fehlende Tage werden neu angelegt; bei vorhandenen Tagen werden nur leere Felder gefüllt — ein erfasster Wert wird nie überschrieben. _(`src/utils/historyBackfill.ts:1–14`)_
+- **AC-19:** Fehlt der S&P 500 im Verlauf, wird er als SPY × 10 gesetzt. _(`server.ts:998–1002`)_
+- **AC-20:** Kommt etwas hinzu, erscheint „Verlauf ergänzt – N Tage neu, M Tage vervollständigt“; ohne Netz bleibt der Verlauf unverändert und es gibt keine Meldung. _(`src/App.tsx:172–184`)_
+- **AC-21:** „📥 Letzten Cache laden“ spielt die zuletzt geholten Werte wieder ein; stammt der Cache von einem früheren Tag, ist das Datum orange markiert. Der Cache enthält die Kurse **aller** beim Abruf versorgten Werte (Depot, Journal-Bestände, Watchlist) — keine feste Aktienliste. _(`src/components/MorgenroutineTab.tsx:201–263`, `916–930`)_
+
 ## Open Questions
 
-_Keine Abweichungen bisher._
-
-_Continues at: Block 3 von 3 (Historie & lokaler Cache, ab AC-15). Run /reverse-spec MR-1 to resume._
+- **Abweichung (AC-21):** Code speichert im Cache fest nur Tesla, ServiceNow, Alibaba und Bitcoin (`src/components/MorgenroutineTab.tsx:215–220`, `242–248`); AC-21 verlangt alle versorgten Werte. Gefunden 2026-10-22.
+- **Offen (AC-21):** Der Cache enthält heute auch SPX und Distribution Days nicht (nur VIX, VXV, VVIX, WTI, Gas — `src/components/MorgenroutineTab.tsx:208–214`). Ob sie hineingehören, entscheidet der Nutzer.
