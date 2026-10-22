@@ -46,8 +46,11 @@ function parseSections(md: string): Section[] {
       });
     }
   }
-  for (let i = 0; i < sections.length - 1; i++) {
-    sections[i].end = sections[i + 1].start;
+  // A section runs to the next heading of the same or a higher level, so a chapter (##)
+  // shows its subsections (###) too instead of stopping at the first one.
+  for (let i = 0; i < sections.length; i++) {
+    const next = sections.slice(i + 1).find((s) => s.level <= sections[i].level);
+    sections[i].end = next ? next.start : lines.length;
   }
   return sections;
 }
