@@ -25,12 +25,28 @@ Fasst die Tages-Snapshots der Morgenroutine zu Zeiträumen zusammen, hält je Ze
 - **AC-6:** Ohne Tagesdaten erscheint „Noch keine Tagesdaten erfasst …“ mit Verweis auf „Marktwerte holen“. _(`src/components/AuswertungTab.tsx:126–131`)_
 - **AC-7:** Je Zeitraum lässt sich eine Pareto-Notiz schreiben; Speichern ersetzt die frühere Notiz desselben Zeitraums, darunter steht „Zuletzt gespeichert: …“. _(`src/components/AuswertungTab.tsx:66–74, 189–192`)_
 
+### KI-Entwurf
+
+- **AC-8:** „KI-Entwurf erstellen“ schickt die Daten des Zeitraums an die KI; der Entwurf erscheint im Textfeld und wird **sofort automatisch gespeichert**, ohne Rückfrage und ohne extra Klick auf „Speichern“. _(`src/components/AuswertungTab.tsx:39–64`)_
+- **AC-9:** Fehlt der Gemini-Schlüssel, kommt „Gemini API-Schlüssel ist nicht konfiguriert.“; ohne Tagesdaten „Keine Tagesdaten für diesen Zeitraum vorhanden.“ _(`server.ts:148–153`)_
+- **AC-10:** Die KI begründet Kaufen/Kaufverbot ausschließlich mit den sechs Schranken der Regel-Matrix; Kursbewegungen sind nie ein Sperrgrund. Bei Distribution Days nennt sie immer die Quelle (Yahoo/manuell = harte Sperre, KI/Schätzung = nur Warnung). Der Text hat vier Abschnitte: Markt, Regel-Check, Pareto-Kern, Learning. _(`server.ts:155–206`)_
+- **AC-11:** Die KI versucht nacheinander `gemini-2.5-flash`, `gemini-2.0-flash`, `gemini-1.5-flash`; scheitern alle, erscheint „Analyse fehlgeschlagen“. _(`server.ts:209–229`, `src/components/AuswertungTab.tsx:59–60`)_
+- **AC-14:** Die KI wertet zusätzlich die **Wirkung auf Depot und Trades** im Zeitraum aus: Käufe und Verkäufe, realisierter Gewinn/Verlust, und ob an ROT-Tagen gekauft wurde (Disziplin). _(neu, noch ohne Beleg im Code)_
+
+### Erträgnisaufstellung
+
+- **AC-12:** Verkäufe werden je Kalenderjahr und Depot zusammengefasst: Anzahl, Gewinne, Verluste, Netto und gebuchte KESt; das neueste Jahr steht oben. _(`src/components/Ertraegnisaufstellung.tsx:63–111`)_
+- **AC-13:** Gewinne und Verluste werden pro Depot verrechnet, nicht depotübergreifend; je Depot steht die Steuermethode (FIFO/Durchschnitt), bei verschiedenen Methoden „gemischt“. _(`src/components/Ertraegnisaufstellung.tsx:9–10, 89–92`)_
+
 ## Out of Scope (später)
 
 - Dashboard-Grafiken (Diagramme der Kennzahlen je Zeitraum) — vom Nutzer für später gewünscht; kommt über `/refine MR-9` und ein Design, sobald es dran ist. _(2026-10-22)_
 
 ## Open Questions
 
-_Keine Abweichungen bisher._
+- **Abweichung (AC-8):** Code legt den KI-Entwurf nur ins Textfeld; gespeichert wird erst per Klick auf „Speichern“ (`src/components/AuswertungTab.tsx:57, 193–198`). AC-8 verlangt automatisches Speichern. Gefunden 2026-10-22.
+- **Fehlt (AC-14):** Die KI bekommt heute nur Marktdaten, keine Trades (`src/components/AuswertungTab.tsx:45–50`). Gefunden 2026-10-22.
+- [ ] **Datenschutz (AC-14):** Damit gehen persönliche Finanzdaten (Käufe, Verkäufe, Gewinne) an Google Gemini. Vor dem Bau `/dsgvo MR-9` ausführen.
+- [ ] **Modelle (AC-11):** `gemini-2.0-flash` und `gemini-1.5-flash` sind möglicherweise abgekündigt — `/qa` prüft die Erreichbarkeit.
 
-_Continues at: Block 2 von 2 (KI-Entwurf & Erträgnisaufstellung, ab AC-8), dann die neuen Kriterien Quartal & Jahr. Run /reverse-spec MR-9 to resume._
+_Continues at: neue Kriterien Quartal & Jahr (ab AC-15). Run /reverse-spec MR-9 to resume._
