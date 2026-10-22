@@ -125,21 +125,28 @@
     ]
   },
   "extraKnownMarketplaces": {
-    "zycck-mods": {
-      "source": {
-        "source": "github",
-        "repo": "zycck/claude-mods"
-      }
-    },
     "reifen01-mods": {
       "source": {
         "source": "github",
         "repo": "reifen01/claude-mods"
       }
+    },
+    "claude-mods-deutsch": {
+      "source": {
+        "source": "github",
+        "repo": "boonpflug/claude-mods-deutsch"
+      }
     }
   },
   "enabledPlugins": {
-    "plan-progress@zycck-mods": true,
-    "token-weather@reifen01-mods": true
+    "token-weather@reifen01-mods": true,
+    "fortschritt@claude-mods-deutsch": true,
+    "deutscher-skin@claude-mods-deutsch": true,
+    "merk-dir-das@claude-mods-deutsch": true,
+    "dateibaum@claude-mods-deutsch": true,
+    "cache-waechter@claude-mods-deutsch": true,
+    "sprengradius@claude-mods-deutsch": true,
+    "regel-merken@claude-mods-deutsch": true,
+    "replay@claude-mods-deutsch": true
   }
 }
