@@ -23,7 +23,7 @@
 |-------|-------|--------|------------------|---------------|-------------------------------|
 | Routine-Auswertung & Erträgnisaufstellung (MR-9) | Tages-Snapshots (Marktdaten, nicht personenbezogen), Pareto-Notizen (Freitext), Verkäufe mit Ergebnis, KESt, Depot- und Besitzername | Nutzer der App (und ggf. eingetragene Mit-Besitzer) | Bleibt auf dem Gerät des Nutzers; der Betreiber verarbeitet nichts davon | Bis der Nutzer löscht („Alles löschen“, MR-11) | keine |
 | KI-Entwurf der Perioden-Analyse (MR-9, heute) | Nur Marktdaten des Zeitraums | — (nicht personenbezogen) | — | Nicht gespeichert (Server) | Vercel, Google Gemini |
-| KI-Entwurf mit Wirkung auf Depot & Trades (MR-9 AC-14, **geplant**) | Käufe/Verkäufe des Zeitraums — nach Datensparsamkeit nur Titel, Datum, Ergebnis in %, Kauf an ROT-Tag (siehe vorgeschlagene ACs) | Nutzer der App | DSGVO: Art. 6(1)(b) für die angeforderte Auswertung; solange der Gemini-**Gratis-Tarif** läuft, nutzt Google die Eingaben auch für eigene Zwecke → dafür **Einwilligung** Art. 6(1)(a) nötig · DSG: erwartbarer Zweck, Hinweis + Bekanntgabe des Exportlands | Server speichert und protokolliert nichts; bei Google laut Gemini-API-Bedingungen (Gratis-Tarif: inkl. Produktverbesserung, menschliche Prüfung möglich) | Vercel, Google Gemini |
+| KI-Entwurf mit Wirkung auf Depot & Trades (MR-9 AC-14, **geplant**) | Käufe/Verkäufe des Zeitraums — nur Titel, Datum, Ergebnis in %, Kauf an ROT-Tag; nur bei eingeschaltetem Opt-in (MR-9 AC-17, AC-18) | Nutzer der App | DSGVO: Art. 6(1)(b) für die angeforderte Auswertung; solange der Gemini-**Gratis-Tarif** läuft, nutzt Google die Eingaben auch für eigene Zwecke → dafür **Einwilligung** Art. 6(1)(a) nötig · DSG: erwartbarer Zweck, Hinweis + Bekanntgabe des Exportlands | Server speichert und protokolliert nichts; bei Google laut Gemini-API-Bedingungen (Gratis-Tarif: inkl. Produktverbesserung, menschliche Prüfung möglich) | Vercel, Google Gemini |
 
 ## Besondere Kategorien
 
@@ -53,12 +53,16 @@
 - [ ] Gemini auf **bezahlten Tarif** umstellen (dann keine Nutzung der Eingaben durch Google für eigene Zwecke) — oder Einwilligung vor dem Senden einholen (MR-9)
 - [ ] Vercel-Function-Region ermitteln, wenn möglich auf Frankfurt (`fra1`) stellen
 - [ ] AVV/DPA mit Vercel und Google (Gemini, bezahlter Tarif) abschließen
-- [ ] Datenschutzerklärung in der App (nennt Vercel, Google Gemini, USA als Exportland) — fehlt projektweit
+- [ ] Datenschutzerklärung in der App (nennt Vercel, Google Gemini, USA als Exportland) — fehlt projektweit; für MR-9 als AC-20 in der Spec
+- [ ] Hinweis „Keine Anlageberatung — nur zu Informations- und Lernzwecken“ beim ersten Start / bei der Installation (MR-12)
 - [ ] Name und Anschrift des Verantwortlichen eintragen
 - [ ] `/dsgvo` für das ganze Projekt ausführen (KI-Coach, Screenshot-OCR, Google-Workspace-Sync, Cloud-Profile mit PIN sind hier noch nicht bewertet)
 
 ## Für einen Anwalt / Datenschutzberater
 
 - Ich betreibe die App als **Privatperson** öffentlich und kostenlos für fremde Nutzer, ohne Konten; alle Daten liegen im Browser der Nutzer. Bin ich für die KI-Aufrufe (Trades gehen über meine Vercel-Function an Google Gemini) Verantwortlicher, und reicht ein Hinweis plus Opt-in-Schalter vor dem ersten Senden?
+  _Einschätzung des Betreibers (2026-10-22):_ für die eigenen Daten ja; fremde Depots sieht er nie, die App startet leer. _Technischer Hinweis:_ Verantwortlich macht nach Art. 4 Nr. 7 DSGVO, wer Zweck und Mittel festlegt, nicht wer die Daten sieht — umgesetzt sind daher Opt-in und Datensparsamkeit (MR-9 AC-17, AC-18).
 - Gemini läuft im **Gratis-Tarif**, bei dem Google Eingaben für eigene Zwecke nutzen darf. Ist das für pseudonyme Trade-Daten fremder Nutzer mit Einwilligung vertretbar, oder muss ich auf den bezahlten Tarif wechseln? Gilt für Aufrufe aus der EU eine abweichende Regel in Googles Bedingungen?
-- Die KI-Auswertung bewertet Trades gegen ein Regelwerk („durfte gekauft werden?“). Ist das in Österreich bereits **Anlageberatung** (WAG/BWG) — und braucht es einen Hinweis „keine Anlageberatung“?
+  _Einschätzung des Betreibers:_ mit Einwilligung vertretbar. _Technischer Hinweis:_ Google sieht die Daten trotzdem; der bezahlte Tarif bleibt die sicherere Wahl.
+- Die KI-Auswertung bewertet Trades gegen ein Regelwerk („durfte gekauft werden?“). Ist das in Österreich bereits **Anlageberatung** (WAG/BWG)?
+  _Einschätzung des Betreibers:_ nein. _Umgesetzt:_ Hinweis „Keine Anlageberatung — nur zu Informations- und Lernzwecken“ unter jedem KI-Entwurf (MR-9 AC-23) und beim ersten Start der App (geplant für MR-12); keine Einzeltitel-Empfehlungen.
