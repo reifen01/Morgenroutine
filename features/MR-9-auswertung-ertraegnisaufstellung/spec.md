@@ -25,6 +25,9 @@ Fasst die Tages-Snapshots der Morgenroutine zu Zeiträumen zusammen, hält je Ze
 - **AC-6:** Ohne Tagesdaten erscheint „Noch keine Tagesdaten erfasst …“ mit Verweis auf „Marktwerte holen“. _(`src/components/AuswertungTab.tsx:126–131`)_
 - **AC-7:** Je Zeitraum lässt sich eine Pareto-Notiz schreiben; Speichern ersetzt die frühere Notiz desselben Zeitraums, darunter steht „Zuletzt gespeichert: …“. _(`src/components/AuswertungTab.tsx:66–74, 189–192`)_
 
+- **AC-15:** Die Routine-Auswertung lässt sich zusätzlich nach **Quartal** („Q3 / 2026“) und **Jahr** („2026“) zusammenfassen; der Umschalter hat vier Stufen: Woche, Monat, Quartal, Jahr. _(neu, noch ohne Beleg im Code)_
+- **AC-16:** Quartal und Jahr zeigen dieselben Kennzahlen wie Woche und Monat (AC-3 bis AC-5) und haben je eine eigene Pareto-Notiz mit KI-Entwurf (AC-7, AC-8, AC-14). _(neu, noch ohne Beleg im Code)_
+
 ### KI-Entwurf
 
 - **AC-8:** „KI-Entwurf erstellen“ schickt die Daten des Zeitraums an die KI; der Entwurf erscheint im Textfeld und wird **sofort automatisch gespeichert**, ohne Rückfrage und ohne extra Klick auf „Speichern“. _(`src/components/AuswertungTab.tsx:39–64`)_
@@ -48,5 +51,4 @@ Fasst die Tages-Snapshots der Morgenroutine zu Zeiträumen zusammen, hält je Ze
 - **Fehlt (AC-14):** Die KI bekommt heute nur Marktdaten, keine Trades (`src/components/AuswertungTab.tsx:45–50`). Gefunden 2026-10-22.
 - [ ] **Datenschutz (AC-14):** Damit gehen persönliche Finanzdaten (Käufe, Verkäufe, Gewinne) an Google Gemini. Vor dem Bau `/dsgvo MR-9` ausführen.
 - [ ] **Modelle (AC-11):** `gemini-2.0-flash` und `gemini-1.5-flash` sind möglicherweise abgekündigt — `/qa` prüft die Erreichbarkeit.
-
-_Continues at: neue Kriterien Quartal & Jahr (ab AC-15). Run /reverse-spec MR-9 to resume._
+- **Fehlt (AC-15, AC-16):** Code kennt nur Woche und Monat (`src/utils/periodStats.ts:12`, `src/components/AuswertungTab.tsx:109–122`). Gefunden 2026-10-22.

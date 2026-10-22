@@ -33,7 +33,7 @@
 | MR-6 | Cash-Cockpit | Rechnet je Depot arbeitendes Kapital, freies Cash und reserviertes Budget aus Startkapital, Käufen und Verkäufen. | Mapped | | 2026-10-18 |
 | MR-7 | Rechner & Watchlist | Stückzahl und Stop nach der 1-%-Regel, Denkfehler-Check, Favoriten-Watchlist und Aktiensuche. | Mapped | | 2026-10-18 |
 | MR-8 | Aktien-Screener (Einbettung) | Bettet den externen Screener ein und übernimmt Treffer in die Watchlist. | Mapped | | 2026-10-18 |
-| MR-9 | Auswertung & Erträgnisaufstellung | Wochen-/Monatsstatistik der Snapshots mit Pareto-Notizen und KI-Entwurf, Erträge je Jahr und Depot. | Mapped | | 2026-10-18 |
+| MR-9 | Auswertung & Erträgnisaufstellung | Wochen-/Monatsstatistik der Snapshots mit Pareto-Notizen und KI-Entwurf, Erträge je Jahr und Depot. | Spec'd | [MR-9-auswertung-ertraegnisaufstellung](MR-9-auswertung-ertraegnisaufstellung/) | 2026-10-18 |
 | MR-10 | Regelwerk & KI-Coach | Durchsuchbares Handbuch mit Direktsprung und Chat mit dem Trading-Coach. | Mapped | | 2026-10-18 |
 | MR-11 | Backup, Demo & Reset | Verschlüsselte Backup-Datei mit PIN/Passwort, Wiederherstellung mit Vergleich, Backup-Erinnerung, Demo-Daten, Alles löschen. | Mapped | | 2026-10-18 |
 | MR-12 | App-Hülle, Onboarding & PWA | Installierbare PWA mit Onboarding, Handbuch-Hilfe, Fehlerseite, Update-Banner, Kopfzeile und Ping. | Mapped | | 2026-10-18 |
