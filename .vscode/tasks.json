@@ -1,0 +1,61 @@
+{
+  // Arbeitsansicht: links Claude Code im Terminal, rechts die laufende App im Simple Browser.
+  // Starten mit Strg+Umschalt+B (oder Terminal → Task ausführen → "Morgenroutine: Ansicht").
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Morgenroutine: Ansicht",
+      "dependsOn": ["Claude Code", "Morgenroutine: App + Vorschau"],
+      "dependsOrder": "parallel",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": []
+    },
+    {
+      "label": "Morgenroutine: App + Vorschau",
+      "dependsOn": ["Morgenroutine: Dev-Server", "Morgenroutine: Vorschau"],
+      "dependsOrder": "sequence",
+      "problemMatcher": []
+    },
+    {
+      "label": "Claude Code",
+      "type": "shell",
+      "command": "claude",
+      "isBackground": true,
+      "presentation": { "reveal": "always", "focus": true, "panel": "dedicated", "clear": false },
+      "problemMatcher": []
+    },
+    {
+      // npm run dev; gilt als "bereit", sobald server.ts "Server gestartet auf Port" meldet
+      "label": "Morgenroutine: Dev-Server",
+      "type": "npm",
+      "script": "dev",
+      "isBackground": true,
+      "presentation": { "reveal": "silent", "focus": false, "panel": "dedicated" },
+      "problemMatcher": {
+        "owner": "morgenroutine-dev",
+        "pattern": { "regexp": "^__morgenroutine_kein_fehlermuster__$" },
+        "background": {
+          "activeBegins": true,
+          "beginsPattern": "^__morgenroutine_neustart__$",
+          "endsPattern": "Server gestartet auf Port"
+        }
+      }
+    },
+    {
+      // öffnet http://localhost:3000 im Simple Browser; das echo ist nur der Träger für den Aufruf
+      "label": "Morgenroutine: Vorschau",
+      "type": "shell",
+      "command": "echo Vorschau geoeffnet ${input:vorschau}",
+      "presentation": { "reveal": "never", "echo": false, "focus": false, "panel": "shared" },
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "vorschau",
+      "type": "command",
+      "command": "simpleBrowser.show",
+      "args": ["http://localhost:3000"]
+    }
+  ]
+}

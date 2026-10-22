@@ -1,0 +1,8 @@
+{
+  // Terminal-Bereich links, Editor-Bereich (Simple Browser, Dateien) rechts
+  "workbench.panel.defaultLocation": "left",
+  // Links auf die laufende App öffnen sich im Simple Browser statt im externen Browser
+  "workbench.externalUriOpeners": {
+    "localhost:3000": "simpleBrowser.open"
+  }
+}
