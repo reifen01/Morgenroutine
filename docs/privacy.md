@@ -1,72 +1,68 @@
-# Privacy Record — what this product does with personal data
+# Verarbeitungsübersicht — was dieses Produkt mit personenbezogenen Daten macht
 
-> The honest overview of which personal data this product processes, why, and for how long.
+> Die ehrliche Übersicht, welche personenbezogenen Daten das Produkt verarbeitet, wozu und wie lange.
 >
-> - Created and kept current by `/dsgvo`, one entry per processing purpose.
-> - Grows with the product: when a feature changes what is stored, its entry changes too.
-> - **Altitude:** purposes, legal bases, retention, and who else sees the data. Field-level detail lives in `docs/data-model.md` and the feature designs.
+> - Angelegt und aktuell gehalten von `/dsgvo`, ein Eintrag je Verarbeitungszweck.
+> - Wächst mit dem Produkt: Ändert ein Feature, was gespeichert wird, ändert sich sein Eintrag.
+> - **Flughöhe:** Zwecke, Rechtsgrundlagen, Speicherdauer und wer die Daten sonst sieht. Feldgenaues steht in `docs/data-model.md` und in den Feature-Designs.
 >
-> This maps closely onto the record of processing activities (*Verarbeitungsverzeichnis*, Art. 30 GDPR; Art. 12 Swiss DSG) — but it is an engineering document, not a legal filing. A lawyer or your data protection officer / advisor has the final word on whether it is complete for your situation.
+> Entspricht weitgehend dem Verzeichnis von Verarbeitungstätigkeiten (Art. 30 DSGVO; Art. 12 DSG) — ist aber ein technisches Dokument, keine rechtliche Einreichung. Ob es für deinen Fall vollständig ist, entscheidet ein Anwalt oder Datenschutzberater.
 
-**Applicable law:** _GDPR (EU/DE) · DSG (CH) · both — from `.ai-eng-kit` → `law`; the rules are in `docs/law/`_
-**Data protection stance:** _lean | standard | strict — set in `docs/PRD.md` → Constraints_
-**Controller (Verantwortlicher):** _your company / your name and address — the legal entity behind the product_
-**Last reviewed:** _YYYY-MM-DD_
+**Anwendbares Recht:** DSGVO (EU/AT) · DSG (CH) · AI Act (EU) — aus `.ai-eng-kit` → `law`; Regeln in `docs/law/`
+**Datenschutz-Haltung:** standard — `docs/PRD.md` → Rahmenbedingungen
+**Verantwortlicher:** der Autor als Privatperson (Österreich) — Name und Anschrift noch einzutragen
+**Zuletzt geprüft:** 2026-10-22 (Feature-Prüfung MR-9; eine Prüfung des ganzen Projekts mit `/dsgvo` steht noch aus)
+
+**Grundsatz der App:** Kein Konto, keine Datenbank. Depot, Journal, Notizen und Auswertungen liegen nur im Browser des Nutzers (`localStorage`). Der Betreiber sieht diese Daten nicht. Personenbezogene Daten verlassen das Gerät nur bei einzelnen Server-Aufrufen — vor allem bei den KI-Funktionen.
 
 ---
 
-## Processing activities
+## Verarbeitungstätigkeiten
 
-_One row per purpose, not per table. "Run user accounts" is a purpose; "the profiles table" is not._
+| Zweck | Daten | Wessen | Warum rechtmäßig | Speicherdauer | Beteiligte Auftragsverarbeiter |
+|-------|-------|--------|------------------|---------------|-------------------------------|
+| Routine-Auswertung & Erträgnisaufstellung (MR-9) | Tages-Snapshots (Marktdaten, nicht personenbezogen), Pareto-Notizen (Freitext), Verkäufe mit Ergebnis, KESt, Depot- und Besitzername | Nutzer der App (und ggf. eingetragene Mit-Besitzer) | Bleibt auf dem Gerät des Nutzers; der Betreiber verarbeitet nichts davon | Bis der Nutzer löscht („Alles löschen“, MR-11) | keine |
+| KI-Entwurf der Perioden-Analyse (MR-9, heute) | Nur Marktdaten des Zeitraums | — (nicht personenbezogen) | — | Nicht gespeichert (Server) | Vercel, Google Gemini |
+| KI-Entwurf mit Wirkung auf Depot & Trades (MR-9 AC-14, **geplant**) | Käufe/Verkäufe des Zeitraums — nur Titel, Datum, Ergebnis in %, Kauf an ROT-Tag; nur bei eingeschaltetem Opt-in (MR-9 AC-17, AC-18) | Nutzer der App | DSGVO: Art. 6(1)(b) für die angeforderte Auswertung; solange der Gemini-**Gratis-Tarif** läuft, nutzt Google die Eingaben auch für eigene Zwecke → dafür **Einwilligung** Art. 6(1)(a) nötig · DSG: erwartbarer Zweck, Hinweis + Bekanntgabe des Exportlands | Server speichert und protokolliert nichts; bei Google laut Gemini-API-Bedingungen (Gratis-Tarif: inkl. Produktverbesserung, menschliche Prüfung möglich) | Vercel, Google Gemini |
 
-| Purpose | Data | Whose | Why it is lawful | Retention | Processors involved |
-|---------|------|-------|------------------|-----------|---------------------|
-| _Run user accounts_ | _Email, password hash, display name_ | _Registered users_ | _GDPR: Art. 6(1)(b) contract · DSG: expected purpose, no justification needed_ | _Until account deletion_ | _Supabase (EU)_ |
-| _..._ | _..._ | _..._ | _..._ | _..._ | _..._ |
+## Besondere Kategorien
 
-## Sensitive data
+- keine. Finanzdaten (Trades, Gewinne) sind **keine** besondere Kategorie nach Art. 9 DSGVO / Art. 5 lit. c DSG, aber vertraulich — Freitextfelder (`notiz`, `gedanken`, `ziele`) können trotzdem alles enthalten und gehen deshalb nicht an die KI.
 
-_Health, biometrics, genetics, ethnicity, political opinion, religion, trade union membership, sex life or orientation, criminal matters — and, under the Swiss DSG, social-assistance measures and administrative proceedings (Art. 9 GDPR · Art. 5 lit. c DSG). These carry much stricter rules — usually explicit consent. List them separately so nobody overlooks them, or write "none"._
+## Auftragsverarbeiter (Auftragsbearbeiter)
 
-- _none_
+| Dienst | Was er verarbeitet | Region | AVV / DPA | Außerhalb der angemessenen Länder? |
+|--------|--------------------|--------|-----------|-----------------------------------|
+| Vercel | Server-Anfragen inkl. IP, Request-Inhalt der KI-Aufrufe (durchgereicht), Logs | **nicht ermittelt** (Function-Region im Dashboard prüfen) | ☐ (Vercel DPA, im Dashboard) | US-Unternehmen; EU-US / Swiss-US DPF prüfen |
+| Google Gemini API | Prompt-Inhalt der KI-Funktionen | **nicht ermittelt** | ☐ — beim Gratis-Tarif gelten Googles Bedingungen für unbezahlte Dienste, nicht die Datenverarbeitungsbedingungen für bezahlte | US-Unternehmen; DPF prüfen |
 
-## Processors (Auftragsverarbeiter · Auftragsbearbeiter)
+## Betroffenenrechte — wie sie erfüllt werden
 
-_Every external service that touches personal data on your behalf (Art. 28 GDPR · Art. 9 DSG). Each needs a data processing agreement (AVV / DPA) — normally a checkbox or a downloadable document in the provider's dashboard. Under the DSG the countries you export to also have to be named in the privacy policy._
+| Recht | DSGVO | DSG | Wie die App es erfüllt |
+|-------|-------|-----|------------------------|
+| Auskunft / Kopie | Art. 15 | Art. 25 | Daten liegen beim Nutzer; Export über die verschlüsselte Backup-Datei (MR-11). Beim Betreiber liegt nichts. |
+| Berichtigung | Art. 16 | Art. 32 | Nutzer bearbeitet selbst in der App. |
+| Löschung | Art. 17 | Art. 32 / Art. 6 Abs. 4 | „Alles löschen“ (MR-11); einzelne Pareto-Notiz löschen (vorgeschlagen). Was bei Google liegt: nur über Google. |
+| Datenübertragbarkeit | Art. 20 | Art. 28 | Backup-Datei (MR-11). |
+| Widerspruch / Widerruf | Art. 21 / Art. 7(3) | Art. 30 Abs. 2 | Schalter „Trades in KI-Auswertung einbeziehen“ (vorgeschlagen), jederzeit ausschaltbar. |
 
-| Service | What it processes | Region | DPA signed | Outside the adequate countries? |
-|---------|-------------------|--------|------------------|----------------|
-| _Supabase_ | _All application data_ | _eu-central-1 (Frankfurt)_ | _☐_ | _US company, EU hosting_ |
-| _Vercel_ | _Requests, logs_ | _..._ | _☐_ | _..._ |
-| _Sentry_ | _Error reports (scrubbed)_ | _..._ | _☐_ | _..._ |
+> Frist: **ein Monat** nach DSGVO (Art. 12(3)), **30 Tage** nach DSG (Art. 25 Abs. 7).
 
-## Data subject rights — how they are served
+## Offene Punkte
 
-_Which part of the app actually delivers each right. "By email, manually" is a valid answer for a small product; leaving it blank is not._
+- [ ] Gemini auf **bezahlten Tarif** umstellen (dann keine Nutzung der Eingaben durch Google für eigene Zwecke) — oder Einwilligung vor dem Senden einholen (MR-9)
+- [ ] Vercel-Function-Region ermitteln, wenn möglich auf Frankfurt (`fra1`) stellen
+- [ ] AVV/DPA mit Vercel und Google (Gemini, bezahlter Tarif) abschließen
+- [ ] Datenschutzerklärung in der App (nennt Vercel, Google Gemini, USA als Exportland) — fehlt projektweit; für MR-9 als AC-20 in der Spec
+- [ ] Hinweis „Keine Anlageberatung — nur zu Informations- und Lernzwecken“ beim ersten Start / bei der Installation (in der Spec als MR-12 AC-12, noch nicht gebaut)
+- [ ] Name und Anschrift des Verantwortlichen eintragen
+- [ ] `/dsgvo` für das ganze Projekt ausführen (KI-Coach, Screenshot-OCR, Google-Workspace-Sync, Cloud-Profile mit PIN sind hier noch nicht bewertet)
 
-| Right | GDPR | DSG | How this product delivers it |
-|-------|------|-----|------------------------------|
-| Access / copy | Art. 15 | Art. 25 | _..._ |
-| Rectification | Art. 16 | Art. 32 | _..._ |
-| Erasure | Art. 17 | Art. 32 / Art. 6 Abs. 4 | _..._ |
-| Portability | Art. 20 | Art. 28 (narrower) | _..._ |
-| Objection | Art. 21 | Art. 30 Abs. 2 | _..._ |
+## Für einen Anwalt / Datenschutzberater
 
-> Deadline: **one calendar month** under the GDPR (Art. 12(3), extendable by two for complex cases if the person is told within the first), **30 days** under the DSG (Art. 25 Abs. 7).
-
-## Open points
-
-_What is still unresolved, and who resolves it. `/dsgvo` adds items here; they leave when they are actually done._
-
-- [ ] _e.g. AVV with Sentry not yet signed_
-- [ ] _e.g. Retention period for uploaded files never decided_
-
-## For a lawyer / data protection officer or advisor
-
-_Questions that need a human. Keep the context with each question so it can be asked without re-explaining the product._
-
-- _e.g. Our free tier keeps analytics data for 24 months on legitimate interest — is that defensible for a B2C product with no login requirement?_
-
----
-
-_Run `/dsgvo` to create the first version of this record, and again whenever a feature changes what personal data the product holds._
+- Ich betreibe die App als **Privatperson** öffentlich und kostenlos für fremde Nutzer, ohne Konten; alle Daten liegen im Browser der Nutzer. Bin ich für die KI-Aufrufe (Trades gehen über meine Vercel-Function an Google Gemini) Verantwortlicher, und reicht ein Hinweis plus Opt-in-Schalter vor dem ersten Senden?
+  _Einschätzung des Betreibers (2026-10-22):_ für die eigenen Daten ja; fremde Depots sieht er nie, die App startet leer. _Technischer Hinweis:_ Verantwortlich macht nach Art. 4 Nr. 7 DSGVO, wer Zweck und Mittel festlegt, nicht wer die Daten sieht — umgesetzt sind daher Opt-in und Datensparsamkeit (MR-9 AC-17, AC-18).
+- Gemini läuft im **Gratis-Tarif**, bei dem Google Eingaben für eigene Zwecke nutzen darf. Ist das für pseudonyme Trade-Daten fremder Nutzer mit Einwilligung vertretbar, oder muss ich auf den bezahlten Tarif wechseln? Gilt für Aufrufe aus der EU eine abweichende Regel in Googles Bedingungen?
+  _Einschätzung des Betreibers:_ mit Einwilligung vertretbar. _Technischer Hinweis:_ Google sieht die Daten trotzdem; der bezahlte Tarif bleibt die sicherere Wahl.
+- Die KI-Auswertung bewertet Trades gegen ein Regelwerk („durfte gekauft werden?“). Ist das in Österreich bereits **Anlageberatung** (WAG/BWG)?
+  _Einschätzung des Betreibers:_ nein. _Umgesetzt:_ Hinweis „Keine Anlageberatung — nur zu Informations- und Lernzwecken“ unter jedem KI-Entwurf (MR-9 AC-23) und beim ersten Start der App (geplant für MR-12); keine Einzeltitel-Empfehlungen.
