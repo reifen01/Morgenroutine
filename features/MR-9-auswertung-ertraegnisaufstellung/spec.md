@@ -69,7 +69,7 @@ Fasst die Tages-Snapshots der Morgenroutine zu Zeiträumen zusammen, hält je Ze
 - **Abweichung (AC-8):** Code legt den KI-Entwurf nur ins Textfeld; gespeichert wird erst per Klick auf „Speichern“ (`src/components/AuswertungTab.tsx:57, 193–198`). AC-8 verlangt automatisches Speichern. Gefunden 2026-10-22.
 - **Fehlt (AC-14):** Die KI bekommt heute nur Marktdaten, keine Trades (`src/components/AuswertungTab.tsx:45–50`). Gefunden 2026-10-22.
 - [x] **Datenschutz (AC-14):** Damit gehen persönliche Finanzdaten an Google Gemini. → `/dsgvo MR-9` ausgeführt, Ergebnis AC-17 bis AC-23, Details in `docs/privacy.md` (2026-10-22)
-- [ ] **App-weiter Hinweis (→ MR-12):** Der Nutzer wünscht „Keine Anlageberatung — nur zu Informations- und Lernzwecken“ auch beim ersten Start bzw. bei der Installation der App. Das gehört zum Onboarding (MR-12, noch ohne Spec) — kommt mit `/reverse-spec MR-12` als neues Kriterium dort hinein.
+- [x] **App-weiter Hinweis (→ MR-12):** „Keine Anlageberatung“ auch beim ersten Start. → als MR-12 AC-12 aufgenommen (2026-10-23)
 - [ ] **Gemini-Tarif:** Solange der Gratis-Tarif läuft, darf Google Eingaben für eigene Zwecke nutzen; AC-18 (Einwilligung) ist deshalb Pflicht. Empfehlung: bezahlter Tarif + Vercel-Region Frankfurt (siehe `docs/privacy.md` → Offene Punkte).
 - [ ] **Modelle (AC-11):** `gemini-2.0-flash` und `gemini-1.5-flash` sind möglicherweise abgekündigt — `/qa` prüft die Erreichbarkeit.
 - **Fehlt (AC-15, AC-16):** Code kennt nur Woche und Monat (`src/utils/periodStats.ts:12`, `src/components/AuswertungTab.tsx:109–122`). Gefunden 2026-10-22.

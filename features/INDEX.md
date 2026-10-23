@@ -36,7 +36,7 @@
 | MR-9 | Auswertung & Erträgnisaufstellung | Wochen-/Monatsstatistik der Snapshots mit Pareto-Notizen und KI-Entwurf, Erträge je Jahr und Depot. | Spec'd | [MR-9-auswertung-ertraegnisaufstellung](MR-9-auswertung-ertraegnisaufstellung/) | 2026-10-18 |
 | MR-10 | Regelwerk & KI-Coach | Durchsuchbares Handbuch mit Direktsprung und Chat mit dem Trading-Coach. | Mapped | | 2026-10-18 |
 | MR-11 | Backup, Demo & Reset | Verschlüsselte Backup-Datei mit PIN/Passwort, Wiederherstellung mit Vergleich, Backup-Erinnerung, Demo-Daten, Alles löschen. | Mapped | | 2026-10-18 |
-| MR-12 | App-Hülle, Onboarding & PWA | Installierbare PWA mit Onboarding, Handbuch-Hilfe, Fehlerseite, Update-Banner, Kopfzeile und Ping. | Mapped | | 2026-10-18 |
+| MR-12 | App-Hülle, Onboarding & PWA | Installierbare PWA mit Onboarding, Handbuch-Hilfe, Fehlerseite, Update-Banner, Kopfzeile und Ping. | Spec'd | [MR-12-app-huelle-onboarding-pwa](MR-12-app-huelle-onboarding-pwa/) | 2026-10-18 |
 | MR-13 | Blasen-Ampel (Sektoren) | Prüft je Sektor-ETF nach „Bubbles for Fama", ob sich die Branche in zwei Jahren verdoppelt hat; GRÜN/GELB/ROT mit Verlauf, sperrt keinen Kauf. | Mapped | | 2026-10-18 |
 | MR-14 | Schwellen-Warnung | Weist darauf hin, wenn ein Ampel-Signal kurz vor dem Umschlag steht, nicht erst nach dem Umschlag. | Roadmap | — | 2026-10-18 |
 | MR-15 | Depotstand-Verlauf | Zeigt, wie sich der Depotwert über Tage und Wochen entwickelt hat (eine Kapitalkurve existiert im Code, wird aber nicht angezeigt). | Roadmap | — | 2026-10-18 |

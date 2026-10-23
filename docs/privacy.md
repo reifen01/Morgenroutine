@@ -54,7 +54,7 @@
 - [ ] Vercel-Function-Region ermitteln, wenn möglich auf Frankfurt (`fra1`) stellen
 - [ ] AVV/DPA mit Vercel und Google (Gemini, bezahlter Tarif) abschließen
 - [ ] Datenschutzerklärung in der App (nennt Vercel, Google Gemini, USA als Exportland) — fehlt projektweit; für MR-9 als AC-20 in der Spec
-- [ ] Hinweis „Keine Anlageberatung — nur zu Informations- und Lernzwecken“ beim ersten Start / bei der Installation (MR-12)
+- [ ] Hinweis „Keine Anlageberatung — nur zu Informations- und Lernzwecken“ beim ersten Start / bei der Installation (in der Spec als MR-12 AC-12, noch nicht gebaut)
 - [ ] Name und Anschrift des Verantwortlichen eintragen
 - [ ] `/dsgvo` für das ganze Projekt ausführen (KI-Coach, Screenshot-OCR, Google-Workspace-Sync, Cloud-Profile mit PIN sind hier noch nicht bewertet)
 
