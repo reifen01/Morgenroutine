@@ -51,13 +51,7 @@
       "Edit(**/.env.production)",
       "Edit(**/.env.test)",
       "Edit(**/secrets/**)",
-      "Edit(**/.ssh/**)",
-      "Write(**/.env)",
-      "Write(**/.env.local)",
-      "Write(**/.env.*.local)",
-      "Write(**/.env.development)",
-      "Write(**/.env.production)",
-      "Write(**/.env.test)"
+      "Edit(**/.ssh/**)"
     ],
     "ask": [
       "Edit(/package.json)",
