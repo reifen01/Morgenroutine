@@ -29,6 +29,7 @@ Reihenfolge der zweiten Zeile unter Analyse: Screener · Auswertung · Kaufziele
 - **Header** (`src/components/CompactHeader.tsx`): Logo-Button (Update-Check), Titel, Badge „Update verfügbar", Backup-Badge (ab 7 Tagen), Routine-Datum, „?"-Hilfe, Bereitschafts-Punkt.
 - **Tab-Leiste** (`<nav>`, `src/App.tsx:700-753`): vier Buttons mit Icon, aktiv = `border-b-2 border-slate-800`; zweite Reiterzeile als Pillen unter Analyse und System.
 - **Content** (`<main>`, `max-w-7xl`, scrollt): der aktive Tab.
+- **Erster Start:** Vollbild-Hinweis „Keine Anlageberatung“ (bis „Verstanden“), dann Onboarding, dann die App (MR-12 AC-12, AC-1).
 - **Mobile:** gleiche Leiste, kein Burger, Karten randlos bis zum Bildschirmrand; PWA `display: standalone` mit Safe-Area-Padding.
 
 ## Page Pattern
